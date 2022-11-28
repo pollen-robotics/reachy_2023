@@ -2,7 +2,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 <xacro:macro name="arm" params="prefix parent side damping friction">
 
-  <xacro:include filename="$(find reachy_description)/ros2_control/joint.ros2_control.xacro"/>
+  <xacro:include filename="$(find reachy_description)/ros2_control/arm.ros2_control.xacro"/>
 
   <xacro:if value="${side == 'left'}">
     <xacro:property name="reflect" value="-1"/>
