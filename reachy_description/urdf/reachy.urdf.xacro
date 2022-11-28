@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="reachy_2023">
+
+  <xacro:include filename="$(find reachy_description)/urdf/arm.urdf.xacro"/>
+  <xacro:include filename="$(find reachy_description)/urdf/head.urdf.xacro"/>
+
+  <link name="world"/>
+  <joint name="world_joint" type="fixed">
+    <origin xyz="0 0 1.0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="torso"/>
+  </joint>
+
+  <link name="torso">
+      <inertial>
+          <origin xyz="0.0 0.019 -0.009" rpy="0.0 0.0 0.0"/>
+          <mass value="0.527"/>
+          <inertia ixx="2.89598e-3" ixy="-1.16791e-6" ixz="-8.28749e-6" iyy="4.491e-3" iyz="2.343e-4" izz="3.995e-3"/>
+      </inertial>
+      <visual name="">
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <mesh filename="package://reachy_description/meshes/torso.dae"/>
+          </geometry>
+      </visual>
+      <collision>
+          <origin xyz="0 0 -0.1" rpy="0 0.05 0" />
+          <geometry>
+              <box size="0.11 0.2 0.32" />
+          </geometry>
+      </collision>
+  </link>
+
+  <gazebo reference="torso">
+    <material>Gazebo/Black</material>
+    <static>true</static>
+  </gazebo>
+
+
+  <!--MODEL PARAMETERS-->
+  <xacro:property name="damping" value="0.1"/>
+  <xacro:property name="friction" value="0.1"/>
+
+  <!-- RIGHT ARM-->
+  <xacro:arm
+    prefix="r" parent="torso" side="right"
+    damping="${damping}" friction="${friction}"
+  />
+
+  <!-- LEFT ARM-->
+  <xacro:arm
+    prefix="l" parent="torso" side="left"
+    damping="${damping}" friction="${friction}"
+  />
+
+  <!-- HEAD-->
+  <xacro:head
+    parent="torso"
+    damping="${damping}" friction="${friction}"
+  />
+
+</robot>
