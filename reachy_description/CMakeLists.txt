@@ -23,7 +23,7 @@ if(BUILD_TESTING)
 endif()
 
 install(
-  DIRECTORY config launch meshes urdf
+  DIRECTORY config launch meshes urdf ros2_control
   DESTINATION share/${PROJECT_NAME}
 )
 
