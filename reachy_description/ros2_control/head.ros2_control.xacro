@@ -23,5 +23,23 @@
       <xacro:position_joint_control name="neck_pitch"/>
       <xacro:position_joint_control name="neck_yaw"/>
     </ros2_control>
+
+    <ros2_control name="antennas" type="system">
+      <hardware>
+        <xacro:if value="$(arg use_fake_hardware)">
+          <!-- Use gazebo as hardware simulation. -->
+          <xacro:if value="$(arg use_gazebo)">
+            <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+          </xacro:if>
+
+          <!-- Use fake components. -->
+          <xacro:unless value="$(arg use_gazebo)">
+            <plugin>fake_components/GenericSystem</plugin>
+          </xacro:unless>
+        </xacro:if>
+      </hardware>
+      <xacro:position_joint_control name="l_antenna"/>
+      <xacro:position_joint_control name="r_antenna"/>
+    </ros2_control>
   </xacro:macro>
 </robot>
