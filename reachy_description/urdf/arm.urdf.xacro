@@ -1,0 +1,260 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="arm" params="prefix parent side damping friction">
+
+  <xacro:if value="${side == 'left'}">
+    <xacro:property name="reflect" value="-1"/>
+    <xacro:property name="shoulder_y" value="0.044"/>
+  </xacro:if>
+  <xacro:if value="${side == 'right'}">
+    <xacro:property name="reflect" value="1"/>
+    <xacro:property name="shoulder_y" value="0.036"/>
+  </xacro:if>
+
+  <link name="${prefix}_shoulder">
+      <inertial>
+          <origin xyz="-0.016 ${shoulder_y} 0.0" rpy="${1.57*reflect} 1.57 0.0"/>
+          <mass value="0.053"/>
+          <inertia ixx="3.308e-4" ixy="9.972e-8" ixz="-2.037e-9" iyy="4.650e-5" iyz="2.113e-6" izz="3.545e-5"/>
+      </inertial>
+      <visual name="">
+          <origin xyz="0.0 ${0.04*reflect} 0.0" rpy="${1.57*reflect} 1.57 0.0"/>
+          <geometry>
+              <mesh filename="package://reachy_description/meshes/shoulder.dae"/>
+          </geometry>
+      </visual>
+      <collision>
+          <origin xyz="0.0 ${0.04*reflect} 0.0" rpy="${1.57*reflect} 1.57 0.0"/>
+          <geometry>
+              <cylinder length="0.09" radius="0.035" />
+          </geometry>
+      </collision>
+  </link>
+
+  <joint name="${prefix}_shoulder_pitch" type="revolute">
+      <origin xyz="0.0 ${-0.19*reflect} 0.0" rpy="0.0 0.0 0.0"/>
+      <parent link="${parent}"/>
+      <child link="${prefix}_shoulder"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-2.618" upper="1.57" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+  </joint>
+
+  <link name="${prefix}_shoulder_x">
+      <inertial>
+          <origin xyz="-0.0 0.0 -0.019" rpy="0.0 0.0 0.0"/>
+          <mass value="0.158"/>
+          <inertia ixx="6.887e+4" ixy="5.393e+0" ixz="-9.155e+2" iyy="7.895e+4" iyz="4.512e-1" izz="4.235e+4"/>
+      </inertial>
+      <visual name="">
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <mesh filename="package://reachy_description/meshes/shoulder_x.dae"/>
+          </geometry>
+      </visual>
+      <collision>
+          <origin xyz="0 0 -0.02" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <cylinder length="0.04" radius="0.035" />
+          </geometry>
+      </collision>
+  </link>
+
+  <joint name="${prefix}_shoulder_roll" type="revolute">
+      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+      <parent link="${prefix}_shoulder"/>
+      <child link="${prefix}_shoulder_x"/>
+      <axis xyz="1 0 0"/>
+      <xacro:if value="${side == 'right'}">
+        <limit lower="-3.14" upper="0.174" effort="10." velocity="0.0"/>
+      </xacro:if>
+      <xacro:if value="${side == 'left'}">
+        <limit lower="-0.174" upper="3.14" effort="10." velocity="0.0"/>
+      </xacro:if>
+      <dynamics damping="${damping}" friction="${friction}"/>
+  </joint>
+
+  <link name="${prefix}_upper_arm">
+      <inertial>
+          <origin xyz="-0.004 0.0 -0.1426" rpy="0.0 0.0 0.0"/>
+          <mass value="0.430"/>
+          <inertia ixx="3.264e-3" ixy="-4.027e-8" ixz="1.395e-4" iyy="3.345e-3" iyz="1.885e-6" izz="2.616e-4"/>
+      </inertial>
+      <visual name="">
+          <origin xyz="0.0 0.0 -0.0526" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <mesh filename="package://reachy_description/meshes/upper_arm.dae"/>
+          </geometry>
+      </visual>
+      <collision>
+          <origin xyz="0.0 0.0 -0.16" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <cylinder length="0.25" radius="0.04" />
+          </geometry>
+      </collision>
+  </link>
+
+  <joint name="${prefix}_arm_yaw" type="revolute">
+      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+      <parent link="${prefix}_shoulder_x"/>
+      <child link="${prefix}_upper_arm"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="-1.57" upper="1.57" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+  </joint>
+
+  <link name="${prefix}_forearm">
+      <inertial>
+          <origin xyz="-0.008 0.0 -0.058" rpy="0.0 0.0 0.0"/>
+          <mass value="0.162"/>
+          <inertia ixx="2.532e-4" ixy="-2.999e-8" ixz="1.448e-5" iyy="2.538e-4" iyz="-4.323e-8" izz="1.234e-4"/>
+      </inertial>
+      <visual name="">
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <mesh filename="package://reachy_description/meshes/forearm.dae"/>
+          </geometry>
+      </visual>
+      <collision>
+          <origin xyz="0.0 0.0 -0.058" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <cylinder length="0.09" radius="0.04" />
+          </geometry>
+      </collision>
+  </link>
+
+  <joint name="${prefix}_elbow_pitch" type="revolute">
+      <origin xyz="0 0 -0.28" rpy="0.0 0.0 0.0"/>
+      <parent link="${prefix}_upper_arm"/>
+      <child link="${prefix}_forearm"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-2.182" upper="0" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+  </joint>
+
+  <link name="${prefix}_wrist">
+      <inertial>
+          <origin xyz="0.0 0.0 -0.193" rpy="0.0 0.0 0.0"/>
+          <mass value="0.197"/>
+          <inertia ixx="6.157e-4" ixy="5.706e-8" ixz="-1.045e-5" iyy="6.280e-4" iyz="4.862e-7" izz="1.050e-4"/>
+      </inertial>
+      <visual name="">
+          <origin xyz="0.0 0.0 -0.100" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <mesh filename="package://reachy_description/meshes/wrist.dae"/>
+          </geometry>
+      </visual>
+      <collision>
+          <origin xyz="0.0 0.0 -0.18" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <cylinder length="0.14" radius="0.035" />
+          </geometry>
+      </collision>
+  </link>
+
+  <joint name="${prefix}_forearm_yaw" type="revolute">
+      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+      <parent link="${prefix}_forearm"/>
+      <child link="${prefix}_wrist"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="-1.745" upper="1.745" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+  </joint>
+
+  <link name="${prefix}_wrist2hand">
+      <inertial>
+          <origin xyz="0.0 0.0 0.014" rpy="0.0 0.0 0.0"/>
+          <mass value="0.01"/>
+          <inertia ixx="6.750e-6" ixy="3.732e-11" ixz="-1.581e-11" iyy="6.060e-6" iyz="-1.746e-12" izz="5.774e-6"/>
+      </inertial>
+      <visual name="">
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <mesh filename="package://reachy_description/meshes/wrist2hand.dae"/>
+          </geometry>
+      </visual>
+      <collision>
+          <origin xyz="0.0 0.0 -0.03" rpy="0.0 0.0 0.0"/>
+          <geometry>
+              <cylinder length="0.06" radius="0.03" />
+          </geometry>
+      </collision>
+  </link>
+
+  <joint name="${prefix}_wrist_pitch" type="revolute">
+      <origin xyz="0 0 -0.25" rpy="0.0 0.0 0.0"/>
+      <parent link="${prefix}_wrist"/>
+      <child link="${prefix}_wrist2hand"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.785" upper="0.785" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+  </joint>
+
+  <link name="${prefix}_gripper_thumb">
+      <inertial>
+          <origin xyz="0.032 ${-0.008*reflect} 0.0" rpy="0.0 1.57 0.0"/>
+          <mass value="0.173"/>
+          <inertia ixx="1.083e-4" ixy="-3.476e-5" ixz="1.331e-6" iyy="1.421e-4" iyz="6.730e-7" izz="2.112e-4"/>
+      </inertial>
+      <visual name="">
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
+          <geometry>
+              <mesh filename="package://reachy_description/meshes/${prefix}_gripper_thumb.dae"/>
+          </geometry>
+      </visual>
+      <collision>
+          <origin xyz="0.0 0.02 -0.06" rpy="0.0 1.57 0.0"/>
+          <geometry>
+              <box size="0.1 0.012 0.035" />
+          </geometry>
+      </collision>
+  </link>
+
+  <joint name="${prefix}_wrist_roll" type="revolute">
+      <origin xyz="0 0 -0.0325" rpy="0.0 0.0 0.0"/>
+      <parent link="${prefix}_wrist2hand"/>
+      <child link="${prefix}_gripper_thumb"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="-0.785" upper="0.785" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+  </joint>
+
+  <link name="${prefix}_gripper_finger">
+      <inertial>
+          <origin xyz="${-0.005*reflect} -0.043 -0.0" rpy="0.0 1.57 0.0"/>
+          <mass value="0.035"/>
+          <inertia ixx="9.166e-5" ixy="-6.559e-6" ixz="-3.952e-8" iyy="1.062e-5" iyz="5.276e-9" izz="8.704e-5"/>
+      </inertial>
+      <visual name="">
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
+          <geometry>
+              <mesh filename="package://reachy_description/meshes/${prefix}_gripper_finger.dae"/>
+          </geometry>
+      </visual>
+      <collision>
+          <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/>
+          <geometry>
+              <box size="0.1 0.012 0.035" />
+          </geometry>
+      </collision>
+  </link>
+
+  <link name="${prefix}_arm_tip"/>
+
+  <joint name="${prefix}_arm_tip" type="fixed">
+      <origin xyz="0 -0.012 -0.085" rpy="0 0 0" />
+      <parent link="${prefix}_gripper_thumb" />
+      <child link="${prefix}_arm_tip" />
+  </joint>
+
+  <joint name="${prefix}_gripper" type="revolute">
+      <origin xyz="0.0 ${-0.037*reflect} -0.03998" rpy="0.0 0.0 0.0"/>
+      <parent link="${prefix}_gripper_thumb"/>
+      <child link="${prefix}_gripper_finger"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="-1.2" upper="0.35" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+  </joint>
+
+</xacro:macro>
+</robot>
