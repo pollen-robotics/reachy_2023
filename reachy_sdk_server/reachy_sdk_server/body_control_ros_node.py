@@ -1,12 +1,12 @@
+import time
 from threading import Event, Lock, Thread
 from typing import List
 
-from scipy.spatial.transform import Rotation
 import yaml
+import numpy as np
 
 from google.protobuf.wrappers_pb2 import FloatValue, UInt32Value
-
-import numpy as np
+from scipy.spatial.transform import Rotation
 
 import rclpy
 from rclpy.node import Node
@@ -46,32 +46,24 @@ class BodyControlNode(Node):
         )
 
         # Publish to each controllers
-        self.neck_position_pub = self.create_publisher(
-            msg_type=Float64MultiArray, 
-            topic='/neck_forward_position_controller/commands',
-            qos_profile=5,
-        )
-        self.antenna_position_pub = self.create_publisher(
-            msg_type=Float64MultiArray, 
-            topic='/antenna_forward_position_controller/commands',
-            qos_profile=5,
-        )
-        self.r_arm_position_pub = self.create_publisher(
-            msg_type=Float64MultiArray, 
-            topic='/r_arm_forward_position_controller/commands',
-            qos_profile=5,
-        )
-        self.l_arm_position_pub = self.create_publisher(
-            msg_type=Float64MultiArray, 
-            topic='/l_arm_forward_position_controller/commands',
-            qos_profile=5,
-        )
+        self.forward_publishers = {
+            c: self.create_publisher(
+                msg_type=Float64MultiArray, 
+                topic=f'/{c}/commands',
+                qos_profile=5,
+            )
+            for c in self.forward_controllers
+        }
 
         self.neck_pos_msg = Float64MultiArray()
 
         self.joint_state_pub_event = Event()
 
         self.wait_for_setup()
+
+        t = Thread(target=self._publish_joint_command)
+        t.daemon = True
+        t.start()
 
     def wait_for_setup(self):
         while not self.joint_state_ready.is_set():
@@ -183,3 +175,14 @@ class BodyControlNode(Node):
                 }
                 
         return d
+    
+    def _update_joint_target_pos(self, grpc_req: JointsCommand):
+        for cmd in grpc_req.commands:
+            self.joints[self._get_joint_name(cmd.id)]['target_position'] = cmd.goal_position.value
+
+    def _publish_joint_command(self):
+        while rclpy.ok():
+            for controller, joint_dic in self.forward_controllers.items():
+                pos = [self.joints[joint]['target_position'] for joint in joint_dic.keys()]
+                self.forward_publishers[controller].publish(Float64MultiArray(data=pos))
+            time.sleep(0.01)
