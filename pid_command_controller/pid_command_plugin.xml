@@ -1,0 +1,7 @@
+<library path="pid_command_controller">
+  <class name="pid_command_controller/PIDCommandController" type="pid_command_controller::PIDCommandController" base_class_type="controller_interface::ControllerInterface">
+  <description>
+    The PID command controller commands a group of joints in a given interface
+  </description>
+  </class>
+</library>
