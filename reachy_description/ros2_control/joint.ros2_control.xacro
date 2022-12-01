@@ -21,6 +21,14 @@
 
       <command_interface name="position"/>
       <command_interface name="torque"/>
+
+      <state_interface name="p_gain"/>   
+      <command_interface name="p_gain"/>
+      <state_interface name="i_gain"/>   
+      <command_interface name="i_gain"/>
+      <state_interface name="d_gain"/>   
+      <command_interface name="d_gain"/>
+
     </joint>
   </xacro:macro>
 </robot>

@@ -5,7 +5,7 @@ from typing import List
 import yaml
 import numpy as np
 
-from google.protobuf.wrappers_pb2 import FloatValue, UInt32Value
+from google.protobuf.wrappers_pb2 import FloatValue, UInt32Value, BoolValue
 from scipy.spatial.transform import Rotation
 
 import rclpy
@@ -19,7 +19,7 @@ from reachy_msgs.msg import Gripper
 
 from reachy_sdk_api.arm_kinematics_pb2 import ArmIKRequest, ArmSide
 from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand
-from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState
+from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState, JointField, PIDValue, PIDGains
 from reachy_sdk_api.orbita_kinematics_pb2 import OrbitaIKRequest
 
 
@@ -33,8 +33,8 @@ class BodyControlNode(Node):
         self.joints = {}
         self.joint_uids = {}
 
-        self.torques = {}
         self.requested_torques = {}
+        self.requested_pid = {}
 
         # Subscribe to: 
         #  - /dynamic_joint_states (for present_position, torque and temperature)
@@ -75,7 +75,7 @@ class BodyControlNode(Node):
             self.logger.info('Waiting for /dynamic_joint_states...')
             rclpy.spin_once(self)
 
-    def get_joint_state(self, uid: JointId, full=False) -> JointsState:
+    def get_joint_state(self, uid: JointId, joint_fields: JointField) -> JointsState:
         """ Get update info for requested joint.
 
          - present_position
@@ -87,15 +87,41 @@ class BodyControlNode(Node):
         name = self._get_joint_name(uid)
         values = self.joints[name]
 
-        kwargs = {
-            'present_position': FloatValue(value=values['present_position']),
-            'temperature': FloatValue(value=values['present_temperature']),
-            'goal_position': FloatValue(value=values['target_position']),
-        }
+        kwargs = {}
 
-        if full:
-            kwargs['name'] = name
-            kwargs['uid'] = UInt32Value(value=uid)
+        for field in joint_fields:
+            if field == JointField.ALL:
+                kwargs = {
+                    'name': name,
+                    'uid': UInt32Value(value=values['uid']),
+                    'present_position': FloatValue(value=values['present_position']),
+                    'temperature': FloatValue(value=values['present_temperature']),
+                    'goal_position': FloatValue(value=values['target_position']),
+                    'pid': PIDValue(pid=PIDGains(p=values['pid']['p'], i=values['pid']['i'], d=values['pid']['d'])),
+                    'compliant': BoolValue(value=values['compliant']),
+                }
+                break
+
+            elif field == JointField.NAME:
+                kwargs['name'] = name
+
+            elif field == JointField.PID:
+                kwargs['pid'] = PIDValue(pid=PIDGains(p=values['pid']['p'], i=values['pid']['i'], d=values['pid']['d']))
+
+            elif field == JointField.UID:
+                kwargs['uid'] = UInt32Value(value=values['uid'])
+
+            elif field == JointField.COMPLIANT:
+                kwargs['compliant'] = BoolValue(value=values['compliant'])
+
+            elif field == JointField.TEMPERATURE:
+                kwargs['temperature'] = FloatValue(value=values['present_temperature'])
+
+            elif field == JointField.GOAL_POSITION:
+                kwargs['goal_position'] = FloatValue(value=values['target_position'])
+
+            elif field == JointField.PRESENT_POSITION:
+                kwargs['present_position'] = FloatValue(value=values['present_position'])
 
         return JointState(**kwargs)
 
@@ -108,23 +134,30 @@ class BodyControlNode(Node):
         # There is some specific preparation we need to do
         #   - we create the dict entry
         #   - we set the target_position to the current_position
-        if not self.torques:
-            self.torques = {joint: True for joint in self.forward_controllers['forward_torque_controller'].keys()}
 
         if not self.joints:
             for uid, (name, kv) in enumerate(zip(state.joint_names, state.interface_values)):
                 if 'position' in kv.interface_names:
                     self.joints[name] = {}
+                    self.joints[name]['name'] = name
                     self.joints[name]['uid'] = uid
+                    self.joints[name]['pid'] = {}
                     self.joint_uids[uid] = name
 
                     for k, v in zip(kv.interface_names, kv.values):
                         if k == 'position':
                             self.joints[name]['present_position'] = v
                             self.joints[name]['target_position'] = v
-
                         elif k == 'temperature':
                             self.joints[name]['present_temperature'] = v
+                        elif k == 'p_gain':
+                            self.joints[name]['pid']['p'] = v
+                        elif k == 'i_gain':
+                            self.joints[name]['pid']['i'] = v
+                        elif k == 'd_gain':
+                            self.joints[name]['pid']['d'] = v
+                        elif k == 'torque':
+                            self.joints[name]['compliant'] = (v == 0.0)
 
             self.joint_state_ready.set()
 
@@ -136,7 +169,13 @@ class BodyControlNode(Node):
                 elif k == 'temperature':
                     self.joints[name]['present_temperature'] = v
                 elif k == 'torque':
-                    self.torques[name] = (v == 0.0)
+                    self.joints[name]['compliant'] = (v == 0.0)
+                elif k == 'p_gain':
+                    self.joints[name]['pid']['p'] = v
+                elif k == 'i_gain':
+                    self.joints[name]['pid']['i'] = v
+                elif k == 'd_gain':
+                    self.joints[name]['pid']['d'] = v
 
         self.joint_state_pub_event.set()
         
@@ -188,7 +227,7 @@ class BodyControlNode(Node):
                 need_update = True
                 name = self._get_joint_name(cmd.id)
                 comp = cmd.compliant.value
-                self.requested_torques[name] = not comp
+                self.requested_torques[name] = comp
 
         if need_update:
             self.torque_need_update.set()
@@ -212,14 +251,16 @@ class BodyControlNode(Node):
             self.torque_need_update.wait()
             self.torque_need_update.clear()
 
-            self.torques.update(self.requested_torques)
+            for joint, torque in self.requested_torques.items():
+                self.joints[joint]['compliant'] = torque
+                
             self.requested_torques.clear()
 
-            torque_data = [float(not t) for t in self.torques.values()]
+            joint_dic = self.forward_controllers['forward_torque_controller']
+            torque_data = [float(not self.joints[joint]['compliant']) for joint in joint_dic.keys()]
 
             self.forward_publishers['forward_torque_controller'].publish(
                 Float64MultiArray(
                     data=torque_data
                 )
             )
-

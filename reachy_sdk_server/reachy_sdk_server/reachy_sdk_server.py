@@ -77,7 +77,7 @@ class ReachySDKServer(
 
         params['ids'] = request.ids
         params['states'] = [
-            self.body_control_node.get_joint_state(uid=id)
+            self.body_control_node.get_joint_state(uid=id, joint_fields=request.requested_fields)
             for id in request.ids
         ]
         params['timestamp'] = Timestamp()
