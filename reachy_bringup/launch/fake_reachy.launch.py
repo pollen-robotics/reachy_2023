@@ -110,6 +110,12 @@ def generate_launch_description():
         arguments=['antenna_forward_position_controller', '-c', '/controller_manager'],
     )
 
+    forward_torque_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['forward_torque_controller', '-c', '/controller_manager'],
+    )
+
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -125,6 +131,7 @@ def generate_launch_description():
                 r_arm_forward_position_controller_spawner,
                 l_arm_forward_position_controller_spawner,
                 antenna_forward_position_controller_spawner,
+                forward_torque_controller_spawner,
             ],
         ),
     )

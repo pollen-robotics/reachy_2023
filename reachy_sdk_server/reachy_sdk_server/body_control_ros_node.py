@@ -28,10 +28,13 @@ class BodyControlNode(Node):
         super().__init__(node_name='body_control_server_node')
         self.logger = self.get_logger()
 
-        self.forward_controllers = self._parse_controller(controllers_file)        
+        self.forward_controllers = self._parse_controller(controllers_file)
 
         self.joints = {}
         self.joint_uids = {}
+
+        self.torques = {}
+        self.requested_torques = {}
 
         # Subscribe to: 
         #  - /dynamic_joint_states (for present_position, torque and temperature)
@@ -55,8 +58,6 @@ class BodyControlNode(Node):
             for c in self.forward_controllers
         }
 
-        self.neck_pos_msg = Float64MultiArray()
-
         self.joint_state_pub_event = Event()
 
         self.wait_for_setup()
@@ -65,13 +66,14 @@ class BodyControlNode(Node):
         t.daemon = True
         t.start()
 
+        self.torque_need_update = Event()
+        self._torque_pub_t = Thread(target=self._publish_torque_update)
+        self._torque_pub_t.start()
+
     def wait_for_setup(self):
         while not self.joint_state_ready.is_set():
             self.logger.info('Waiting for /dynamic_joint_states...')
             rclpy.spin_once(self)
-
-    def handle_joint_message(self, req: JointsCommand):
-        return
 
     def get_joint_state(self, uid: JointId, full=False) -> JointsState:
         """ Get update info for requested joint.
@@ -106,6 +108,8 @@ class BodyControlNode(Node):
         # There is some specific preparation we need to do
         #   - we create the dict entry
         #   - we set the target_position to the current_position
+        if not self.torques:
+            self.torques = {joint: True for joint in self.forward_controllers['forward_torque_controller'].keys()}
 
         if not self.joints:
             for uid, (name, kv) in enumerate(zip(state.joint_names, state.interface_values)):
@@ -122,11 +126,6 @@ class BodyControlNode(Node):
                         elif k == 'temperature':
                             self.joints[name]['present_temperature'] = v
 
-                if 'torque' in kv.interface_names:
-                    for k, v in zip(kv.interface_names, kv.values):
-                        if k == 'torque':
-                            self.torques[name] = (v == 0.0)
-
             self.joint_state_ready.set()
 
         # Normal use case
@@ -137,7 +136,7 @@ class BodyControlNode(Node):
                 elif k == 'temperature':
                     self.joints[name]['present_temperature'] = v
                 elif k == 'torque':
-                    self.torques[name] = v
+                    self.torques[name] = (v == 0.0)
 
         self.joint_state_pub_event.set()
         
@@ -173,16 +172,54 @@ class BodyControlNode(Node):
                 d[c] = {
                     j: i for i, j in enumerate(joints)
                 }
-                
+
         return d
     
-    def _update_joint_target_pos(self, grpc_req: JointsCommand):
-        for cmd in grpc_req.commands:
-            self.joints[self._get_joint_name(cmd.id)]['target_position'] = cmd.goal_position.value
+    def _update_joint_target_pos(self, req: JointsCommand):
+        for cmd in req.commands:
+            if cmd.HasField('goal_position'):
+                self.joints[self._get_joint_name(cmd.id)]['target_position'] = cmd.goal_position.value
+
+    def _update_torque(self, req: JointsCommand):
+        need_update = False
+
+        for cmd in req.commands:
+            if cmd.HasField('compliant'):
+                need_update = True
+                name = self._get_joint_name(cmd.id)
+                comp = cmd.compliant.value
+                self.requested_torques[name] = not comp
+
+        if need_update:
+            self.torque_need_update.set()
+
+    def handle_joint_msg(self, grpc_req: JointsCommand):
+        self._update_joint_target_pos(grpc_req)
+        self._update_torque(grpc_req)
 
     def _publish_joint_command(self):
         while rclpy.ok():
             for controller, joint_dic in self.forward_controllers.items():
+                if controller == 'forward_torque_controller':
+                    continue
                 pos = [self.joints[joint]['target_position'] for joint in joint_dic.keys()]
                 self.forward_publishers[controller].publish(Float64MultiArray(data=pos))
+
             time.sleep(0.01)
+    
+    def _publish_torque_update(self):
+        while rclpy.ok():
+            self.torque_need_update.wait()
+            self.torque_need_update.clear()
+
+            self.torques.update(self.requested_torques)
+            self.requested_torques.clear()
+
+            torque_data = [float(not t) for t in self.torques.values()]
+
+            self.forward_publishers['forward_torque_controller'].publish(
+                Float64MultiArray(
+                    data=torque_data
+                )
+            )
+

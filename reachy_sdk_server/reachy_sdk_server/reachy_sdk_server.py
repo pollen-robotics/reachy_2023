@@ -105,12 +105,12 @@ class ReachySDKServer(
             last_pub = time.time()
 
     def SendJointsCommands(self, request: joint_pb2.JointsCommand, context) -> joint_pb2.JointsCommandAck:
-        self.body_control_node._update_joint_target_pos(grpc_req=request)
+        self.body_control_node.handle_joint_msg(grpc_req=request)
         return joint_pb2.JointsCommandAck(success=True)
 
     def StreamJointsCommands(self, request_iterator: Iterator[joint_pb2.JointsCommand], context) -> joint_pb2.JointsCommandAck:
         for request in request_iterator:
-            self.body_control_node._update_joint_target_pos(grpc_req=request)
+            self.body_control_node.handle_joint_msg(grpc_req=request)
         return joint_pb2.JointsCommandAck(success=True)
 
 
