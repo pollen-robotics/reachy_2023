@@ -70,6 +70,10 @@ class BodyControlNode(Node):
         self._torque_pub_t = Thread(target=self._publish_torque_update)
         self._torque_pub_t.start()
 
+        self.pid_need_update = Event()
+        self._pid_pub_t = Thread(target=self._publish_pid_update)
+        self._pid_pub_t.start()
+
     def wait_for_setup(self):
         while not self.joint_state_ready.is_set():
             self.logger.info('Waiting for /dynamic_joint_states...')
@@ -203,6 +207,8 @@ class BodyControlNode(Node):
                 try:
                     if v['type'] == 'forward_command_controller/ForwardCommandController':
                         forward_controllers.append(k)
+                    elif v['type'] == 'pid_command_controller/PIDCommandController':
+                        forward_controllers.append(k)
                 except (KeyError, TypeError):
                     pass
 
@@ -232,14 +238,31 @@ class BodyControlNode(Node):
         if need_update:
             self.torque_need_update.set()
 
+    def _update_pid(self, req: JointsCommand):
+        need_update = False
+
+        for cmd in req.commands:
+            if cmd.HasField('pid'):
+                need_update = True
+                name = self._get_joint_name(cmd.id)
+                self.requested_pid[name] = {
+                    'p': cmd.pid.pid.p,
+                    'i': cmd.pid.pid.i,
+                    'd': cmd.pid.pid.d,
+                }
+
+        if need_update:
+            self.pid_need_update.set()
+
     def handle_joint_msg(self, grpc_req: JointsCommand):
         self._update_joint_target_pos(grpc_req)
         self._update_torque(grpc_req)
+        self._update_pid(grpc_req)
 
     def _publish_joint_command(self):
         while rclpy.ok():
             for controller, joint_dic in self.forward_controllers.items():
-                if controller == 'forward_torque_controller':
+                if controller == 'forward_torque_controller' or controller == 'pid_controller':
                     continue
                 pos = [self.joints[joint]['target_position'] for joint in joint_dic.keys()]
                 self.forward_publishers[controller].publish(Float64MultiArray(data=pos))
@@ -262,5 +285,26 @@ class BodyControlNode(Node):
             self.forward_publishers['forward_torque_controller'].publish(
                 Float64MultiArray(
                     data=torque_data
+                )
+            )
+
+    def _publish_pid_update(self):
+        while rclpy.ok():
+            self.pid_need_update.wait()
+            self.pid_need_update.clear()
+
+            for joint, pid in self.requested_pid.items():
+                self.joints[joint]['pid'] = pid
+
+            print(self.requested_pid)
+
+            self.requested_pid.clear()
+
+            joint_dic = self.forward_controllers['pid_controller']
+            pid_data = [list(self.joints[joint]['pid'].values()) for joint in joint_dic.keys()]
+
+            self.forward_publishers['pid_controller'].publish(
+                Float64MultiArray(
+                    data=list(np.array(pid_data).ravel())
                 )
             )
