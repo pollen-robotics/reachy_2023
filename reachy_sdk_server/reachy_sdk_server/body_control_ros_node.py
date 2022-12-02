@@ -21,6 +21,7 @@ from reachy_sdk_api.arm_kinematics_pb2 import ArmIKRequest, ArmSide
 from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand
 from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState, JointField, PIDValue, PIDGains
 from reachy_sdk_api.orbita_kinematics_pb2 import OrbitaIKRequest
+from reachy_sdk_api.sensor_pb2 import SensorId, SensorState, ForceSensorState
 
 
 class BodyControlNode(Node):
@@ -35,6 +36,9 @@ class BodyControlNode(Node):
 
         self.requested_torques = {}
         self.requested_pid = {}
+
+        self.sensors = {}
+        self.sensors_uids = {}
 
         # Subscribe to: 
         #  - /dynamic_joint_states (for present_position, torque and temperature)
@@ -59,6 +63,7 @@ class BodyControlNode(Node):
         }
 
         self.joint_state_pub_event = Event()
+        self.sensor_state_pub_event = Event()
 
         self.wait_for_setup()
 
@@ -129,6 +134,10 @@ class BodyControlNode(Node):
 
         return JointState(**kwargs)
 
+    def get_sensor_state(self, uid: SensorId) -> SensorState:
+        name = self._get_sensor_name(uid)
+        return SensorState(force_sensor_state=ForceSensorState(force=self.sensors[name]['force']))
+
     def _on_joint_state(self, state: DynamicJointState):
         """ Retreive the joint state from /dynamic_joint_states.
 
@@ -138,7 +147,6 @@ class BodyControlNode(Node):
         # There is some specific preparation we need to do
         #   - we create the dict entry
         #   - we set the target_position to the current_position
-
         if not self.joints:
             for uid, (name, kv) in enumerate(zip(state.joint_names, state.interface_values)):
                 if 'position' in kv.interface_names:
@@ -163,32 +171,50 @@ class BodyControlNode(Node):
                         elif k == 'torque':
                             self.joints[name]['compliant'] = (v == 0.0)
 
+                elif 'force' in kv.interface_names:
+                    self.sensors[name] = {}
+                    self.sensors[name]['name'] = name
+                    self.sensors[name]['uid'] = uid
+                    self.sensors[name]['force'] = kv.values[0]
+                    self.sensors_uids[uid] = name
+
             self.joint_state_ready.set()
 
         # Normal use case
         for name, kv in zip(state.joint_names, state.interface_values):
-            for k, v in zip(kv.interface_names, kv.values):
-                if k == 'position':
-                    self.joints[name]['present_position'] = v
-                elif k == 'temperature':
-                    self.joints[name]['present_temperature'] = v
-                elif k == 'torque':
-                    self.joints[name]['compliant'] = (v == 0.0)
-                elif k == 'p_gain':
-                    self.joints[name]['pid']['p'] = v
-                elif k == 'i_gain':
-                    self.joints[name]['pid']['i'] = v
-                elif k == 'd_gain':
-                    self.joints[name]['pid']['d'] = v
+            if 'position' in kv.interface_names:
+                for k, v in zip(kv.interface_names, kv.values):
+                    if k == 'position':
+                        self.joints[name]['present_position'] = v
+                    elif k == 'temperature':
+                        self.joints[name]['present_temperature'] = v
+                    elif k == 'torque':
+                        self.joints[name]['compliant'] = (v == 0.0)
+                    elif k == 'p_gain':
+                        self.joints[name]['pid']['p'] = v
+                    elif k == 'i_gain':
+                        self.joints[name]['pid']['i'] = v
+                    elif k == 'd_gain':
+                        self.joints[name]['pid']['d'] = v
+
+            elif 'force' in kv.interface_names:
+                self.sensors[name]['force'] = kv.values[0]
 
         self.joint_state_pub_event.set()
+        self.sensor_state_pub_event.set()
         
     def _get_joint_name(self, joint_id: JointId) -> str:
         if joint_id.HasField('uid'):
             return self.joint_uids[joint_id.uid]
         else:
             return joint_id.name
-    
+
+    def _get_sensor_name(self, sensor_id: SensorId) -> str:
+        if sensor_id.HasField('uid'):
+            return self.sensors_uids[sensor_id.uid]
+        else:
+            return sensor_id.name
+
     def _get_joint_uid(self, joint_id: JointId) -> int:
         if joint_id.HasField('uid'):
             return joint_id.uid

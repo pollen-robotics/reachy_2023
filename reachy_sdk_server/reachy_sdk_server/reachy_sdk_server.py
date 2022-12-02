@@ -47,6 +47,7 @@ from body_control_ros_node import BodyControlNode
 
 class ReachySDKServer(
                       joint_pb2_grpc.JointServiceServicer,
+                      sensor_pb2_grpc.SensorServiceServicer,
                       ):
     """Reachy SDK server node."""
 
@@ -113,6 +114,49 @@ class ReachySDKServer(
             self.body_control_node.handle_joint_msg(grpc_req=request)
         return joint_pb2.JointsCommandAck(success=True)
 
+    def GetAllJointsId(self, request: Empty, context) -> joint_pb2.JointsId:
+        names, uids = zip(*[
+            (joint['name'], joint['uid']) 
+            for joint in self.body_control_node.joints.values()
+        ])
+        return joint_pb2.JointsId(names=names, uids=uids)
+
+    def GetAllForceSensorsId(self, request: Empty, context) -> sensor_pb2.SensorsId:
+        names, uids = zip(*[
+            (sensor['name'], sensor['uid']) 
+            for sensor in self.body_control_node.sensors.values()
+        ])
+        return sensor_pb2.SensorsId(names=names, uids=uids)
+
+    def GetSensorsState(self, request: sensor_pb2.SensorsStateRequest, context) -> sensor_pb2.SensorsState:
+        params = {}
+
+        params['ids'] = request.ids
+        params['states'] = [
+            self.body_control_node.get_sensor_state(uid=id) for id in request.ids
+        ]
+        params['timestamp'] = Timestamp()
+        params['timestamp'].GetCurrentTime()
+        return sensor_pb2.SensorsState(**params)
+
+    def StreamSensorStates(self, request: Iterator[sensor_pb2.SensorsStateRequest], context) -> Iterator[sensor_pb2.SensorsState]:
+        dt = 1.0 / request.publish_frequency if request.publish_frequency > 0 else -1.0
+        last_pub = 0.0
+
+        while True:
+            elapsed_time = time.time() - last_pub
+            if elapsed_time < dt:
+                time.sleep(dt - elapsed_time)
+
+            self.body_control_node.sensor_state_pub_event.wait()
+            self.body_control_node.sensor_state_pub_event.clear()
+
+            sensors_state = self.GetSensorsState(request.request, context)
+            sensors_state.timestamp.GetCurrentTime()
+
+            yield sensors_state
+            last_pub = time.time()
+
 
 def main():
     """Run the Node and the gRPC server."""
@@ -120,6 +164,7 @@ def main():
 
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
     joint_pb2_grpc.add_JointServiceServicer_to_server(sdk_server, server)
+    sensor_pb2_grpc.add_SensorServiceServicer_to_server(sdk_server, server)
 
     server.add_insecure_port('[::]:50055')
     server.start()

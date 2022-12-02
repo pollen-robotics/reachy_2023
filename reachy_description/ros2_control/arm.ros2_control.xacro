@@ -28,6 +28,12 @@
       <xacro:position_joint_control name="${name}_wrist_roll"/>
       <xacro:position_joint_control name="${name}_gripper"/>
 
+      <sensor name="${name}_gripper_force_sensor">
+        <state_interface name="force">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+    </sensor>
+
     </ros2_control>
   </xacro:macro>
 </robot>
