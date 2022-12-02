@@ -28,11 +28,32 @@
       <xacro:position_joint_control name="${name}_wrist_roll"/>
       <xacro:position_joint_control name="${name}_gripper"/>
 
-      <sensor name="${name}_gripper_force_sensor">
+      <sensor name="${name}_force_gripper">
         <state_interface name="force">
           <param name="initial_value">0.0</param>
         </state_interface>
-    </sensor>
+      </sensor>
+
+      <joint name="${name}_shoulder_fan">
+        <state_interface name="state">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <command_interface name="state"/>
+      </joint>
+
+      <joint name="${name}_elbow_fan">
+        <state_interface name="state">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <command_interface name="state"/>
+      </joint>
+
+      <joint name="${name}_wrist_fan">
+        <state_interface name="state">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <command_interface name="state"/>
+      </joint>
 
     </ros2_control>
   </xacro:macro>

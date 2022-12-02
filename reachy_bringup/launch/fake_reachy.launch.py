@@ -122,6 +122,12 @@ def generate_launch_description():
         arguments=['pid_controller', '-c', '/controller_manager'],
     )
 
+    forward_fan_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['forward_fan_controller', '-c', '/controller_manager'],
+    )
+
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -139,6 +145,7 @@ def generate_launch_description():
                 antenna_forward_position_controller_spawner,
                 forward_torque_controller_spawner,
                 pid_controller_spawner,
+                forward_fan_controller_spawner,
             ],
         ),
     )

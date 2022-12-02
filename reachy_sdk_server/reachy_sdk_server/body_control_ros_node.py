@@ -18,6 +18,7 @@ from std_msgs.msg import Float64MultiArray
 from reachy_msgs.msg import Gripper
 
 from reachy_sdk_api.arm_kinematics_pb2 import ArmIKRequest, ArmSide
+from reachy_sdk_api.fan_pb2 import FanId, FanState, FansCommand
 from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand
 from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState, JointField, PIDValue, PIDGains
 from reachy_sdk_api.orbita_kinematics_pb2 import OrbitaIKRequest
@@ -36,9 +37,13 @@ class BodyControlNode(Node):
 
         self.requested_torques = {}
         self.requested_pid = {}
+        self.requested_fans = {}
 
         self.sensors = {}
         self.sensors_uids = {}
+
+        self.fans = {}
+        self.fans_uids = {}
 
         # Subscribe to: 
         #  - /dynamic_joint_states (for present_position, torque and temperature)
@@ -64,6 +69,7 @@ class BodyControlNode(Node):
 
         self.joint_state_pub_event = Event()
         self.sensor_state_pub_event = Event()
+        self.fan_state_pub_event = Event()
 
         self.wait_for_setup()
 
@@ -78,6 +84,10 @@ class BodyControlNode(Node):
         self.pid_need_update = Event()
         self._pid_pub_t = Thread(target=self._publish_pid_update)
         self._pid_pub_t.start()
+
+        self.fan_need_update = Event()
+        self._fan_pub_t = Thread(target=self._publish_fan_update)
+        self._fan_pub_t.start()
 
     def wait_for_setup(self):
         while not self.joint_state_ready.is_set():
@@ -138,6 +148,10 @@ class BodyControlNode(Node):
         name = self._get_sensor_name(uid)
         return SensorState(force_sensor_state=ForceSensorState(force=self.sensors[name]['force']))
 
+    def get_fan_state(self, uid: FanId) -> FanState:
+        name = self._get_fan_name(uid)
+        return FanState(on=bool(self.fans[name]['state']))
+
     def _on_joint_state(self, state: DynamicJointState):
         """ Retreive the joint state from /dynamic_joint_states.
 
@@ -178,6 +192,13 @@ class BodyControlNode(Node):
                     self.sensors[name]['force'] = kv.values[0]
                     self.sensors_uids[uid] = name
 
+                elif 'state' in kv.interface_names:
+                    self.fans[name] = {}
+                    self.fans[name]['name'] = name
+                    self.fans[name]['uid'] = uid
+                    self.fans[name]['state'] = kv.values[0]
+                    self.fans_uids[uid] = name
+
             self.joint_state_ready.set()
 
         # Normal use case
@@ -200,8 +221,12 @@ class BodyControlNode(Node):
             elif 'force' in kv.interface_names:
                 self.sensors[name]['force'] = kv.values[0]
 
+            elif 'state' in kv.interface_names:
+                self.fans[name]['state'] = kv.values[0]
+
         self.joint_state_pub_event.set()
         self.sensor_state_pub_event.set()
+        self.fan_state_pub_event.set()
         
     def _get_joint_name(self, joint_id: JointId) -> str:
         if joint_id.HasField('uid'):
@@ -214,6 +239,12 @@ class BodyControlNode(Node):
             return self.sensors_uids[sensor_id.uid]
         else:
             return sensor_id.name
+
+    def _get_fan_name(self, fan_id: FanId) -> str:
+        if fan_id.HasField('uid'):
+            return self.fans_uids[fan_id.uid]
+        else:
+            return fan_id.name
 
     def _get_joint_uid(self, joint_id: JointId) -> int:
         if joint_id.HasField('uid'):
@@ -280,6 +311,17 @@ class BodyControlNode(Node):
         if need_update:
             self.pid_need_update.set()
 
+    def handle_fan_msg(self, grpc_req: FansCommand):
+        need_update = False
+
+        for cmd in grpc_req.commands:
+            need_update = True
+            name = self._get_fan_name(cmd.id)
+            self.requested_fans[name] = float(cmd.on)
+
+        if need_update:
+            self.fan_need_update.set()
+
     def handle_joint_msg(self, grpc_req: JointsCommand):
         self._update_joint_target_pos(grpc_req)
         self._update_torque(grpc_req)
@@ -288,7 +330,7 @@ class BodyControlNode(Node):
     def _publish_joint_command(self):
         while rclpy.ok():
             for controller, joint_dic in self.forward_controllers.items():
-                if controller == 'forward_torque_controller' or controller == 'pid_controller':
+                if controller in ('forward_torque_controller', 'pid_controller', 'forward_fan_controller'):
                     continue
                 pos = [self.joints[joint]['target_position'] for joint in joint_dic.keys()]
                 self.forward_publishers[controller].publish(Float64MultiArray(data=pos))
@@ -322,8 +364,6 @@ class BodyControlNode(Node):
             for joint, pid in self.requested_pid.items():
                 self.joints[joint]['pid'] = pid
 
-            print(self.requested_pid)
-
             self.requested_pid.clear()
 
             joint_dic = self.forward_controllers['pid_controller']
@@ -332,5 +372,24 @@ class BodyControlNode(Node):
             self.forward_publishers['pid_controller'].publish(
                 Float64MultiArray(
                     data=list(np.array(pid_data).ravel())
+                )
+            )
+
+    def _publish_fan_update(self):
+        while rclpy.ok():
+            self.fan_need_update.wait()
+            self.fan_need_update.clear()
+
+            for fan, state in self.requested_fans.items():
+                self.fans[fan]['state'] = state
+
+            self.requested_fans.clear()
+
+            fan_dic = self.forward_controllers['forward_fan_controller']
+            fan_data = [self.fans[fan]['state'] for fan in fan_dic.keys()]
+
+            self.forward_publishers['forward_fan_controller'].publish(
+                Float64MultiArray(
+                    data=fan_data
                 )
             )

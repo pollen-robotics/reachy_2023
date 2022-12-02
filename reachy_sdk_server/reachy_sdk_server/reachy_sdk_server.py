@@ -48,6 +48,7 @@ from body_control_ros_node import BodyControlNode
 class ReachySDKServer(
                       joint_pb2_grpc.JointServiceServicer,
                       sensor_pb2_grpc.SensorServiceServicer,
+                      fan_pb2_grpc.FanControllerServiceServicer,
                       ):
     """Reachy SDK server node."""
 
@@ -109,6 +110,10 @@ class ReachySDKServer(
         self.body_control_node.handle_joint_msg(grpc_req=request)
         return joint_pb2.JointsCommandAck(success=True)
 
+    def SendFansCommands(self, request: fan_pb2.FansCommand, context) -> fan_pb2.FansCommandAck:
+        self.body_control_node.handle_fan_msg(grpc_req=request)
+        return fan_pb2.FansCommandAck(success=True)
+
     def StreamJointsCommands(self, request_iterator: Iterator[joint_pb2.JointsCommand], context) -> joint_pb2.JointsCommandAck:
         for request in request_iterator:
             self.body_control_node.handle_joint_msg(grpc_req=request)
@@ -128,6 +133,13 @@ class ReachySDKServer(
         ])
         return sensor_pb2.SensorsId(names=names, uids=uids)
 
+    def GetAllFansId(self, request: Empty, context) -> fan_pb2.FansId:
+        names, uids = zip(*[
+            (fan['name'], fan['uid']) 
+            for fan in self.body_control_node.fans.values()
+        ])
+        return fan_pb2.FansId(names=names, uids=uids)
+
     def GetSensorsState(self, request: sensor_pb2.SensorsStateRequest, context) -> sensor_pb2.SensorsState:
         params = {}
 
@@ -138,6 +150,17 @@ class ReachySDKServer(
         params['timestamp'] = Timestamp()
         params['timestamp'].GetCurrentTime()
         return sensor_pb2.SensorsState(**params)
+
+    def GetFansState(self, request: fan_pb2.FansStateRequest, context) -> fan_pb2.FansState:
+        params = {}
+
+        params['ids'] = request.ids
+        params['states'] = [
+            self.body_control_node.get_fan_state(uid=id) for id in request.ids
+        ]
+        params['timestamp'] = Timestamp()
+        params['timestamp'].GetCurrentTime()
+        return fan_pb2.FansState(**params)
 
     def StreamSensorStates(self, request: Iterator[sensor_pb2.SensorsStateRequest], context) -> Iterator[sensor_pb2.SensorsState]:
         dt = 1.0 / request.publish_frequency if request.publish_frequency > 0 else -1.0
@@ -165,6 +188,7 @@ def main():
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
     joint_pb2_grpc.add_JointServiceServicer_to_server(sdk_server, server)
     sensor_pb2_grpc.add_SensorServiceServicer_to_server(sdk_server, server)
+    fan_pb2_grpc.add_FanControllerServiceServicer_to_server(sdk_server, server)
 
     server.add_insecure_port('[::]:50055')
     server.start()

@@ -20,6 +20,9 @@ controller_manager:
     forward_torque_controller:
       type: forward_command_controller/ForwardCommandController
 
+    forward_fan_controller:
+      type: forward_command_controller/ForwardCommandController
+
     pid_controller:
       type: pid_command_controller/PIDCommandController
 
@@ -124,4 +127,20 @@ pid_controller:
       - l_gripper
       - l_antenna
       - r_antenna
+    use_sim_time: false
+
+
+forward_fan_controller:
+  ros__parameters:
+    joints:
+      - l_antenna_fan
+      - r_antenna_fan
+      - r_shoulder_fan
+      - l_elbow_fan
+      - r_wrist_fan
+      - r_elbow_fan
+      - neck_fan
+      - l_wrist_fan
+      - l_shoulder_fan
+    interface_name: state
     use_sim_time: false
