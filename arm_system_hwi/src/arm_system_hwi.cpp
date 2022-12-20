@@ -290,6 +290,20 @@ ArmSystem::read()
       );
     }
 
+    if (arm_hwi_read_force_sensor(this->uid, &hw_force_sensor_) != 0) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("ArmSystem"),
+        "(%s) READ FORCE SENSOR ERROR!", info_.name.c_str()
+      );
+    }
+
+    if (arm_hwi_get_fan_state(this->uid, hw_fans_states_) != 0) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("ArmSystem"),
+        "(%s) READ FAN ERROR!", info_.name.c_str()
+      );
+    }
+
   return hardware_interface::return_type::OK;
 }
 
@@ -323,6 +337,16 @@ ArmSystem::write()
         RCLCPP_INFO(
         rclcpp::get_logger("ArmSystem"),
         "(%s) WRITE PID ERROR!", info_.name.c_str()
+      );
+  }
+
+  if (arm_hwi_set_fan_state(
+    this->uid,
+    hw_fans_commands_
+  ) != 0) {
+    RCLCPP_INFO(
+        rclcpp::get_logger("ArmSystem"),
+        "(%s) WRITE FAN ERROR!", info_.name.c_str()
       );
   }
 

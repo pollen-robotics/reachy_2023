@@ -69,7 +69,7 @@ forward_fan_controller:
   ros__parameters:
     joints:
       - r_shoulder_fan
-      - r_wrist_fan
       - r_elbow_fan
+      - r_wrist_fan
     interface_name: state
     use_sim_time: false
