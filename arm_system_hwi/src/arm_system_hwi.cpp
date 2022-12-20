@@ -9,6 +9,23 @@
 #include "rclcpp/rclcpp.hpp"
 
 
+std::vector<float> parse_string_as_vec(std::string s) {
+  std::string delimiter = ",";
+
+  std::vector<float> v;
+
+  size_t pos = 0;
+  std::string token;
+  while ((pos = s.find(delimiter)) != std::string::npos) {
+    token = s.substr(0, pos);
+    v.push_back(std::stof(token));
+    s.erase(0, pos + delimiter.length());
+  }
+  v.push_back(std::stof(s));
+
+  return v;
+}
+
 
 namespace arm_system_hwi
 {
@@ -39,10 +56,10 @@ ArmSystem::on_init(const hardware_interface::HardwareInfo & info)
   }
 
   const char *serial_port;
-  uint8_t mx_ids[8] = {10, 11, 12, 13, 14, 15, 16, 17};
-  double offsets[8] = {1.57, 1.57, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  bool is_direct[8] = {false, false, false, false, false, false, false, true};
-  double reductions[8] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -2.0};
+  uint8_t mx_ids[8];
+  double offsets[8];
+  bool is_direct[8];
+  double reductions[8];
   uint8_t fan_id;
   uint8_t force_sensor_id;
 
@@ -52,16 +69,28 @@ ArmSystem::on_init(const hardware_interface::HardwareInfo & info)
       serial_port = params.second.c_str();
     }
     else if (params.first == "mx_ids") {
-
+      std::vector<float> v = parse_string_as_vec(params.second.c_str());
+      for (uint i=0; i < v.size(); i++) {
+        mx_ids[i] = (int)v[i];
+      }
     }
     else if (params.first == "offsets") {
-
+      std::vector<float> v = parse_string_as_vec(params.second.c_str());
+      for (uint i=0; i < v.size(); i++) {
+        offsets[i] = v[i];
+      }
     }
     else if (params.first == "is_direct") {
-
+      std::vector<float> v = parse_string_as_vec(params.second.c_str());
+      for (uint i=0; i < v.size(); i++) {
+        is_direct[i] = v[i] != 0.0;
+      }
     }
     else if (params.first == "reductions") {
-
+      std::vector<float> v = parse_string_as_vec(params.second.c_str());
+      for (uint i=0; i < v.size(); i++) {
+        reductions[i] = v[i];
+      }
     }
     else if (params.first == "fan_id") {
       fan_id = std::stoi(params.second.c_str());
