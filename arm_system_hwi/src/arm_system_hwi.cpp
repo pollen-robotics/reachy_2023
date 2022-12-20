@@ -296,6 +296,13 @@ ArmSystem::read()
 hardware_interface::return_type
 ArmSystem::write()
 {
+  if (arm_hwi_set_mx_torque(this->uid, hw_mx_commands_torque_) != 0) {
+        RCLCPP_INFO(
+        rclcpp::get_logger("ArmSystem"),
+        "(%s) WRITE TORQUE ERROR!", info_.name.c_str()
+      );
+  }
+
   if (arm_hwi_set_mx_target_position_speed_load(
     this->uid,
     hw_mx_commands_position_,
@@ -307,38 +314,17 @@ ArmSystem::write()
       );
   }
 
-  // double hw_mx_commands_position_[8];
-  // double hw_mx_commands_torque_[8];
-  // double hw_mx_commands_p_gain_[8];
-  // double hw_mx_commands_i_gain_[8];
-  // double hw_mx_commands_d_gain_[8];
-
-
-//   if (!std::isnan(hw_commands_position_grasp_)) {
-//     if (gripper_write_grasping_finger_position(this->id, hw_commands_position_grasp_) != 0) {
-//       RCLCPP_INFO(
-//         rclcpp::get_logger("ArmSystem"),
-//         "(%s) WRITE GRASP POS ERROR!", info_.name.c_str()
-//       );
-//     }
-//   }
-//   if (!std::isnan(hw_commands_position_action_)) {
-//     if (gripper_write_action_finger_position(this->id, hw_commands_position_action_) != 0) {
-//       RCLCPP_INFO(
-//         rclcpp::get_logger("ArmSystem"),
-//         "(%s) WRITE ACTION POS ERROR!", info_.name.c_str()
-//       );
-//     }
-//   }
-
-//   bool torque = true ? hw_commands_torque_ == 1.0 : false;
-
-//   if (gripper_set_torque(this->id, torque) != 0) {
-//     RCLCPP_INFO(
-//       rclcpp::get_logger("ArmSystem"),
-//       "(%s) SET TORQUE ERROR!", info_.name.c_str()
-//     );
-//   }
+  if (arm_hwi_set_mx_pid(
+    this->uid,
+    hw_mx_commands_p_gain_,
+    hw_mx_commands_i_gain_,
+    hw_mx_commands_d_gain_
+  ) != 0) {
+        RCLCPP_INFO(
+        rclcpp::get_logger("ArmSystem"),
+        "(%s) WRITE PID ERROR!", info_.name.c_str()
+      );
+  }
 
   return hardware_interface::return_type::OK;
 }
