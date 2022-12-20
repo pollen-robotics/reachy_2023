@@ -5,8 +5,15 @@
 
     <xacro:include filename="$(find reachy_description)/ros2_control/joint.ros2_control.xacro"/>
 
-    <ros2_control name="${name}" type="system">
+    <ros2_control name="${name}_arm" type="system">
       <hardware>
+        <xacro:unless value="$(arg use_fake_hardware)">
+          <plugin>arm_system_hwi/ArmSystem</plugin>
+          <param name="serial_port">/dev/ttyACM0</param>
+          <param name="offsets">{"1.2","3.4","0.5","200.7"}</param>
+
+        </xacro:unless>
+
         <xacro:if value="$(arg use_fake_hardware)">
           <!-- Use gazebo as hardware simulation. -->
           <xacro:if value="$(arg use_gazebo)">

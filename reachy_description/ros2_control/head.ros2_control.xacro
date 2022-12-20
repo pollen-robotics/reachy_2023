@@ -7,6 +7,12 @@
 
     <ros2_control name="head" type="system">
       <hardware>
+        <xacro:unless value="$(arg use_fake_hardware)">
+          <!-- <plugin>arm_system_hwi/ArmSystem</plugin> -->
+          <plugin>fake_components/GenericSystem</plugin>
+        </xacro:unless>
+
+
         <xacro:if value="$(arg use_fake_hardware)">
           <!-- Use gazebo as hardware simulation. -->
           <xacro:if value="$(arg use_gazebo)">
@@ -32,6 +38,11 @@
 
     <ros2_control name="antennas" type="system">
       <hardware>
+        <xacro:unless value="$(arg use_fake_hardware)">
+          <!-- <plugin>arm_system_hwi/ArmSystem</plugin> -->
+          <plugin>fake_components/GenericSystem</plugin>
+        </xacro:unless>
+
         <xacro:if value="$(arg use_fake_hardware)">
           <!-- Use gazebo as hardware simulation. -->
           <xacro:if value="$(arg use_gazebo)">
