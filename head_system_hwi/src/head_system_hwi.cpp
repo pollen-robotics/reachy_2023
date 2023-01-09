@@ -37,11 +37,11 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
     return CallbackReturn::ERROR;
   }
 
-  if (info.joints.size() != 2 + 3)
+  if (info.joints.size() != 2 + 2)
   {
     RCLCPP_ERROR(
       rclcpp::get_logger("HeadSystem"),
-      "Exactly 11 joints should be provided (2 motors and 3 fans)!"
+      "Exactly 4 joints should be provided (2 motors and 2 fans)!"
     );
     return CallbackReturn::ERROR;
   }
@@ -51,7 +51,6 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
   uint8_t mx_ids[2];
   double offsets[2];
   bool is_direct[2];
-  double reductions[2];
   uint8_t fan_id;
 
   for (auto const& params : info.hardware_parameters)
@@ -75,12 +74,6 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
       std::vector<float> v = parse_string_as_vec(params.second.c_str());
       for (uint i=0; i < v.size(); i++) {
         is_direct[i] = v[i] != 0.0;
-      }
-    }
-    else if (params.first == "reductions") {
-      std::vector<float> v = parse_string_as_vec(params.second.c_str());
-      for (uint i=0; i < v.size(); i++) {
-        reductions[i] = v[i];
       }
     }
     else if (params.first == "fan_id") {
@@ -129,7 +122,7 @@ HeadSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
   head_hwi_is_mx_torque_on(this->uid, hw_mx_commands_torque_);
   head_hwi_get_mx_pid(this->uid, hw_mx_commands_p_gain_, hw_mx_commands_i_gain_, hw_mx_commands_d_gain_);
 
-  for (int i=0; i < 3; i++) {
+  for (int i=0; i < 2; i++) {
     hw_fans_states_[i] = std::numeric_limits<double>::quiet_NaN();
   }
   head_hwi_get_fan_state(this->uid, hw_fans_commands_);
@@ -187,7 +180,7 @@ HeadSystem::export_state_interfaces()
   }
 
   // FANS 
-  for (std::size_t i = 0; i < 3; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     auto joint = info_.joints[2 + i];
 
@@ -235,7 +228,7 @@ HeadSystem::export_command_interfaces()
   }
 
   // FANS 
-  for (std::size_t i = 0; i < 3; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     auto joint = info_.joints[2 + i];
 
