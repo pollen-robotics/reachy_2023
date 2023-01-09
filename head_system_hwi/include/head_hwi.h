@@ -7,16 +7,16 @@
 extern "C" {
 
 uint32_t head_hwi_init(const char *serial_port,
-                      uint8_t *mx_ids,
-                      double *offsets,
-                      bool *is_direct,
-                      double *reductions,
-                      uint8_t fan_id);
+                       uint8_t *mx_ids,
+                       double *offsets,
+                       bool *is_direct,
+                       double *reductions,
+                       uint8_t fan_id);
 
 int32_t head_hwi_get_mx_present_position_speed_load(uint32_t uid,
-                                                   double *position,
-                                                   double *speed,
-                                                   double *load);
+                                                    double *position,
+                                                    double *speed,
+                                                    double *load);
 
 int32_t head_hwi_get_goal_position(uint32_t uid, double *goal_position);
 
@@ -25,9 +25,9 @@ int32_t head_hwi_get_moving_speed(uint32_t uid, double *moving_speed);
 int32_t head_hwi_get_torque_limit(uint32_t uid, double *torque_limit);
 
 int32_t head_hwi_set_mx_target_position_speed_load(uint32_t uid,
-                                                  double *target_position,
-                                                  double *moving_speed,
-                                                  double *torque_limit);
+                                                   double *target_position,
+                                                   double *moving_speed,
+                                                   double *torque_limit);
 
 int32_t head_hwi_get_mx_temperature(uint32_t uid, double *temperature);
 
