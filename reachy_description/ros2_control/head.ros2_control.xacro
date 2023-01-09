@@ -8,7 +8,7 @@
     <ros2_control name="head" type="system">
       <hardware>
         <xacro:unless value="$(arg use_fake_hardware)">
-          <!-- <plugin>arm_system_hwi/ArmSystem</plugin> -->
+          <!-- <plugin>head_system_hwi/HeadSystem</plugin> -->
           <plugin>fake_components/GenericSystem</plugin>
         </xacro:unless>
 
@@ -39,7 +39,7 @@
     <ros2_control name="antennas" type="system">
       <hardware>
         <xacro:unless value="$(arg use_fake_hardware)">
-          <!-- <plugin>arm_system_hwi/ArmSystem</plugin> -->
+          <!-- <plugin>head_system_hwi/HeadSystem</plugin> -->
           <plugin>fake_components/GenericSystem</plugin>
         </xacro:unless>
 
