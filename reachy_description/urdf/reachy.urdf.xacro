@@ -44,17 +44,17 @@
   <xacro:property name="damping" value="0.1"/>
   <xacro:property name="friction" value="0.1"/>
 
-  <!-- RIGHT ARM-->
-  <xacro:arm
-    prefix="r" parent="torso" side="right"
-    damping="${damping}" friction="${friction}"
-  />
+<!--  &lt;!&ndash; RIGHT ARM&ndash;&gt;-->
+<!--  <xacro:arm-->
+<!--    prefix="r" parent="torso" side="right"-->
+<!--    damping="${damping}" friction="${friction}"-->
+<!--  />-->
 
-  <!-- LEFT ARM-->
-  <xacro:arm
-    prefix="l" parent="torso" side="left"
-    damping="${damping}" friction="${friction}"
-  />
+<!--  &lt;!&ndash; LEFT ARM&ndash;&gt;-->
+<!--  <xacro:arm-->
+<!--    prefix="l" parent="torso" side="left"-->
+<!--    damping="${damping}" friction="${friction}"-->
+<!--  />-->
 
   <!-- HEAD-->
   <xacro:head

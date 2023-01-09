@@ -51,6 +51,8 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
   uint8_t mx_ids[2];
   double offsets[2];
   bool is_direct[2];
+    double reductions[2];
+
   uint8_t fan_id;
 
   for (auto const& params : info.hardware_parameters)
@@ -89,7 +91,7 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
 
   this->uid = head_hwi_init(
     serial_port,
-    mx_ids, offsets, is_direct, reductions, 
+    mx_ids, offsets, is_direct, reductions,
     fan_id
   );
 

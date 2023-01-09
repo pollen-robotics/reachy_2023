@@ -137,12 +137,12 @@ def generate_launch_description():
             target_action=joint_state_broadcaster_spawner,
             on_exit=[
                 # neck_forward_position_controller_spawner,
-                r_arm_forward_position_controller_spawner,
+                #r_arm_forward_position_controller_spawner,
                 # l_arm_forward_position_controller_spawner,
-                # antenna_forward_position_controller_spawner,
-                forward_torque_controller_spawner,
-                pid_controller_spawner,
-                forward_fan_controller_spawner,
+                antenna_forward_position_controller_spawner,
+                #forward_torque_controller_spawner,
+                #pid_controller_spawner,
+                #forward_fan_controller_spawner,
             ],
         ),
     )
