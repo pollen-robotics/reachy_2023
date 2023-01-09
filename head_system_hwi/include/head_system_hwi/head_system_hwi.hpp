@@ -29,22 +29,22 @@ public:
 
 private:
 // MX
-  double hw_mx_states_position_[8];
-  double hw_mx_states_velocity_[8];
-  double hw_mx_states_effort_[8];
-  double hw_mx_states_temperature_[8];
-  double hw_mx_states_torque_[8];
-  double hw_mx_states_p_gain_[8];
-  double hw_mx_states_i_gain_[8];
-  double hw_mx_states_d_gain_[8];
+  double hw_mx_states_position_[2];
+  double hw_mx_states_velocity_[2];
+  double hw_mx_states_effort_[2];
+  double hw_mx_states_temperature_[2];
+  double hw_mx_states_torque_[2];
+  double hw_mx_states_p_gain_[2];
+  double hw_mx_states_i_gain_[2];
+  double hw_mx_states_d_gain_[2];
 
-  double hw_mx_commands_position_[8];
-  double hw_mx_commands_max_speed_[8];
-  double hw_mx_commands_torque_limit_[8];
-  double hw_mx_commands_torque_[8];
-  double hw_mx_commands_p_gain_[8];
-  double hw_mx_commands_i_gain_[8];
-  double hw_mx_commands_d_gain_[8];
+  double hw_mx_commands_position_[2];
+  double hw_mx_commands_max_speed_[2];
+  double hw_mx_commands_torque_limit_[2];
+  double hw_mx_commands_torque_[2];
+  double hw_mx_commands_p_gain_[2];
+  double hw_mx_commands_i_gain_[2];
+  double hw_mx_commands_d_gain_[2];
 
 // Fans
   double hw_fans_states_[3];

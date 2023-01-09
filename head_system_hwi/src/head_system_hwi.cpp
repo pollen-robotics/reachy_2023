@@ -37,29 +37,21 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
     return CallbackReturn::ERROR;
   }
 
-  if (info.joints.size() != 8 + 3)
+  if (info.joints.size() != 2 + 3)
   {
     RCLCPP_ERROR(
       rclcpp::get_logger("HeadSystem"),
-      "Exactly 11 joints should be provided (8 motors and 3 fans)!"
+      "Exactly 11 joints should be provided (2 motors and 3 fans)!"
     );
     return CallbackReturn::ERROR;
   }
 
-  if (info.sensors.size() != 1)
-  {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("HeadSystem"),
-      "Exactly 1 sensor should be provided (force_sensor)!"
-    );
-    return CallbackReturn::ERROR;
-  }
 
   const char *serial_port;
-  uint8_t mx_ids[8];
-  double offsets[8];
-  bool is_direct[8];
-  double reductions[8];
+  uint8_t mx_ids[2];
+  double offsets[2];
+  bool is_direct[2];
+  double reductions[2];
   uint8_t fan_id;
 
   for (auto const& params : info.hardware_parameters)
@@ -121,7 +113,7 @@ CallbackReturn
 HeadSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // Set some default values
-  for (int i=0; i < 8; i++) {
+  for (int i=0; i < 2; i++) {
     hw_mx_states_position_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_mx_states_velocity_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_mx_states_effort_[i] = std::numeric_limits<double>::quiet_NaN();
@@ -167,7 +159,7 @@ HeadSystem::export_state_interfaces()
   std::vector<hardware_interface::StateInterface> state_interfaces;
 
 // MX
-  for (std::size_t i = 0; i < 8; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     auto joint = info_.joints[i];
 
@@ -197,7 +189,7 @@ HeadSystem::export_state_interfaces()
   // FANS 
   for (std::size_t i = 0; i < 3; i++)
   {
-    auto joint = info_.joints[8 + i];
+    auto joint = info_.joints[2 + i];
 
     state_interfaces.emplace_back(hardware_interface::StateInterface(
         joint.name, "state", &hw_fans_states_[i]));
@@ -217,7 +209,7 @@ HeadSystem::export_command_interfaces()
   std::vector<hardware_interface::CommandInterface> command_interfaces;
 
 // MX
-  for (std::size_t i = 0; i < 8; i++)
+  for (std::size_t i = 0; i < 2; i++)
   {
     auto joint = info_.joints[i];
 
@@ -245,7 +237,7 @@ HeadSystem::export_command_interfaces()
   // FANS 
   for (std::size_t i = 0; i < 3; i++)
   {
-    auto joint = info_.joints[8 + i];
+    auto joint = info_.joints[2 + i];
 
     command_interfaces.emplace_back(hardware_interface::CommandInterface(
         joint.name, "state", &hw_fans_commands_[i]));
