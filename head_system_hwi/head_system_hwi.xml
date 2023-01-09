@@ -1,0 +1,12 @@
+<library path="head_system_hwi">
+
+  <class
+    name="head_system_hwi/HeadSystem"
+    type="head_system_hwi::HeadSystem"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Head hardware interface plugin.
+    </description>
+  </class>
+
+</library>
