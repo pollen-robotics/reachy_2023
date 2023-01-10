@@ -11,7 +11,7 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     controllers_file_arg = DeclareLaunchArgument(
         'controllers_file',
-        default_value=['reachy_right_arm_controllers.yaml'],
+        default_value=['reachy_antenna_controllers.yaml'],
         description='YAML file with the controllers configuration.',
     )
     controllers_file = LaunchConfiguration('controllers_file')
@@ -140,7 +140,7 @@ def generate_launch_description():
                 #r_arm_forward_position_controller_spawner,
                 # l_arm_forward_position_controller_spawner,
                 antenna_forward_position_controller_spawner,
-                #forward_torque_controller_spawner,
+                forward_torque_controller_spawner,
                 #pid_controller_spawner,
                 #forward_fan_controller_spawner,
             ],
@@ -151,6 +151,6 @@ def generate_launch_description():
         control_node,
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
-        delay_rviz_after_joint_state_broadcaster_spawner,
+        # delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
     ])
