@@ -78,10 +78,18 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
         is_direct[i] = v[i] != 0.0;
       }
     }
+
+     else if (params.first == "reductions") {
+      std::vector<float> v = parse_string_as_vec(params.second.c_str());
+      for (uint i=0; i < v.size(); i++) {
+        reductions[i] = v[i];
+      }
+    }
     else if (params.first == "fan_id") {
       fan_id = std::stoi(params.second.c_str());
     }
   }
+
 
   RCLCPP_INFO(
     rclcpp::get_logger("HeadSystem"),
@@ -263,43 +271,32 @@ HeadSystem::read()
         "(%s) READ POS/VEL/EFF ERROR!", info_.name.c_str()
       );
   }
-  RCLCPP_INFO(
-        rclcpp::get_logger("HeadSystem"),
-        "(%f,%f) READ POS", hw_mx_states_position_[0], hw_mx_states_position_[1]
-      );
-        RCLCPP_INFO(
-        rclcpp::get_logger("HeadSystem"),
-        "(%f,%f) READ VEL", hw_mx_states_velocity_[0], hw_mx_states_velocity_[1]
-      );
-              RCLCPP_INFO(
-        rclcpp::get_logger("HeadSystem"),
-        "(%f,%f) READ EFF", hw_mx_states_effort_[0], hw_mx_states_effort_[1]
-      );
 
-//  if (head_hwi_get_mx_temperature(this->uid, hw_mx_states_temperature_)) {
-//      RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
-//      );
-//  }
 
-//  if (head_hwi_get_mx_pid(
-//    this->uid,
-//    hw_mx_states_p_gain_,
-//    hw_mx_states_i_gain_,
-//    hw_mx_states_d_gain_)) {
-//      RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%s) READ PID ERROR!", info_.name.c_str()
-//      );
-//    }
+  if (head_hwi_get_mx_temperature(this->uid, hw_mx_states_temperature_)) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
+      );
+  }
 
-//    if (head_hwi_is_mx_torque_on(this->uid, hw_mx_states_torque_)) {
-//      RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%s) READ TORQUE ERROR!", info_.name.c_str()
-//      );
-//    }
+  if (head_hwi_get_mx_pid(
+    this->uid,
+    hw_mx_states_p_gain_,
+    hw_mx_states_i_gain_,
+    hw_mx_states_d_gain_)) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) READ PID ERROR!", info_.name.c_str()
+      );
+    }
+
+    if (head_hwi_is_mx_torque_on(this->uid, hw_mx_states_torque_)) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) READ TORQUE ERROR!", info_.name.c_str()
+      );
+    }
 
 
   return hardware_interface::return_type::OK;
@@ -308,37 +305,37 @@ HeadSystem::read()
 hardware_interface::return_type
 HeadSystem::write()
 {
-//  if (head_hwi_set_mx_torque(this->uid, hw_mx_commands_torque_) != 0) {
-//        RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%s) WRITE TORQUE ERROR!", info_.name.c_str()
-//      );
-//  }
-//
-//  if (head_hwi_set_mx_target_position_speed_load(
-//    this->uid,
-//    hw_mx_commands_position_,
-//    hw_mx_commands_max_speed_,
-//    hw_mx_commands_torque_limit_) != 0) {
-//    RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%s) WRITE POS/SPEED/TORQUE ERROR!", info_.name.c_str()
-//      );
-//  }
-//
-//  if (head_hwi_set_mx_pid(
-//    this->uid,
-//    hw_mx_commands_p_gain_,
-//    hw_mx_commands_i_gain_,
-//    hw_mx_commands_d_gain_
-//  ) != 0) {
-//        RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%s) WRITE PID ERROR!", info_.name.c_str()
-//      );
-//  }
-//
-//
+  if (head_hwi_set_mx_torque(this->uid, hw_mx_commands_torque_) != 0) {
+        RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) WRITE TORQUE ERROR!", info_.name.c_str()
+      );
+  }
+
+  if (head_hwi_set_mx_target_position_speed_load(
+    this->uid,
+    hw_mx_commands_position_,
+    hw_mx_commands_max_speed_,
+    hw_mx_commands_torque_limit_) != 0) {
+    RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) WRITE POS/SPEED/TORQUE ERROR!", info_.name.c_str()
+      );
+  }
+
+  if (head_hwi_set_mx_pid(
+    this->uid,
+    hw_mx_commands_p_gain_,
+    hw_mx_commands_i_gain_,
+    hw_mx_commands_d_gain_
+  ) != 0) {
+        RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) WRITE PID ERROR!", info_.name.c_str()
+      );
+  }
+
+
 
   return hardware_interface::return_type::OK;
 }

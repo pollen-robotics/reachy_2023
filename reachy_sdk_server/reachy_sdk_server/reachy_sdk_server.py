@@ -64,7 +64,7 @@ class ReachySDKServer(
 
         rclpy.init()
         self.body_control_node = BodyControlNode(
-            controllers_file='/home/cdussieux/ros_ws/src/reachy_2023/reachy_bringup/config/reachy_controllers.yaml'
+            controllers_file='/home/cdussieux/ros_ws/src/reachy_2023/reachy_bringup/config/reachy_antenna_controllers.yaml'
             )
         threading.Thread(target=lambda: rclpy.spin(self.body_control_node)).start()
 

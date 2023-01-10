@@ -14,9 +14,6 @@ controller_manager:
       type: forward_command_controller/ForwardCommandController
 
 
-    pid_controller:
-      type: pid_command_controller/PIDCommandController
-
 joint_state_broadcaster:
   ros__parameters:
     use_sim_time: false
