@@ -367,7 +367,14 @@ class BodyControlNode(Node):
             self.requested_pid.clear()
 
             joint_dic = self.forward_controllers['pid_controller']
-            pid_data = [list(self.joints[joint]['pid'].values()) for joint in joint_dic.keys()]
+            pid_data = [
+                [
+                    self.joints[joint]['pid']['p'], 
+                    self.joints[joint]['pid']['i'], 
+                    self.joints[joint]['pid']['d'], 
+                ]
+                for joint in joint_dic.keys()
+            ]
 
             self.forward_publishers['pid_controller'].publish(
                 Float64MultiArray(
