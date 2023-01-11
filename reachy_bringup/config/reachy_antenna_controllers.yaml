@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-    update_rate: 100  # Hz
+    update_rate: 1  # Hz
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -12,6 +12,10 @@ controller_manager:
 
     forward_torque_controller:
       type: forward_command_controller/ForwardCommandController
+
+    pid_controller:
+      type: pid_command_controller/PIDCommandController
+
 
 
 joint_state_broadcaster:
