@@ -8,7 +8,6 @@
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-
 std::vector<float> parse_string_as_vec(std::string s) {
   std::string delimiter = ",";
 
@@ -36,11 +35,12 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
   {
     return CallbackReturn::ERROR;
   }
-
-  if (info.joints.size() != 2 )
+  int nb_joints_expected = 2 + 2;
+  if (info.joints.size() != nb_joints_expected)
   {
     RCLCPP_ERROR(
       rclcpp::get_logger("HeadSystem"),
+      "Incorrect number of joints, expected %d, got \"%s\"",nb_joints_expected,
        std::to_string(info.joints.size()).c_str()
     );
     return CallbackReturn::ERROR;
@@ -191,18 +191,18 @@ HeadSystem::export_state_interfaces()
   }
 
 //  // FANS
-//  for (std::size_t i = 0; i < 2; i++)
-//  {
-//    auto joint = info_.joints[2 + i];
-//
-//    state_interfaces.emplace_back(hardware_interface::StateInterface(
-//        joint.name, "state", &hw_fans_states_[i]));
-//
-//    RCLCPP_INFO(
-//      rclcpp::get_logger("HeadSystem"),
-//      "export state interface (%s) \"%s\"!", info_.name.c_str(), joint.name.c_str()
-//      );
-//  }
+  for (std::size_t i = 0; i < 2; i++)
+  {
+    auto joint = info_.joints[2 + i];
+
+    state_interfaces.emplace_back(hardware_interface::StateInterface(
+        joint.name, "state", &hw_fans_states_[i]));
+
+    RCLCPP_INFO(
+      rclcpp::get_logger("HeadSystem"),
+      "export state interface (%s) \"%s\"!", info_.name.c_str(), joint.name.c_str()
+      );
+  }
 
   return state_interfaces;
 }
@@ -239,18 +239,18 @@ HeadSystem::export_command_interfaces()
   }
 
 //  // FANS
-//  for (std::size_t i = 0; i < 2; i++)
-//  {
-//    auto joint = info_.joints[2 + i];
-//
-//    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-//        joint.name, "state", &hw_fans_commands_[i]));
-//
-//    RCLCPP_INFO(
-//      rclcpp::get_logger("HeadSystem"),
-//      "export command interface (%s) \"%s\"!", info_.name.c_str(), joint.name.c_str()
-//      );
-//  }
+  for (std::size_t i = 0; i < 2; i++)
+  {
+    auto joint = info_.joints[2 + i];
+
+    command_interfaces.emplace_back(hardware_interface::CommandInterface(
+        joint.name, "state", &hw_fans_commands_[i]));
+
+    RCLCPP_INFO(
+      rclcpp::get_logger("HeadSystem"),
+      "export command interface (%s) \"%s\"!", info_.name.c_str(), joint.name.c_str()
+      );
+  }
 
   return command_interfaces;
 }
@@ -272,18 +272,7 @@ HeadSystem::read()
         "(%s) READ POS/VEL/EFF ERROR!", info_.name.c_str()
       );
   }
-//  RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%f,%f) READ POS", hw_mx_states_position_[0], hw_mx_states_position_[1]
-//      );
-//        RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%f,%f) READ VEL", hw_mx_states_velocity_[0], hw_mx_states_velocity_[1]
-//      );
-//              RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%f,%f) READ EFF", hw_mx_states_effort_[0], hw_mx_states_effort_[1]
-//      );
+
 
   if (head_hwi_get_mx_temperature(this->uid, hw_mx_states_temperature_)) {
       RCLCPP_INFO(
@@ -309,11 +298,14 @@ HeadSystem::read()
         "(%s) READ TORQUE ERROR!", info_.name.c_str()
       );
     }
-          RCLCPP_INFO(
-        rclcpp::get_logger("HeadSystem"),
-        "(%s) \n READ TORQUE SUCCESS! %f %f", info_.name.c_str(), hw_mx_states_torque_[0], hw_mx_states_torque_[1]
-      );
 
+
+    if (head_hwi_get_fan_state(this->uid, hw_fans_states_) != 0) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) READ FAN ERROR!", info_.name.c_str()
+      );
+    }
 
   return hardware_interface::return_type::OK;
 }
@@ -321,19 +313,14 @@ HeadSystem::read()
 hardware_interface::return_type
 HeadSystem::write()
 {
+
   if (head_hwi_set_mx_torque(this->uid, hw_mx_commands_torque_) != 0) {
         RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) WRITE TORQUE ERROR!", info_.name.c_str()
       );
   }
-else {
- RCLCPP_INFO(
-        rclcpp::get_logger("HeadSystem"),
-        "(%s) \n    WRITE TORQUE SUCCESS! %f %f", info_.name.c_str(), hw_mx_commands_torque_[0], hw_mx_commands_torque_[1]
-      );
 
-}
   if (head_hwi_set_mx_target_position_speed_load(
     this->uid,
     hw_mx_commands_position_,
@@ -344,15 +331,6 @@ else {
         "(%s) WRITE POS/SPEED/TORQUE ERROR!", info_.name.c_str()
       );
   }
-//  else{
-//
-//      RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%s) WRITE POS/SPEED/TORQUE SUCCESS! %f %f %f ", info_.name.c_str(), *hw_mx_commands_position_,
-//    *hw_mx_commands_max_speed_,
-//    *hw_mx_commands_torque_limit_
-//      );
-//  }
 
   if (head_hwi_set_mx_pid(
     this->uid,
@@ -366,8 +344,21 @@ else {
       );
   }
 
-
-
+  if (head_hwi_set_fan_state(
+    this->uid,
+    hw_fans_commands_
+  ) != 0) {
+    RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) WRITE FAN ERROR!", info_.name.c_str()
+      );
+  }
+  else{
+  RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) WRITE FAN SUCCESS! %d %d ", info_.name.c_str(), hw_fans_commands_[0], hw_fans_commands_[1]
+      );
+  }
 
   return hardware_interface::return_type::OK;
 }

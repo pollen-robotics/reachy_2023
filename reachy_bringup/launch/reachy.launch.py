@@ -142,7 +142,7 @@ def generate_launch_description():
                 antenna_forward_position_controller_spawner,
                 forward_torque_controller_spawner,
                 pid_controller_spawner,
-                #forward_fan_controller_spawner,
+                forward_fan_controller_spawner,
             ],
         ),
     )

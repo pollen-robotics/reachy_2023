@@ -47,8 +47,8 @@ private:
   double hw_mx_commands_d_gain_[2];
 
 // Fans
-  double hw_fans_states_[3];
-  double hw_fans_commands_[3];
+  double hw_fans_states_[2];
+  double hw_fans_commands_[2];
 
   // Store time between update loops
   rclcpp::Clock clock_;

@@ -47,7 +47,7 @@
                     <param name="offsets">0.0, 0.0</param>
                     <param name="is_direct">0.0, 0.0</param>
                     <param name="reductions">1.0, 1.0</param>
-                    <param name="fan_id">41</param>
+                    <param name="fan_id">40</param>
                     <!--          <plugin>fake_components/GenericSystem</plugin>-->
                 </xacro:unless>
 
@@ -66,18 +66,18 @@
             <xacro:position_joint_control name="l_antenna"/>
             <xacro:position_joint_control name="r_antenna"/>
 
-<!--            <joint name="l_antenna_fan">-->
-<!--                <state_interface name="state">-->
-<!--                    <param name="initial_value">0.0</param>-->
-<!--                </state_interface>-->
-<!--                <command_interface name="state"/>-->
-<!--            </joint>-->
-<!--            <joint name="r_antenna_fan">-->
-<!--                <state_interface name="state">-->
-<!--                    <param name="initial_value">0.0</param>-->
-<!--                </state_interface>-->
-<!--                <command_interface name="state"/>-->
-<!--            </joint>-->
+            <joint name="l_antenna_fan">
+                <state_interface name="state">
+                    <param name="initial_value">0.0</param>
+                </state_interface>
+                <command_interface name="state"/>
+            </joint>
+            <joint name="r_antenna_fan">
+                <state_interface name="state">
+                    <param name="initial_value">0.0</param>
+                </state_interface>
+                <command_interface name="state"/>
+            </joint>
         </ros2_control>
     </xacro:macro>
 </robot>

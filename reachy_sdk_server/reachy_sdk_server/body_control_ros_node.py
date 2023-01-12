@@ -254,7 +254,6 @@ class BodyControlNode(Node):
 
     def _parse_controller(self, controllers_file):
         d = {}
-
         with open(controllers_file, 'r') as f:
             config = yaml.safe_load(f)
 
