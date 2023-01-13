@@ -1,5 +1,6 @@
 """Expose main Reachy ROS services/topics through gRPC allowing remote client SDK."""
 
+from pathlib import Path
 import threading
 import time
 from subprocess import check_output
@@ -64,7 +65,7 @@ class ReachySDKServer(
 
         rclpy.init()
         self.body_control_node = BodyControlNode(
-            controllers_file='/home/simsim/Pollen/reachy_ws/src/reachy_2023/reachy_bringup/config/reachy_antenna_controllers.yaml'
+            controllers_file='reachy_antenna_controllers'
             )
         threading.Thread(target=lambda: rclpy.spin(self.body_control_node)).start()
 
