@@ -8,6 +8,8 @@ import numpy as np
 from google.protobuf.wrappers_pb2 import FloatValue, UInt32Value, BoolValue
 from scipy.spatial.transform import Rotation
 
+from ament_index_python.packages import get_package_share_directory 
+
 import rclpy
 from rclpy.node import Node
 
@@ -254,29 +256,36 @@ class BodyControlNode(Node):
 
     def _parse_controller(self, controllers_file):
         d = {}
+        controllers_file_folder_path = get_package_share_directory('reachy_bringup') + '/config/'
 
-        with open(controllers_file, 'r') as f:
-            config = yaml.safe_load(f)
+        try: 
+            with open(f'{controllers_file_folder_path+controllers_file}.yaml', 'r') as f:
+                self.logger.info(f'Using reachy_description/ros2_control/{controllers_file}.yaml controller file.')
+                config = yaml.safe_load(f)
 
-            controller_config = config['controller_manager']['ros__parameters']
-            forward_controllers = []
-            for k, v in controller_config.items():
-                try:
-                    if v['type'] == 'forward_command_controller/ForwardCommandController':
-                        forward_controllers.append(k)
-                    elif v['type'] == 'pid_command_controller/PIDCommandController':
-                        forward_controllers.append(k)
-                except (KeyError, TypeError):
-                    pass
+                controller_config = config['controller_manager']['ros__parameters']
+                forward_controllers = []
+                for k, v in controller_config.items():
+                    try:
+                        if v['type'] == 'forward_command_controller/ForwardCommandController':
+                            forward_controllers.append(k)
+                        elif v['type'] == 'pid_command_controller/PIDCommandController':
+                            forward_controllers.append(k)
+                    except (KeyError, TypeError):
+                        pass
 
-            for c in forward_controllers:
-                joints = config[c]['ros__parameters']['joints']
-                d[c] = {
-                    j: i for i, j in enumerate(joints)
-                }
+                for c in forward_controllers:
+                    joints = config[c]['ros__parameters']['joints']
+                    d[c] = {
+                        j: i for i, j in enumerate(joints)
+                    }
 
-        return d
-    
+            return d
+        except FileNotFoundError:
+            self.logger.error(f'Controller file {controllers_file}.yaml does not exist in reachy_description/ros2_control.')
+            import sys
+            sys.exit()
+
     def _update_joint_target_pos(self, req: JointsCommand):
         for cmd in req.commands:
             if cmd.HasField('goal_position'):

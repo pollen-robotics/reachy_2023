@@ -1,5 +1,6 @@
 """Expose main Reachy ROS services/topics through gRPC allowing remote client SDK."""
 
+from pathlib import Path
 import threading
 import time
 from subprocess import check_output
@@ -42,7 +43,7 @@ from reachy_sdk_api import fullbody_cartesian_command_pb2, fullbody_cartesian_co
 from reachy_sdk_api import fan_pb2, fan_pb2_grpc
 from reachy_sdk_api import mobile_platform_reachy_pb2, mobile_platform_reachy_pb2_grpc
 
-from body_control_ros_node import BodyControlNode
+from reachy_sdk_server.body_control_ros_node import BodyControlNode
 
 
 class ReachySDKServer(
@@ -64,7 +65,7 @@ class ReachySDKServer(
 
         rclpy.init()
         self.body_control_node = BodyControlNode(
-            controllers_file='/home/pierre/reachy_ws/src/reachy_2023/reachy_bringup/config/reachy_controllers.yaml'
+            controllers_file='reachy_antenna_controllers'
             )
         threading.Thread(target=lambda: rclpy.spin(self.body_control_node)).start()
 
