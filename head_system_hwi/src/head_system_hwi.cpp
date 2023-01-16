@@ -35,12 +35,13 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
   {
     return CallbackReturn::ERROR;
   }
-  int nb_joints_expected = 2 + 2;
+
+  long unsigned int nb_joints_expected = 2 + 2;
   if (info.joints.size() != nb_joints_expected)
   {
     RCLCPP_ERROR(
       rclcpp::get_logger("HeadSystem"),
-      "Incorrect number of joints, expected %d, got \"%s\"",nb_joints_expected,
+      "Incorrect number of joints, expected %ld, got \"%s\"",nb_joints_expected,
        std::to_string(info.joints.size()).c_str()
     );
     return CallbackReturn::ERROR;
@@ -51,7 +52,7 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
   uint8_t mx_ids[2];
   double offsets[2];
   bool is_direct[2];
-    double reductions[2];
+  double reductions[2];
 
   uint8_t fan_id;
 
@@ -351,12 +352,6 @@ HeadSystem::write()
     RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) WRITE FAN ERROR!", info_.name.c_str()
-      );
-  }
-  else{
-  RCLCPP_INFO(
-        rclcpp::get_logger("HeadSystem"),
-        "(%s) WRITE FAN SUCCESS! %d %d ", info_.name.c_str(), hw_fans_commands_[0], hw_fans_commands_[1]
       );
   }
 
