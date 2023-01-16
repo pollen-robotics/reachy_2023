@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <xacro:macro name="arm_control" params="name">
+  <xacro:macro name="arm_control" params="name serial_port mx_ids offsets is_direct reductions force_sensor_id fan_id">
 
     <xacro:include filename="$(find reachy_description)/ros2_control/joint.ros2_control.xacro"/>
 
@@ -9,14 +9,13 @@
       <hardware>
         <xacro:unless value="$(arg use_fake_hardware)">
           <plugin>arm_system_hwi/ArmSystem</plugin>
-          <param name="serial_port">/dev/ttyACM0</param>
-          <param name="mx_ids">10, 11, 12, 13, 14, 15, 16, 17</param>
-          <param name="offsets">1.57, 1.57, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0</param>
-          <param name="is_direct">0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0</param>
-          <param name="reductions">1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -2.0</param>
-          <param name="force_sensor_id">40</param>
-          <param name="fan_id">41</param>
-
+          <param name="serial_port">${serial_port}</param>
+          <param name="mx_ids">${mx_ids}</param>
+          <param name="offsets">${offsets}</param>
+          <param name="is_direct">${is_direct}</param>
+          <param name="reductions">${reductions}</param>
+          <param name="force_sensor_id">${force_sensor_id}</param>
+          <param name="fan_id">${fan_id}</param>
         </xacro:unless>
 
         <xacro:if value="$(arg use_fake_hardware)">

@@ -136,6 +136,8 @@ ArmSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
     hw_mx_states_i_gain_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_mx_states_d_gain_[i] = std::numeric_limits<double>::quiet_NaN();
   }
+
+  // TODO: Check error and retry if any!
   arm_hwi_get_goal_position(this->uid, hw_mx_commands_position_);
   arm_hwi_get_moving_speed(this->uid, hw_mx_commands_max_speed_);
   arm_hwi_get_torque_limit(this->uid, hw_mx_commands_torque_limit_);
@@ -209,7 +211,7 @@ ArmSystem::export_state_interfaces()
     RCLCPP_INFO(
       rclcpp::get_logger("ArmSystem"),
       "export state interface (%s) \"%s\"!", info_.name.c_str(), force_sensor.name.c_str()
-      );
+    );
 
   // FANS 
   for (std::size_t i = 0; i < 3; i++)
@@ -283,6 +285,8 @@ ArmSystem::read()
   rclcpp::Duration duration = current_timestamp - last_timestamp_;
   last_timestamp_ = current_timestamp;
 
+  auto t0 = clock_.now();
+
   if (arm_hwi_get_mx_present_position_speed_load(
     this->uid,
     hw_mx_states_position_,
@@ -333,12 +337,21 @@ ArmSystem::read()
       );
     }
 
+  auto t1 = clock_.now();
+  rclcpp::Duration dt = t1 - t0;
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("ArmSystem"),
+    "(%s) READ ITER DT %fms", info_.name.c_str(), dt.seconds() * 1000.0    
+  );
+
   return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type
 ArmSystem::write()
 {
+  auto t0 = clock_.now();
+
   if (arm_hwi_set_mx_torque(this->uid, hw_mx_commands_torque_) != 0) {
         RCLCPP_INFO(
         rclcpp::get_logger("ArmSystem"),
@@ -378,6 +391,13 @@ ArmSystem::write()
         "(%s) WRITE FAN ERROR!", info_.name.c_str()
       );
   }
+
+  auto t1 = clock_.now();
+  rclcpp::Duration dt = t1 - t0;
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("ArmSystem"),
+    "(%s) WRITE ITER DT %fms", info_.name.c_str(), dt.seconds() * 1000.0    
+  );
 
   return hardware_interface::return_type::OK;
 }
