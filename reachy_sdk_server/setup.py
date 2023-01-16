@@ -1,6 +1,5 @@
 import os
 from glob import glob
-
 from setuptools import setup
 
 package_name = 'reachy_sdk_server'
