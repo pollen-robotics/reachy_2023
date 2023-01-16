@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-<xacro:macro name="arm" params="prefix parent side damping friction">
+<xacro:macro name="arm" params="prefix parent side damping friction serial_port mx_ids offsets is_direct reductions force_sensor_id fan_id">
+
+  <xacro:include filename="$(find reachy_description)/ros2_control/arm.ros2_control.xacro"/>
 
   <xacro:if value="${side == 'left'}">
     <xacro:property name="reflect" value="-1"/>
@@ -255,6 +257,17 @@
       <limit lower="-1.2" upper="0.35" effort="10." velocity="0.0"/>
       <dynamics damping="${damping}" friction="${friction}"/>
   </joint>
+
+  <xacro:arm_control 
+    name="${prefix}"
+    serial_port="${serial_port}"
+    mx_ids="${mx_ids}"
+    offsets="${offsets}"
+    is_direct="${is_direct}"
+    reductions="${reductions}"
+    force_sensor_id="${force_sensor_id}"
+    fan_id="${fan_id}"
+  />
 
 </xacro:macro>
 </robot>

@@ -2,6 +2,8 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 <xacro:macro name="head" params="parent damping friction">
 
+  <xacro:include filename="$(find reachy_description)/ros2_control/head.ros2_control.xacro"/>
+
   <joint name="neck_roll" type="revolute">
       <origin xyz="0.015 0.0 0.095" rpy="0 0.174 0" />
       <parent link="${parent}"/>
@@ -183,6 +185,8 @@
       <axis xyz="0 0 1"/>
     <limit lower="-2.618" upper="2.618" effort="10." velocity="0.0"/>
   </joint>
+
+  <xacro:head_control/>
 
 </xacro:macro>
 </robot>
