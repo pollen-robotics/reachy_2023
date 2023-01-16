@@ -28,23 +28,23 @@ public:
     hardware_interface::return_type write() override;
 
 private:
-// MX
-  double hw_mx_states_position_[2];
-  double hw_mx_states_velocity_[2];
-  double hw_mx_states_effort_[2];
-  double hw_mx_states_temperature_[2];
-  double hw_mx_states_torque_[2];
-  double hw_mx_states_p_gain_[2];
-  double hw_mx_states_i_gain_[2];
-  double hw_mx_states_d_gain_[2];
+// XL320
+  double hw_xl320_states_position_[2];
+  double hw_xl320_states_velocity_[2];
+  double hw_xl320_states_effort_[2];
+  double hw_xl320_states_temperature_[2];
+  double hw_xl320_states_torque_[2];
+  double hw_xl320_states_p_gain_[2];
+  double hw_xl320_states_i_gain_[2];
+  double hw_xl320_states_d_gain_[2];
 
-  double hw_mx_commands_position_[2];
-  double hw_mx_commands_max_speed_[2];
-  double hw_mx_commands_torque_limit_[2];
-  double hw_mx_commands_torque_[2];
-  double hw_mx_commands_p_gain_[2];
-  double hw_mx_commands_i_gain_[2];
-  double hw_mx_commands_d_gain_[2];
+  double hw_xl320_commands_position_[2];
+  double hw_xl320_commands_max_speed_[2];
+  double hw_xl320_commands_torque_limit_[2];
+  double hw_xl320_commands_torque_[2];
+  double hw_xl320_commands_p_gain_[2];
+  double hw_xl320_commands_i_gain_[2];
+  double hw_xl320_commands_d_gain_[2];
 
 // Fans
   double hw_fans_states_[2];

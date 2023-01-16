@@ -49,7 +49,7 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
 
 
   const char *serial_port;
-  uint8_t mx_ids[2];
+  uint8_t xl320_ids[2];
   double offsets[2];
   bool is_direct[2];
   double reductions[2];
@@ -61,10 +61,10 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
     if (params.first == "serial_port") {
       serial_port = params.second.c_str();
     }
-    else if (params.first == "mx_ids") {
+    else if (params.first == "xl320_ids") {
       std::vector<float> v = parse_string_as_vec(params.second.c_str());
       for (uint i=0; i < v.size(); i++) {
-        mx_ids[i] = (int)v[i];
+        xl320_ids[i] = (int)v[i];
       }
     }
     else if (params.first == "offsets") {
@@ -100,7 +100,7 @@ HeadSystem::on_init(const hardware_interface::HardwareInfo & info)
 
   this->uid = head_hwi_init(
     serial_port,
-    mx_ids, offsets, is_direct, reductions,
+    xl320_ids, offsets, is_direct, reductions,
     fan_id
   );
 
@@ -118,21 +118,21 @@ HeadSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // Set some default values
   for (int i=0; i < 2; i++) {
-    hw_mx_states_position_[i] = std::numeric_limits<double>::quiet_NaN();
-    hw_mx_states_velocity_[i] = std::numeric_limits<double>::quiet_NaN();
-    hw_mx_states_effort_[i] = std::numeric_limits<double>::quiet_NaN();
-    hw_mx_states_temperature_[i] = std::numeric_limits<double>::quiet_NaN();
-    hw_mx_states_torque_[i] = std::numeric_limits<double>::quiet_NaN();
-    hw_mx_states_p_gain_[i] = std::numeric_limits<double>::quiet_NaN();
-    hw_mx_states_i_gain_[i] = std::numeric_limits<double>::quiet_NaN();
-    hw_mx_states_d_gain_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_xl320_states_position_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_xl320_states_velocity_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_xl320_states_effort_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_xl320_states_temperature_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_xl320_states_torque_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_xl320_states_p_gain_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_xl320_states_i_gain_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_xl320_states_d_gain_[i] = std::numeric_limits<double>::quiet_NaN();
 
   }
-  head_hwi_get_goal_position(this->uid, hw_mx_commands_position_);
-  head_hwi_get_moving_speed(this->uid, hw_mx_commands_max_speed_);
-  head_hwi_get_torque_limit(this->uid, hw_mx_commands_torque_limit_);
-  head_hwi_is_mx_torque_on(this->uid, hw_mx_commands_torque_);
-  head_hwi_get_mx_pid(this->uid, hw_mx_commands_p_gain_, hw_mx_commands_i_gain_, hw_mx_commands_d_gain_);
+  head_hwi_get_goal_position(this->uid, hw_xl320_commands_position_);
+  head_hwi_get_moving_speed(this->uid, hw_xl320_commands_max_speed_);
+  head_hwi_get_torque_limit(this->uid, hw_xl320_commands_torque_limit_);
+  head_hwi_is_xl320_torque_on(this->uid, hw_xl320_commands_torque_);
+  head_hwi_get_xl320_pid(this->uid, hw_xl320_commands_p_gain_, hw_xl320_commands_i_gain_, hw_xl320_commands_d_gain_);
 
   for (int i=0; i < 2; i++) {
     hw_fans_states_[i] = std::numeric_limits<double>::quiet_NaN();
@@ -163,27 +163,27 @@ HeadSystem::export_state_interfaces()
 {
   std::vector<hardware_interface::StateInterface> state_interfaces;
 
-// MX
+// XL320
   for (std::size_t i = 0; i < 2; i++)
   {
     auto joint = info_.joints[i];
 
       state_interfaces.emplace_back(hardware_interface::StateInterface(
-        joint.name, hardware_interface::HW_IF_POSITION, &hw_mx_states_position_[i]));
+        joint.name, hardware_interface::HW_IF_POSITION, &hw_xl320_states_position_[i]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
-        joint.name, hardware_interface::HW_IF_VELOCITY, &hw_mx_states_velocity_[i]));
+        joint.name, hardware_interface::HW_IF_VELOCITY, &hw_xl320_states_velocity_[i]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
-        joint.name, hardware_interface::HW_IF_EFFORT, &hw_mx_states_effort_[i]));
+        joint.name, hardware_interface::HW_IF_EFFORT, &hw_xl320_states_effort_[i]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
-        joint.name, "temperature", &hw_mx_states_temperature_[i]));
+        joint.name, "temperature", &hw_xl320_states_temperature_[i]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
-        joint.name, "torque", &hw_mx_states_torque_[i]));
+        joint.name, "torque", &hw_xl320_states_torque_[i]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
-        joint.name, "p_gain", &hw_mx_states_p_gain_[i]));
+        joint.name, "p_gain", &hw_xl320_states_p_gain_[i]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
-        joint.name, "i_gain", &hw_mx_states_i_gain_[i]));
+        joint.name, "i_gain", &hw_xl320_states_i_gain_[i]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
-        joint.name, "d_gain", &hw_mx_states_d_gain_[i]));
+        joint.name, "d_gain", &hw_xl320_states_d_gain_[i]));
 
     RCLCPP_INFO(
       rclcpp::get_logger("HeadSystem"),
@@ -213,25 +213,25 @@ HeadSystem::export_command_interfaces()
 {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
 
-// MX
+// XL320
   for (std::size_t i = 0; i < 2; i++)
   {
     auto joint = info_.joints[i];
 
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
-        joint.name, hardware_interface::HW_IF_POSITION, &hw_mx_commands_position_[i]));
+        joint.name, hardware_interface::HW_IF_POSITION, &hw_xl320_commands_position_[i]));
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
-        joint.name, "torque", &hw_mx_commands_torque_[i]));
+        joint.name, "torque", &hw_xl320_commands_torque_[i]));
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
-        joint.name, "max_speed", &hw_mx_commands_max_speed_[i]));
+        joint.name, "max_speed", &hw_xl320_commands_max_speed_[i]));
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
-        joint.name, "torque_limit", &hw_mx_commands_torque_limit_[i]));
+        joint.name, "torque_limit", &hw_xl320_commands_torque_limit_[i]));
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
-        joint.name, "p_gain", &hw_mx_commands_p_gain_[i]));
+        joint.name, "p_gain", &hw_xl320_commands_p_gain_[i]));
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
-        joint.name, "i_gain", &hw_mx_commands_i_gain_[i]));
+        joint.name, "i_gain", &hw_xl320_commands_i_gain_[i]));
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
-        joint.name, "d_gain", &hw_mx_commands_d_gain_[i]));
+        joint.name, "d_gain", &hw_xl320_commands_d_gain_[i]));
 
     RCLCPP_INFO(
       rclcpp::get_logger("HeadSystem"),
@@ -263,11 +263,11 @@ HeadSystem::read()
   rclcpp::Duration duration = current_timestamp - last_timestamp_;
   last_timestamp_ = current_timestamp;
 
-  if (head_hwi_get_mx_present_position_speed_load(
+  if (head_hwi_get_xl320_present_position_speed_load(
     this->uid,
-    hw_mx_states_position_,
-    hw_mx_states_velocity_,
-    hw_mx_states_effort_) != 0) {
+    hw_xl320_states_position_,
+    hw_xl320_states_velocity_,
+    hw_xl320_states_effort_) != 0) {
       RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) READ POS/VEL/EFF ERROR!", info_.name.c_str()
@@ -275,25 +275,25 @@ HeadSystem::read()
   }
 
 
-  if (head_hwi_get_mx_temperature(this->uid, hw_mx_states_temperature_)) {
+  if (head_hwi_get_xl320_temperature(this->uid, hw_xl320_states_temperature_)) {
       RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
       );
   }
 
-  if (head_hwi_get_mx_pid(
+  if (head_hwi_get_xl320_pid(
     this->uid,
-    hw_mx_states_p_gain_,
-    hw_mx_states_i_gain_,
-    hw_mx_states_d_gain_)) {
+    hw_xl320_states_p_gain_,
+    hw_xl320_states_i_gain_,
+    hw_xl320_states_d_gain_)) {
       RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) READ PID ERROR!", info_.name.c_str()
       );
     }
 
-    if (head_hwi_is_mx_torque_on(this->uid, hw_mx_states_torque_)) {
+    if (head_hwi_is_xl320_torque_on(this->uid, hw_xl320_states_torque_)) {
       RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) READ TORQUE ERROR!", info_.name.c_str()
@@ -315,29 +315,29 @@ hardware_interface::return_type
 HeadSystem::write()
 {
 
-  if (head_hwi_set_mx_torque(this->uid, hw_mx_commands_torque_) != 0) {
+  if (head_hwi_set_xl320_torque(this->uid, hw_xl320_commands_torque_) != 0) {
         RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) WRITE TORQUE ERROR!", info_.name.c_str()
       );
   }
 
-  if (head_hwi_set_mx_target_position_speed_load(
+  if (head_hwi_set_xl320_target_position_speed_load(
     this->uid,
-    hw_mx_commands_position_,
-    hw_mx_commands_max_speed_,
-    hw_mx_commands_torque_limit_) != 0) {
+    hw_xl320_commands_position_,
+    hw_xl320_commands_max_speed_,
+    hw_xl320_commands_torque_limit_) != 0) {
     RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) WRITE POS/SPEED/TORQUE ERROR!", info_.name.c_str()
       );
   }
 
-  if (head_hwi_set_mx_pid(
+  if (head_hwi_set_xl320_pid(
     this->uid,
-    hw_mx_commands_p_gain_,
-    hw_mx_commands_i_gain_,
-    hw_mx_commands_d_gain_
+    hw_xl320_commands_p_gain_,
+    hw_xl320_commands_i_gain_,
+    hw_xl320_commands_d_gain_
   ) != 0) {
         RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
