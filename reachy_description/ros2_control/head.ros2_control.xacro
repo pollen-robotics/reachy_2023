@@ -27,22 +27,22 @@
                     </xacro:unless>
                 </xacro:if>
             </hardware>
-            <!--      <xacro:position_joint_control name="neck_roll"/>-->
-            <!--      <xacro:position_joint_control name="neck_pitch"/>-->
-            <!--      <xacro:position_joint_control name="neck_yaw"/>-->
+                 <xacro:position_joint_control name="neck_roll"/>
+                 <xacro:position_joint_control name="neck_pitch"/>
+                 <xacro:position_joint_control name="neck_yaw"/>
             <!--      <joint name="neck_fan">-->
-            <!--        <state_interface name="state">-->
-            <!--          <param name="initial_value">0.0</param>-->
-            <!--        </state_interface>-->
-            <!--        <command_interface name="state"/>-->
-            <!--      </joint>-->
+                   <!-- <state_interface name="state">
+                     <param name="initial_value">0.0</param>
+                   </state_interface> -->
+                   <!-- <command_interface name="state"/> -->
+                 <!-- </joint> -->
         </ros2_control>
 
         <ros2_control name="antennas" type="system">
             <hardware>
                 <xacro:unless value="$(arg use_fake_hardware)">
                     <plugin>head_system_hwi/HeadSystem</plugin>
-                    <param name="serial_port">/dev/ttyACM0</param>
+                    <param name="serial_port">/dev/usb2ax_head</param>
                     <param name="xl320_ids">30, 31</param>
                     <param name="offsets">0.0, 0.0</param>
                     <param name="is_direct">0.0, 0.0</param>
