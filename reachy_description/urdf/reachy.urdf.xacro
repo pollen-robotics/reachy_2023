@@ -71,9 +71,9 @@
   />
 
   <!-- HEAD-->
-  <!-- <xacro:head
+  <xacro:head
     parent="torso"
     damping="${damping}" friction="${friction}"
-  /> -->
+  />
 
 </robot>
