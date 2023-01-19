@@ -23,7 +23,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/torso.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/torso.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -35,7 +35,7 @@
   </link>
 
   <gazebo reference="torso">
-    <material>Gazebo/Black</material>
+    <material>Gazebo/White</material>
     <static>true</static>
   </gazebo>
 
@@ -75,5 +75,13 @@
     parent="torso"
     damping="${damping}" friction="${friction}"
   />
+
+  <!-- ros_control-plugin -->
+  <gazebo>
+    <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+      <parameters>$(find reachy_bringup)/config/reachy_controllers.yaml</parameters>
+      <robotNamespace>/reachy</robotNamespace>
+    </plugin>
+  </gazebo>
 
 </robot>

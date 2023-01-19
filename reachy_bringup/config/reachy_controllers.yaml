@@ -23,6 +23,10 @@ controller_manager:
     pid_controller:
       type: pid_command_controller/PIDCommandController
 
+    neck_forward_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
+
 joint_state_broadcaster:
   ros__parameters:
     use_sim_time: false
