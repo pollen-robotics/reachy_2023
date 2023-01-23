@@ -13,7 +13,13 @@
     <dynamics damping="${damping}" friction="${friction}"/>
   </joint>
 
-  <link name="head_x" />
+  <link name="head_x">
+    <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <mass value="0.001"/>
+          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+    </inertial>
+    </link>
 
   <joint name="neck_pitch" type="revolute">
       <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
@@ -24,7 +30,13 @@
     <dynamics damping="${damping}" friction="${friction}"/>
   </joint>
 
-  <link name="head_y" />
+  <link name="head_y" >
+    <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <mass value="0.001"/>
+          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+    </inertial>
+    </link>
 
   <joint name="neck_yaw" type="revolute">
       <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
@@ -35,7 +47,13 @@
     <dynamics damping="${damping}" friction="${friction}"/>
   </joint>
 
-  <link name="head_z" />
+  <link name="head_z">
+    <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <mass value="0.001"/>
+          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+    </inertial>
+  </link>
 
   <joint name="neck_fixed" type="fixed">
       <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
@@ -52,10 +70,16 @@
   </joint>
 
   <link name="top_neck_arm">
+    <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <mass value="0.001"/>
+          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+    </inertial>
+
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.5236"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/orbita_arm.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -73,10 +97,15 @@
   </joint>
 
   <link name="middle_neck_arm">
+    <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <mass value="0.001"/>
+          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+    </inertial>
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 2.618"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/orbita_arm.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -94,10 +123,15 @@
   </joint>
 
   <link name="bottom_neck_arm">
+    <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <mass value="0.001"/>
+          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+    </inertial>
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 -1.57"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/orbita_arm.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -119,7 +153,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/head.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/head.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -139,7 +173,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/antenna.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/antenna.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -167,7 +201,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/antenna.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/antenna.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -187,6 +221,8 @@
   </joint>
 
   <xacro:head_control/>
+
+
 
 </xacro:macro>
 </robot>
