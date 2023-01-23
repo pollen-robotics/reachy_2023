@@ -13,7 +13,6 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-
         (os.path.join('share', package_name), glob('launch/*.py')),
     ],
     install_requires=[
@@ -30,6 +29,8 @@ setup(
     entry_points={
         'console_scripts': [
             'camera_publisher = camera_controllers.camera_publisher:main',
+            'camera_zoom_service = camera_controllers.camera_zoom_service:main',
+            'camera_focus = camera_controllers.camera_focus:main',
             'view_cam = examples.view_cam:main',
         ],
     },
