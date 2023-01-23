@@ -1,3 +1,4 @@
+from collections import defaultdict
 import time
 from threading import Event, Lock, Thread
 from typing import List
@@ -33,6 +34,11 @@ class BodyControlNode(Node):
         self.logger = self.get_logger()
 
         self.forward_controllers = self._parse_controller(controllers_file)
+        self.joint_to_position_controller = {}
+        for c, joints in self.forward_controllers.items():
+            if c.endswith('forward_position_controller'):
+                for j in joints:
+                    self.joint_to_position_controller[j] = c
 
         self.joints = {}
         self.joint_uids = {}
@@ -73,6 +79,7 @@ class BodyControlNode(Node):
         self.sensor_state_pub_event = Event()
         self.fan_state_pub_event = Event()
 
+        self.requested_goal_positions = defaultdict(dict)
         self.wait_for_setup()
 
         t = Thread(target=self._publish_joint_command)
@@ -289,7 +296,9 @@ class BodyControlNode(Node):
     def _update_joint_target_pos(self, req: JointsCommand):
         for cmd in req.commands:
             if cmd.HasField('goal_position'):
-                self.joints[self._get_joint_name(cmd.id)]['target_position'] = cmd.goal_position.value
+                joint = self._get_joint_name(cmd.id)
+                controller = self.joint_to_position_controller[joint]
+                self.requested_goal_positions[controller][joint] = cmd.goal_position.value
 
     def _update_torque(self, req: JointsCommand):
         need_update = False
@@ -338,11 +347,17 @@ class BodyControlNode(Node):
 
     def _publish_joint_command(self):
         while rclpy.ok():
-            for controller, joint_dic in self.forward_controllers.items():
-                if controller in ('forward_torque_controller', 'pid_controller', 'forward_fan_controller'):
-                    continue
-                pos = [self.joints[joint]['target_position'] for joint in joint_dic.keys()]
-                self.forward_publishers[controller].publish(Float64MultiArray(data=pos))
+            if self.requested_goal_positions:
+                for controller_name, joints_to_update in self.requested_goal_positions.items():
+                    controller_joints = self.forward_controllers[controller_name]
+
+                    target_pos = {j: self.joints[j]['target_position'] for j in controller_joints}
+                    target_pos.update(joints_to_update)
+
+                    pos = [target_pos[j] for j in controller_joints]
+                    self.forward_publishers[controller_name].publish(Float64MultiArray(data=pos))
+
+                self.requested_goal_positions.clear()
 
             time.sleep(0.01)
     
