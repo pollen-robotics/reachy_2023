@@ -1,12 +1,12 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.descriptions import ParameterValue
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def generate_launch_description():
     controllers_file_arg = DeclareLaunchArgument(
@@ -14,7 +14,7 @@ def generate_launch_description():
         default_value=['reachy_controllers.yaml'],
         description='YAML file with the controllers configuration.',
     )
-    controllers_file = LaunchConfiguration('controllers_file')
+
 
     start_rviz_arg = DeclareLaunchArgument(
         'start_rviz',
@@ -45,25 +45,12 @@ def generate_launch_description():
         'robot_description': ParameterValue(robot_description_content, value_type=str),
     }
 
-    robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare('reachy_bringup'),
-            'config',
-            controllers_file,
-        ]
-    )
 
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
     )
 
-    control_node = Node(
-        package='controller_manager',
-        executable='ros2_control_node',
-        parameters=[robot_description, robot_controllers],
-        output='screen',
-    )
-
+    
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -135,6 +122,8 @@ def generate_launch_description():
         ),
     )
 
+    #For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
+
     delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -151,7 +140,10 @@ def generate_launch_description():
     )
 
     return LaunchDescription(arguments + [
-        # control_node,
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                FindPackageShare("reachy_bringup"), '/launch', '/gazebo.launch.py'])
+        ),
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
