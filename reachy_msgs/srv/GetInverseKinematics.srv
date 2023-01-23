@@ -1,0 +1,11 @@
+# A service call to carry out the inverse kinematics computation for Reachy
+# Pose request
+geometry_msgs/Pose pose
+sensor_msgs/JointState q0
+
+---
+
+# The returned solution 
+bool success
+# position of each joints
+sensor_msgs/JointState joint_position
