@@ -1,0 +1,10 @@
+# A service call to carry out the forward kinematics computation for Reachy
+# Joints request
+sensor_msgs/JointState joint_position
+
+---
+
+# The returned solution 
+bool success
+# the returned pose solution 
+geometry_msgs/Pose pose

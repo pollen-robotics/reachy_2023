@@ -22,19 +22,6 @@ import grpc
 import rclpy
 from rclpy.node import Node
 
-from control_msgs.msg import DynamicJointState
-from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Float64MultiArray
-
-from geometry_msgs.msg import Point, Quaternion
-
-from sensor_msgs.msg import JointState
-
-from reachy_msgs.msg import JointTemperature, ForceSensor, PidGains, FanState
-from reachy_msgs.srv import GetJointFullState, SetJointCompliancy, SetJointPidGains
-from reachy_msgs.srv import GetArmIK, GetArmFK
-from reachy_msgs.srv import GetReachyModel, SetFanState
-
 from reachy_sdk_api import joint_pb2, joint_pb2_grpc
 from reachy_sdk_api import sensor_pb2, sensor_pb2_grpc
 from reachy_sdk_api import kinematics_pb2
