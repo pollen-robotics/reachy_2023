@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import partial
 import time
 from threading import Event, Lock, Thread
 from typing import List
@@ -55,8 +56,7 @@ class BodyControlNode(Node):
 
         # Subscribe to: 
         #  - /dynamic_joint_states (for present_position, torque and temperature)
-        #  - /neck_forward_position_controller/commands for (neck roll pitch yaw) target_position
-        #  - TODO: where to get arm target_position?
+        #  - /*_forward_position_controller/commands for target_position
         self.joint_state_ready = Event()
         self.joint_state_sub = self.create_subscription(
             msg_type=DynamicJointState, 
@@ -64,6 +64,19 @@ class BodyControlNode(Node):
             qos_profile=5,
             callback=self._on_joint_state,
         )
+        # We both listen and publish to the forward position
+        # Indeed, as the joints can be controlled either directly or via the kinematics
+        # We need to detect both modifications
+        self.target_pos_sub = {
+            c: self.create_subscription(
+                msg_type=Float64MultiArray,
+                topic=f'/{c}/commands',
+                qos_profile=5,
+                callback=partial(self._on_target_position_update, controller_name=c),
+            )
+            for c in self.forward_controllers 
+            if c.endswith('forward_position_controller')
+        }
 
         # Publish to each controllers
         self.forward_publishers = {
@@ -299,6 +312,12 @@ class BodyControlNode(Node):
                 joint = self._get_joint_name(cmd.id)
                 controller = self.joint_to_position_controller[joint]
                 self.requested_goal_positions[controller][joint] = cmd.goal_position.value
+
+    def _on_target_position_update(self, data: Float64MultiArray, controller_name):
+        # Callback of the /*_forward_position_controller subscription
+        joints = self.forward_controllers[controller_name]
+        for j, pos in zip(joints, data.data):
+            self.joints[j]['target_position'] = pos
 
     def _update_torque(self, req: JointsCommand):
         need_update = False
