@@ -1,5 +1,7 @@
 from functools import partial
 
+import numpy as np
+
 from scipy.spatial.transform import Rotation
 
 import rclpy
@@ -7,11 +9,15 @@ from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from std_msgs.msg import Float64MultiArray, String
 
-from reachy_msgs.srv import GetForwardKinematics
+from reachy_msgs.srv import (
+    GetForwardKinematics,
+    GetInverseKinematics,
+)
 
 from .kdl_kinematics import (
     generate_solver, 
     forward_kinematics,
+    inverse_kinematics,
 )
 
 
@@ -23,7 +29,7 @@ class ReachyKdlKinematics(Node):
         self.urdf = self.retrieve_urdf()
 
         self.chain, self.fk_solver, self.ik_solver = {}, {}, {}
-        self.fk_srv = {}
+        self.fk_srv, self.ik_srv = {}, {}
 
         for prefix in ('l', 'r'):
             arm = f'{prefix}_arm'
@@ -36,6 +42,12 @@ class ReachyKdlKinematics(Node):
                     srv_type=GetForwardKinematics, 
                     srv_name=f'/{arm}/forward_kinematics', 
                     callback=partial(self.forward_kinematics_srv, name=arm),
+                )
+
+                self.ik_srv[arm] = self.create_service(
+                    srv_type=GetInverseKinematics,
+                    srv_name=f'/{arm}/inverse_kinematics',
+                    callback=partial(self.inverse_kinematics_srv, name=arm),
                 )
 
                 self.chain[arm] = chain
@@ -71,6 +83,37 @@ class ReachyKdlKinematics(Node):
 
         return response
 
+    def inverse_kinematics_srv(
+        self,
+        request: GetInverseKinematics.Request,
+        response: GetInverseKinematics.Response,
+        name,
+    ) -> GetInverseKinematics.Response: 
+
+        M = np.eye(4)
+        M[0, 3] = request.pose.position.x
+        M[1, 3] = request.pose.position.y
+        M[2, 3] = request.pose.position.z
+        q = (
+            request.pose.orientation.x,
+            request.pose.orientation.y,
+            request.pose.orientation.z,
+            request.pose.orientation.w,
+        )
+        M[:3, :3] = Rotation.from_quat(q).as_matrix()
+
+        error, sol = inverse_kinematics(
+            self.ik_solver[name],
+            q0=request.q0.position,
+            target_pose=M,
+            nb_joints=self.chain[name].getNrOfJoints(),
+        )
+
+        # TODO: use error
+        response.success = True
+        response.joint_position.position = sol
+
+        return response
 
     def retrieve_urdf(self, timeout_sec: float = 15):
         self.logger.info('Retrieving URDF from "/robot_description"...')
