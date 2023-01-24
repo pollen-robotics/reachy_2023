@@ -5,6 +5,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 import rclpy
+from geometry_msgs.msg import PoseStamped
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from std_msgs.msg import Float64MultiArray, String
@@ -31,6 +32,7 @@ class ReachyKdlKinematics(Node):
 
         self.chain, self.fk_solver, self.ik_solver = {}, {}, {}
         self.fk_srv, self.ik_srv = {}, {}
+        self.target_sub = {}
 
         for prefix in ('l', 'r'):
             arm = f'{prefix}_arm'
@@ -39,16 +41,39 @@ class ReachyKdlKinematics(Node):
             
             # We automatically loads the kinematics corresponding to the config
             if chain.getNrOfJoints():
+
+                # Create forward kinematics service
                 self.fk_srv[arm] = self.create_service(
                     srv_type=GetForwardKinematics, 
                     srv_name=f'/{arm}/forward_kinematics', 
                     callback=partial(self.forward_kinematics_srv, name=arm),
                 )
 
+                # Create inverse kinematics service
                 self.ik_srv[arm] = self.create_service(
                     srv_type=GetInverseKinematics,
                     srv_name=f'/{arm}/inverse_kinematics',
                     callback=partial(self.inverse_kinematics_srv, name=arm),
+                )
+
+                # Create cartesian control subscription
+                forward_position_pub = self.create_publisher(
+                    msg_type=Float64MultiArray,
+                    topic=f'/{arm}_forward_position_controller/commands',
+                    qos_profile=5,
+                )
+
+                self.target_sub[arm] = self.create_subscription(
+                    msg_type=PoseStamped,
+                    topic=f'/{arm}/target_pose',
+                    qos_profile=5,
+                    callback=partial(
+                        self.on_target_pose, 
+                        name=arm,
+                        # arm straight, with elbow at -90 (facing forward)
+                        q0=[0, 0, 0, -np.pi / 2, 0, 0, 0],
+                        forward_publisher=forward_position_pub,
+                    ),
                 )
 
                 self.chain[arm] = chain
@@ -106,6 +131,24 @@ class ReachyKdlKinematics(Node):
         response.joint_position.position = sol
 
         return response
+
+    def on_target_pose(self, msg: PoseStamped, name, q0, forward_publisher):
+        M = ros_pose_to_matrix(msg.pose)
+
+        error, sol = inverse_kinematics(
+            self.ik_solver[name],
+            q0=q0,
+            target_pose=M,
+            nb_joints=self.chain[name].getNrOfJoints(),
+        )
+
+        # TODO: check error
+
+        msg = Float64MultiArray()
+        # TODO: remove the gripper position when #37 is fixed
+        msg.data = sol + [0.0]
+
+        forward_publisher.publish(msg)
 
     def retrieve_urdf(self, timeout_sec: float = 15):
         self.logger.info('Retrieving URDF from "/robot_description"...')
