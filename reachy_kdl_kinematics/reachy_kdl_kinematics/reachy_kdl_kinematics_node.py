@@ -41,6 +41,7 @@ class ReachyKdlKinematics(Node):
             
             # We automatically loads the kinematics corresponding to the config
             if chain.getNrOfJoints():
+                self.logger.info(f'Found kinematics chain for "{arm}"!')
 
                 # Create forward kinematics service
                 self.fk_srv[arm] = self.create_service(
@@ -48,6 +49,7 @@ class ReachyKdlKinematics(Node):
                     srv_name=f'/{arm}/forward_kinematics', 
                     callback=partial(self.forward_kinematics_srv, name=arm),
                 )
+                self.logger.info(f'Adding service "{self.fk_srv[arm].srv_name}"...')
 
                 # Create inverse kinematics service
                 self.ik_srv[arm] = self.create_service(
@@ -55,6 +57,7 @@ class ReachyKdlKinematics(Node):
                     srv_name=f'/{arm}/inverse_kinematics',
                     callback=partial(self.inverse_kinematics_srv, name=arm),
                 )
+                self.logger.info(f'Adding service "{self.ik_srv[arm].srv_name}"...')
 
                 # Create cartesian control subscription
                 forward_position_pub = self.create_publisher(
@@ -75,10 +78,13 @@ class ReachyKdlKinematics(Node):
                         forward_publisher=forward_position_pub,
                     ),
                 )
+                self.logger.info(f'Adding subscription on "{self.target_sub[arm].topic}"...')
 
                 self.chain[arm] = chain
                 self.fk_solver[arm] = fk_solver
                 self.ik_solver[arm] = ik_solver
+
+        self.logger.info(f'Kinematics node ready!')
 
     def forward_kinematics_srv(
         self, 
