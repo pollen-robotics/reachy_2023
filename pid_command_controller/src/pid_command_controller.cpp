@@ -41,7 +41,7 @@ CallbackReturn PIDCommandController::on_init()
 CallbackReturn PIDCommandController::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  joint_names_ = node_->get_parameter("joints").as_string_array();
+  joint_names_ = get_node()->get_parameter("joints").as_string_array();
 
   if (joint_names_.empty())
   {
@@ -93,7 +93,7 @@ CallbackReturn PIDCommandController::on_activate(
     command_interfaces_.size() != 3 * ordered_interfaces.size())
   {
     RCLCPP_ERROR(
-      node_->get_logger(), "Expected %zu position command interfaces, got %zu", joint_names_.size(),
+		 get_node()->get_logger(), "Expected %zu position command interfaces, got %zu", joint_names_.size(),
       ordered_interfaces.size());
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::ERROR;
   }
@@ -126,7 +126,7 @@ controller_interface::return_type PIDCommandController::update(
   if ((*joint_commands)->data.size() != command_interfaces_.size())
   {
     RCLCPP_ERROR_THROTTLE(
-      get_node()->get_logger(), *node_->get_clock(), 1000,
+			  get_node()->get_logger(), *(get_node()->get_clock()), 1000,
       "command size (%zu) does not match number of interfaces (%zu)",
       (*joint_commands)->data.size(), command_interfaces_.size());
     return controller_interface::return_type::ERROR;
