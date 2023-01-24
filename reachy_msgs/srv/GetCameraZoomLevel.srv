@@ -1,0 +1,5 @@
+# Service to get the zoom level of a given camera ('left_eye' or 'right_eye')
+# There are three zooming levels ('in', 'out', 'inter' and 'homing')
+string name
+---
+string zoom_level

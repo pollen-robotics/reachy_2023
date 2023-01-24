@@ -17,11 +17,19 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Gripper.msg"
+  "msg/ZoomCommand.msg"
 
   "srv/GetForwardKinematics.srv"
   "srv/GetInverseKinematics.srv"
+  "srv/GetCameraZoomFocus.srv"
+  "srv/SetCameraZoomFocus.srv"
+  "srv/GetCameraZoomLevel.srv"
+  "srv/SetCameraZoomLevel.srv"
+  "srv/GetCameraZoomSpeed.srv"
+  "srv/SetCameraZoomSpeed.srv"
+  "srv/SetFocusState.srv"
 
-  DEPENDENCIES std_msgs
+  DEPENDENCIES std_msgs sensor_msgs geometry_msgs
 )
 
 ament_package()

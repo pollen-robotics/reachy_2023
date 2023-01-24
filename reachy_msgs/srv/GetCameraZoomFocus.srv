@@ -1,0 +1,7 @@
+
+# Service to get the focus and zoom of left and right camera
+---
+uint16 left_focus
+uint16 left_zoom
+uint16 right_focus
+uint16 right_zoom
