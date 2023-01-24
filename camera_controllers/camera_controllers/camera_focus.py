@@ -70,6 +70,7 @@ class CameraFocus(Node):
             'set_focus_state',
             self._set_focus_state_callback,
         )
+        self.logger.info('Create service /set_focus_state')
 
         self.set_camera_zoom_focus_client = self.create_client(
             SetCameraZoomFocus,
@@ -278,6 +279,7 @@ def main(args=None):
     rclpy.init(args=args)
 
     camera_focus = CameraFocus()
+    camera_focus.logger.info('Autofocus ready to run!')
 
     try:
         rclpy.spin(camera_focus)
