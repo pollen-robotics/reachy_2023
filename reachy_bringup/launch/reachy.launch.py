@@ -11,7 +11,7 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     controllers_file_arg = DeclareLaunchArgument(
         'controllers_file',
-        default_value=['reachy_controllers.yaml'],
+        default_value=['reachy_no_orbita_controllers.yaml'],
         description='YAML file with the controllers configuration.',
     )
     controllers_file = LaunchConfiguration('controllers_file')

@@ -17,8 +17,6 @@ from control_msgs.msg import DynamicJointState
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float64MultiArray
 
-from reachy_msgs.msg import Gripper
-
 from reachy_sdk_api.arm_kinematics_pb2 import ArmIKRequest, ArmSide
 from reachy_sdk_api.fan_pb2 import FanId, FanState, FansCommand
 from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand
