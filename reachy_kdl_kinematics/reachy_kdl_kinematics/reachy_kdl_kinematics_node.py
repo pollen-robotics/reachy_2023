@@ -71,13 +71,6 @@ class ReachyKdlKinematics(Node):
 
         return response
 
-    def arm_forward_kinematics(self, joints, side):
-        chain = self.r_arm_chain if side == 'right' else self.l_arm_chain
-        solver = self.r_arm_fk_solver if side == 'right' else self.l_arm_fk_solver
-
-        error, sol = forward_kinematics(solver, joints, chain.getNrOfJoints())
-
-        return error, sol
 
     def retrieve_urdf(self, timeout_sec: float = 15):
         self.logger.info('Retrieving URDF from "/robot_description"...')
