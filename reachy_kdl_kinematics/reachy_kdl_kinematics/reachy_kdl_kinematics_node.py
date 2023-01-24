@@ -47,7 +47,7 @@ class ReachyKdlKinematics(Node):
         request: GetForwardKinematics.Request, 
         response: GetForwardKinematics.Response,
         name,
-    ):
+    ) -> GetForwardKinematics.Response:
         error, sol = forward_kinematics(
             self.fk_solver[name], 
             request.joint_position.position, 
