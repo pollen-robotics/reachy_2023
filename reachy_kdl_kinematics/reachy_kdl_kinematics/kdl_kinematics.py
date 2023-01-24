@@ -19,8 +19,8 @@ def generate_solver(urdf_str: str, root: str, tip: str):
     ik_solver = kdl.ChainIkSolverPos_LMA(
         chain,
         eps=1e-5,
-        _maxiter=500,
-        _eps_joints=1e-15,
+        maxiter=500,
+        eps_joints=1e-15,
     )
 
     return chain, fk_solver, ik_solver
