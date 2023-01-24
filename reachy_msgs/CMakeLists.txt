@@ -21,7 +21,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetForwardKinematics.srv"
   "srv/GetInverseKinematics.srv"
 
-  DEPENDENCIES std_msgs
+  DEPENDENCIES geometry_msgs sensor_msgs std_msgs
 )
 
 ament_package()
