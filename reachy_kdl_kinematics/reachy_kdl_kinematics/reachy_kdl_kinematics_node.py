@@ -18,6 +18,7 @@ from .kdl_kinematics import (
     generate_solver, 
     forward_kinematics,
     inverse_kinematics,
+    ros_pose_to_matrix,
 )
 
 
@@ -90,21 +91,12 @@ class ReachyKdlKinematics(Node):
         name,
     ) -> GetInverseKinematics.Response: 
 
-        M = np.eye(4)
-        M[0, 3] = request.pose.position.x
-        M[1, 3] = request.pose.position.y
-        M[2, 3] = request.pose.position.z
-        q = (
-            request.pose.orientation.x,
-            request.pose.orientation.y,
-            request.pose.orientation.z,
-            request.pose.orientation.w,
-        )
-        M[:3, :3] = Rotation.from_quat(q).as_matrix()
+        M = ros_pose_to_matrix(request.pose)
+        q0 = request.q0.position
 
         error, sol = inverse_kinematics(
             self.ik_solver[name],
-            q0=request.q0.position,
+            q0=q0,
             target_pose=M,
             nb_joints=self.chain[name].getNrOfJoints(),
         )

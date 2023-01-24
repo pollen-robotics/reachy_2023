@@ -1,6 +1,10 @@
 """Compute the kinematics for Reachy using the KDL library and its URDF definition."""
 from typing import Tuple
+
 import numpy as np
+from scipy.spatial.transform import Rotation
+
+from geometry_msgs.msg import Pose
 
 import PyKDL as kdl
 
@@ -66,3 +70,21 @@ def inverse_kinematics(ik_solver, q0: np.ndarray, target_pose: np.ndarray, nb_jo
     sol = list(sol)
 
     return res, sol
+
+
+def ros_pose_to_matrix(pose: Pose) -> np.ndarray:
+    M = np.eye(4)
+
+    M[0, 3] = pose.position.x
+    M[1, 3] = pose.position.y
+    M[2, 3] = pose.position.z
+
+    q = (
+        pose.orientation.x,
+        pose.orientation.y,
+        pose.orientation.z,
+        pose.orientation.w,
+    )
+    M[:3, :3] = Rotation.from_quat(q).as_matrix()
+
+    return M
