@@ -22,7 +22,7 @@
       <visual name="">
           <origin xyz="0.0 ${0.04*reflect} 0.0" rpy="${1.57*reflect} 1.57 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/shoulder.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/shoulder.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -51,7 +51,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/shoulder_x.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/shoulder_x.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -85,7 +85,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 -0.0526" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/upper_arm.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/upper_arm.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -114,7 +114,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/forearm.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/forearm.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -143,7 +143,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 -0.100" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/wrist.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/wrist.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -172,7 +172,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/wrist2hand.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/wrist2hand.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -201,7 +201,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/${prefix}_gripper_thumb.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_thumb.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -230,7 +230,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/${prefix}_gripper_finger.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_finger.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -241,7 +241,14 @@
       </collision>
   </link>
 
-  <link name="${prefix}_arm_tip"/>
+  <link name="${prefix}_arm_tip">
+    <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <mass value="0.001"/>
+          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+    </inertial>
+    </link>
+
 
   <joint name="${prefix}_arm_tip" type="fixed">
       <origin xyz="0 -0.012 -0.085" rpy="0 0 0" />
@@ -258,7 +265,7 @@
       <dynamics damping="${damping}" friction="${friction}"/>
   </joint>
 
-  <xacro:arm_control 
+  <xacro:arm_control
     name="${prefix}"
     serial_port="${serial_port}"
     mx_ids="${mx_ids}"

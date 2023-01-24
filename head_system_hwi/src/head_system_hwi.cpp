@@ -257,7 +257,7 @@ HeadSystem::export_command_interfaces()
 }
 
 hardware_interface::return_type
-HeadSystem::read()
+HeadSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
 {
   current_timestamp = clock_.now();
   rclcpp::Duration duration = current_timestamp - last_timestamp_;
@@ -312,7 +312,7 @@ HeadSystem::read()
 }
 
 hardware_interface::return_type
-HeadSystem::write()
+HeadSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
 {
 
   if (head_hwi_set_xl320_torque(this->uid, hw_xl320_commands_torque_) != 0) {
