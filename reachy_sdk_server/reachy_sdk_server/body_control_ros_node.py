@@ -15,6 +15,7 @@ import rclpy
 from rclpy.node import Node
 
 from control_msgs.msg import DynamicJointState
+from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float64MultiArray
 
 from reachy_msgs.srv import GetForwardKinematics, GetInverseKinematics
@@ -25,7 +26,7 @@ from reachy_sdk_api.arm_kinematics_pb2 import (
     ArmIKRequest, ArmIKSolution,
 )
 from reachy_sdk_api.fan_pb2 import FanId, FanState, FansCommand
-from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand
+from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand, FullBodyCartesianCommandAck
 from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState, JointField, PIDValue, PIDGains
 from reachy_sdk_api.kinematics_pb2 import JointPosition
 from reachy_sdk_api.orbita_kinematics_pb2 import OrbitaIKRequest
@@ -93,9 +94,10 @@ class BodyControlNode(Node):
             for c in self.forward_controllers
         }
 
-        # Create clients for kinematics services
+        # Create clients for kinematics services/pub
         self.forward_kin_client = {}
         self.inverse_kin_client = {}
+        self.target_pose_publisher = {}
         
         for arm in ('l_arm', 'r_arm'):
             forward_srv = self.create_client(
@@ -103,16 +105,23 @@ class BodyControlNode(Node):
                 srv_name=f'/{arm}/forward_kinematics',
             )
 
-            if forward_srv.service_is_ready():
-                self.forward_kin_client[arm] = forward_srv
+            if not forward_srv.service_is_ready():
+                continue
+
+            self.forward_kin_client[arm] = forward_srv
 
             inverse_srv = self.create_client(
                 srv_type=GetInverseKinematics,
                 srv_name=f'/{arm}/inverse_kinematics',
             )
 
-            if inverse_srv.service_is_ready():
-                self.inverse_kin_client[arm] = inverse_srv
+            self.inverse_kin_client[arm] = inverse_srv
+
+            self.target_pos_sub[arm] = self.create_publisher(
+                msg_type=PoseStamped,
+                topic=f'/{arm}/target_pose',
+                qos_profile=5,
+            )
 
         self.joint_state_pub_event = Event()
         self.sensor_state_pub_event = Event()
@@ -526,3 +535,25 @@ class BodyControlNode(Node):
         )
 
         return sol
+
+    def handle_fullbody_cartesian_command(self, cmd: FullBodyCartesianCommand):
+        ack = FullBodyCartesianCommandAck()
+
+        if cmd.HasField('left_arm'):
+            ack.left_arm_command_success = self.handle_arm_cartesian_request(cmd.left_arm, 'l_arm')
+        if cmd.HasField('right_arm'):
+            ack.right_arm_command_success = self.handle_arm_cartesian_request(cmd.right_arm, 'r_arm')
+
+        return ack
+
+    def handle_arm_cartesian_request(self, request: ArmIKRequest, name) -> bool:
+        if name not in self.target_pos_sub:
+            return False
+
+        pose = PoseStamped()
+        pose.header.stamp = self.get_clock().now().to_msg()
+        pose.pose = ros_pose_from_pb_matrix(request.target.pose)
+
+        self.target_pos_sub[name].publish(pose)
+
+        return True

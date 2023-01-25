@@ -35,6 +35,7 @@ from reachy_sdk_server.body_control_ros_node import BodyControlNode
 
 class ReachySDKServer(
     arm_kinematics_pb2_grpc.ArmKinematicsServicer,
+    fullbody_cartesian_command_pb2_grpc.FullBodyCartesianCommandServiceServicer,
     joint_pb2_grpc.JointServiceServicer,
     sensor_pb2_grpc.SensorServiceServicer,
     fan_pb2_grpc.FanControllerServiceServicer,
@@ -176,6 +177,13 @@ class ReachySDKServer(
     def ComputeArmIK(self, request: arm_kinematics_pb2.ArmIKRequest, context) -> arm_kinematics_pb2.ArmIKSolution:
         return self.body_control_node.arm_inverse_kinematics(request)
 
+    def SendFullBodyCartesianCommands(
+        self, 
+        request: fullbody_cartesian_command_pb2.FullBodyCartesianCommand,
+        context,
+    ) -> fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck:
+        return self.body_control_node.handle_fullbody_cartesian_command(request)
+
 
 def main():
     """Run the Node and the gRPC server."""
@@ -184,6 +192,7 @@ def main():
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
 
     arm_kinematics_pb2_grpc.add_ArmKinematicsServicer_to_server(sdk_server, server)
+    fullbody_cartesian_command_pb2_grpc.add_FullBodyCartesianCommandServiceServicer_to_server(sdk_server, server)
     joint_pb2_grpc.add_JointServiceServicer_to_server(sdk_server, server)
     sensor_pb2_grpc.add_SensorServiceServicer_to_server(sdk_server, server)
     fan_pb2_grpc.add_FanControllerServiceServicer_to_server(sdk_server, server)
