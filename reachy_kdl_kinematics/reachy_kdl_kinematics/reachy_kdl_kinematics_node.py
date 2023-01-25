@@ -1,9 +1,12 @@
 from functools import partial
+from threading import Event
 from typing import List
 
 import numpy as np
 
 from scipy.spatial.transform import Rotation
+
+from .pose_averager import PoseAverager
 
 import rclpy
 from geometry_msgs.msg import PoseStamped
@@ -32,9 +35,23 @@ class ReachyKdlKinematics(Node):
 
         self.urdf = self.retrieve_urdf()
 
+        # Listen to /joint_state to get current position
+        # used by averaged_target_pose
+        self._current_pos = {}
+        self.joint_state_sub = self.create_subscription(
+            msg_type=JointState,
+            topic='/joint_states',
+            qos_profile=5,
+            callback=self.on_joint_state,
+        )
+        self.joint_state_ready = Event()
+        self.wait_for_joint_state()
+
         self.chain, self.fk_solver, self.ik_solver = {}, {}, {}
         self.fk_srv, self.ik_srv = {}, {}
-        self.target_sub = {}
+        self.target_sub, self.averaged_target_sub = {}, {}
+        self.averaged_pose = {}
+        self.max_joint_vel = {}
 
         for prefix in ('l', 'r'):
             arm = f'{prefix}_arm'
@@ -80,6 +97,22 @@ class ReachyKdlKinematics(Node):
                         forward_publisher=forward_position_pub,
                     ),
                 )
+                self.logger.info(f'Adding subscription on "{self.target_sub[arm].topic}"...')
+
+                self.averaged_target_sub[arm] = self.create_subscription(
+                    msg_type=PoseStamped,
+                    topic=f'/{arm}/averaged_target_pose',
+                    qos_profile=5,
+                    callback=partial(
+                        self.on_averaged_target_pose, 
+                        name=arm,
+                        # arm straight, with elbow at -90 (facing forward)
+                        q0=[0, 0, 0, -np.pi / 2, 0, 0, 0],
+                        forward_publisher=forward_position_pub,
+                    ),
+                )
+                self.averaged_pose[arm] = PoseAverager(window_length=10)
+                self.max_joint_vel[arm] = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
                 self.logger.info(f'Adding subscription on "{self.target_sub[arm].topic}"...')
 
                 self.chain[arm] = chain
@@ -163,6 +196,48 @@ class ReachyKdlKinematics(Node):
         msg.data = sol
 
         forward_publisher.publish(msg)
+
+    def on_averaged_target_pose(self, msg: PoseStamped, name, q0, forward_publisher):
+        self.averaged_pose[name].append(msg.pose)
+        avg_pose = self.averaged_pose[name].mean()
+
+        M = ros_pose_to_matrix(avg_pose)
+
+        error, sol = inverse_kinematics(
+            self.ik_solver[name],
+            q0=q0,
+            target_pose=M,
+            nb_joints=self.chain[name].getNrOfJoints(),
+        )
+
+        # TODO: check error
+
+        current_position = np.array(self.get_current_position(self.chain[name]))
+
+        vel = np.array(sol) - current_position
+        vel = np.clip(vel, -self.max_joint_vel[name], self.max_joint_vel[name])
+
+        smoothed_sol = current_position + vel
+
+        msg = Float64MultiArray()
+        msg.data = smoothed_sol.tolist()
+
+        forward_publisher.publish(msg)
+
+    def get_current_position(self, chain) -> List[float]:
+        joints = self.get_chain_joints_name(chain)
+        return [self._current_pos[j] for j in joints]
+
+    def wait_for_joint_state(self):
+        while not self.joint_state_ready.is_set():
+            self.logger.info('Waiting for /joint_states...')
+            rclpy.spin_once(self)
+
+    def on_joint_state(self, msg: JointState):
+        for j, pos in zip(msg.name, msg.position):
+            self._current_pos[j] = pos
+
+        self.joint_state_ready.set()
 
     def retrieve_urdf(self, timeout_sec: float = 15):
         self.logger.info('Retrieving URDF from "/robot_description"...')
