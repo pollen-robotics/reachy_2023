@@ -193,7 +193,12 @@ class ReachyKdlKinematics(Node):
 
     def check_position(self, js: JointState, chain) -> List[float]:
         pos = dict(zip(js.name, js.position))
-        return [pos[j] for j in self.get_chain_joints_name(chain)]
+        try:
+            joints = [pos[j] for j in self.get_chain_joints_name(chain)]
+            return joints
+        except KeyError:
+            self.logger.warning(f'Incorrect joints found ({js.name} vs {self.get_chain_joints_name(chain)})')
+            raise
 
     def get_chain_joints_name(self, chain):
         return [chain.getSegment(i).getJoint().getName() for i in range(chain.getNrOfJoints())]

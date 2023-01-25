@@ -475,6 +475,7 @@ class BodyControlNode(Node):
         arm = 'l_arm' if request.arm_position.side == ArmSide.LEFT else 'r_arm'
 
         if arm not in self.forward_kin_client:
+            self.logger.warning(f'Could not find FK service for {arm}')
             return ArmFKSolution(success=False)
 
         fk_cli = self.forward_kin_client[arm]
@@ -501,6 +502,7 @@ class BodyControlNode(Node):
         arm = 'l_arm' if request.target.side == ArmSide.LEFT else 'r_arm'
 
         if arm not in self.inverse_kin_client:
+            self.logger.warning(f'Could not find IK service for {arm}')
             return ArmFKSolution(success=False)
 
         ik_cli = self.inverse_kin_client[arm]
