@@ -34,7 +34,7 @@ class CameraServer(
     def __init__(self, node_name: str) -> None:
         """Set up the node.
 
-        Subscribe to image topics (/left_image and /right_image).
+        Subscribe to image topics (/left_image/image_raw/compressed and /right_image/image_raw/compressed).
         Setup zoom services.
         """
         super().__init__(node_name=node_name)
@@ -61,14 +61,14 @@ class CameraServer(
 
         self.left_camera_sub = self.create_subscription(
             CompressedImage,
-            'left_image',
+            'left_image/image_raw/compressed',
             partial(self.on_image_update, side='left'),
             1,
         )
 
         self.right_camera_sub = self.create_subscription(
             CompressedImage,
-            'right_image',
+            'right_image/image_raw/compressed',
             partial(self.on_image_update, side='right'),
             1,
         )

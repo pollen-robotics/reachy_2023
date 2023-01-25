@@ -25,13 +25,13 @@ class RosCameraSubscriber(
     def __init__(self, node_name: str, side: str) -> None:
         """Set up the node.
 
-        Subscribe to the requested image topic (either /left_image or /right_image).
+        Subscribe to the requested image topic (either /left_image/image_raw/compressed or /right_image/image_raw/compressed).
         """
         super().__init__(node_name=node_name)
 
         self.camera_sub = self.create_subscription(
             CompressedImage,
-            side+'_image',
+            side+'_image/image_raw/compressed',
             self.on_image_update,
             1,
         )

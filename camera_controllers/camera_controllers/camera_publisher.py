@@ -43,10 +43,10 @@ class CameraPublisher(Node):
         self.right_device.video_capture.set_fps(fps)
         self.devices['right'] = self.right_device
 
-        self.camera_publisher_left = self.create_publisher(CompressedImage, 'left_image', 1)
+        self.camera_publisher_left = self.create_publisher(CompressedImage, 'left_image/image_raw/compressed', 1)
         self.logger.info(f'Launching "{self.camera_publisher_left.topic_name}" publisher.')
 
-        self.camera_publisher_right = self.create_publisher(CompressedImage, 'right_image', 1)
+        self.camera_publisher_right = self.create_publisher(CompressedImage, 'right_image/image_raw/compressed', 1)
         self.logger.info(f'Launching "{self.camera_publisher_right.topic_name}" publisher.')
 
         self.publisher = {

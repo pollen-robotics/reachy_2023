@@ -54,13 +54,13 @@ class CameraFocus(Node):
         self.bridge = CvBridge()
 
         self.camera_subscriber_left = self.create_subscription(
-            CompressedImage, 'left_image',
+            CompressedImage, 'left_image/image_raw/compressed',
             partial(self.on_image_update, side='left'),
             1,
             )
 
         self.camera_subscriber_right = self.create_subscription(
-            CompressedImage, 'right_image',
+            CompressedImage, 'right_image/image_raw/compressed',
             partial(self.on_image_update, side='right'),
             1,
             )
