@@ -17,6 +17,9 @@ controller_manager:
     l_arm_forward_position_controller:
       type: forward_command_controller/ForwardCommandController
 
+    gripper_forward_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
     forward_torque_controller:
       type: forward_command_controller/ForwardCommandController
 
@@ -49,7 +52,6 @@ r_arm_forward_position_controller:
       - r_forearm_yaw
       - r_wrist_pitch
       - r_wrist_roll
-      - r_gripper
     interface_name: position
     use_sim_time: false
 
@@ -63,7 +65,6 @@ l_arm_forward_position_controller:
       - l_forearm_yaw
       - l_wrist_pitch
       - l_wrist_roll
-      - l_gripper
     interface_name: position
     use_sim_time: false
 
@@ -72,6 +73,14 @@ antenna_forward_position_controller:
     joints:
       - l_antenna
       - r_antenna
+    interface_name: position
+    use_sim_time: false
+
+gripper_forward_position_controller:
+  ros__parameters:
+    joints:
+      - l_gripper
+      - r_gripper
     interface_name: position
     use_sim_time: false
 
