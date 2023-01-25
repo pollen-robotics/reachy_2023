@@ -8,6 +8,9 @@ controller_manager:
     r_arm_forward_position_controller:
       type: forward_command_controller/ForwardCommandController
 
+    gripper_forward_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
     forward_torque_controller:
       type: forward_command_controller/ForwardCommandController
 
@@ -31,6 +34,12 @@ r_arm_forward_position_controller:
       - r_forearm_yaw
       - r_wrist_pitch
       - r_wrist_roll
+    interface_name: position
+    use_sim_time: false
+
+gripper_forward_position_controller:
+  ros__parameters:
+    joints:
       - r_gripper
     interface_name: position
     use_sim_time: false
