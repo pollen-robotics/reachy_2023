@@ -1,5 +1,5 @@
 from launch import LaunchDescription, LaunchContext
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription, TimerAction
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
@@ -18,7 +18,7 @@ def generate_launch_description():
 
     start_rviz_arg = DeclareLaunchArgument(
         'start_rviz',
-        default_value='true',
+        default_value='false',
         description='Start RViz2 automatically with this launch file.',
     )
     start_rviz = LaunchConfiguration('start_rviz')
@@ -51,6 +51,7 @@ def generate_launch_description():
         [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
     )
 
+
     
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
@@ -69,6 +70,7 @@ def generate_launch_description():
     )
 
 
+
     gazebo_state_broadcaster_params = PathJoinSubstitution(
         [FindPackageShare('reachy_gazebo'), 'config', 'gz_state_broadcaster_params.yaml']
     )
@@ -78,6 +80,9 @@ def generate_launch_description():
         executable='spawner',
         arguments=['joint_state_broadcaster', '-p',gazebo_state_broadcaster_params,'--controller-manager', '/controller_manager'],
     )
+
+    
+    
 
     neck_forward_position_controller_spawner = Node(
         package='controller_manager',
@@ -153,8 +158,7 @@ def generate_launch_description():
 
 
     return LaunchDescription(arguments + [
-        SetUseSimTime(True),
-
+        SetUseSimTime(True), #does not seem to work...
         robot_state_publisher_node,
         gazebo_node,
         joint_state_broadcaster_spawner,
