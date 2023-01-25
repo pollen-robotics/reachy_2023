@@ -1,0 +1,5 @@
+
+# Service to get the zoom speed of a given camera ('left_eye' or 'right_eye')
+string name
+---
+uint16 speed
