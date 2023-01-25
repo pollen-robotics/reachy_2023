@@ -160,8 +160,7 @@ class ReachyKdlKinematics(Node):
         # TODO: check error
 
         msg = Float64MultiArray()
-        # TODO: remove the gripper position when #37 is fixed
-        msg.data = sol + [0.0]
+        msg.data = sol
 
         forward_publisher.publish(msg)
 
