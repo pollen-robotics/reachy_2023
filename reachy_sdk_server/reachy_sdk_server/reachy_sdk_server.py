@@ -172,9 +172,11 @@ class ReachySDKServer(
 
     # Arm kinematics servicer
     def ComputeArmFK(self, request: arm_kinematics_pb2.ArmFKRequest, context) -> arm_kinematics_pb2.ArmFKSolution:
+        """Compute forward kinematics for requested arm."""
         return self.body_control_node.arm_forward_kinematics(request)
 
     def ComputeArmIK(self, request: arm_kinematics_pb2.ArmIKRequest, context) -> arm_kinematics_pb2.ArmIKSolution:
+        """Compute inverse kinematics for requested arm."""
         return self.body_control_node.arm_inverse_kinematics(request)
 
     def SendFullBodyCartesianCommands(
@@ -182,6 +184,7 @@ class ReachySDKServer(
         request: fullbody_cartesian_command_pb2.FullBodyCartesianCommand,
         context,
     ) -> fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck:
+        """Compute movement given the requested commands in cartesian space."""
         return self.body_control_node.handle_fullbody_cartesian_command(request)
 
     def StreamFullBodyCartesianCommands(
@@ -189,6 +192,7 @@ class ReachySDKServer(
         request_iterator: Iterator[fullbody_cartesian_command_pb2.FullBodyCartesianCommand],
         context,
     ) -> fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck:
+        """Compute movement from stream of commands in cartesian space."""
         for request in request_iterator:
             _ = self.SendCartesianCommand(request, context)
 
