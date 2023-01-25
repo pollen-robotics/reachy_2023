@@ -279,7 +279,7 @@ ArmSystem::export_command_interfaces()
 }
 
 hardware_interface::return_type
-ArmSystem::read()
+ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
 {
   current_timestamp = clock_.now();
   rclcpp::Duration duration = current_timestamp - last_timestamp_;
@@ -348,7 +348,7 @@ ArmSystem::read()
 }
 
 hardware_interface::return_type
-ArmSystem::write()
+ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
 {
   auto t0 = clock_.now();
 
