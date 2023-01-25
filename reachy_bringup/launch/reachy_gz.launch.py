@@ -1,4 +1,4 @@
-from launch import LaunchDescription
+from launch import LaunchDescription, LaunchContext
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
@@ -41,6 +41,7 @@ def generate_launch_description():
 
         ]
     )
+
     robot_description = {
         'robot_description': ParameterValue(robot_description_content, value_type=str),
     }

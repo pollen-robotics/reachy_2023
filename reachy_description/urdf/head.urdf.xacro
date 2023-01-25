@@ -360,6 +360,14 @@
 
           <!-- Use camera, not camera_triggered -->
           <plugin name="left_camera_controller" filename="libgazebo_ros_camera.so">
+              <ros>
+                <namespace>/</namespace>
+                <remapping>image_raw:=image_raw</remapping>
+                <remapping>camera_info:=camera_info</remapping>
+              </ros>
+              <camera_name>left_image</camera_name>
+
+
 
             <!-- <ros> -->
             <!--   <namespace>custom_ns</namespace> -->
@@ -368,7 +376,7 @@
             <!-- </ros> -->
 
             <!-- Set camera name. If empty, defaults to sensor name (i.e. "sensor_name") -->
-            <camera_name>left_camera</camera_name>
+            <!-- <camera_name>left_camera</camera_name> -->
 
             <!-- Set TF frame name. If empty, defaults to link name (i.e. "link_name") -->
             <frame_name>left_camera_optical</frame_name>
@@ -422,6 +430,12 @@
 
           <!-- Use camera, not camera_triggered -->
           <plugin name="right_camera_controller" filename="libgazebo_ros_camera.so">
+              <ros>
+                <namespace>/</namespace>
+                <remapping>image_raw:=image_raw</remapping>
+                <remapping>camera_info:=camera_info</remapping>
+              </ros>
+              <camera_name>right_image</camera_name>
 
             <!-- <ros> -->
             <!--   <namespace>custom_ns</namespace> -->
@@ -430,7 +444,7 @@
             <!-- </ros> -->
 
             <!-- Set camera name. If empty, defaults to sensor name (i.e. "sensor_name") -->
-            <camera_name>right_camera</camera_name>
+            <!-- <camera_name>right_camera</camera_name> -->
 
             <!-- Set TF frame name. If empty, defaults to link name (i.e. "link_name") -->
             <frame_name>right_camera_optical</frame_name>

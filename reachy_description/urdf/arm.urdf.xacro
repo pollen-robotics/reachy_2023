@@ -205,12 +205,24 @@
           </geometry>
       </visual>
       <collision>
-          <origin xyz="0.0 0.02 -0.06" rpy="0.0 1.57 0.0"/>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
           <geometry>
-              <box size="0.1 0.012 0.035" />
+              <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_thumb.dae"/>
           </geometry>
+          <!-- <origin xyz="0.0 0.02 -0.06" rpy="0.0 1.57 0.0"/> -->
+          <!-- <geometry> -->
+          <!--     <box size="0.1 0.012 0.035" /> -->
+          <!-- </geometry> -->
       </collision>
+
   </link>
+
+
+  <gazebo reference="${prefix}_gripper_thumb">
+    <self_collide>1</self_collide>
+  </gazebo>
+
+
 
   <joint name="${prefix}_wrist_roll" type="revolute">
       <origin xyz="0 0 -0.0325" rpy="0.0 0.0 0.0"/>
@@ -234,12 +246,22 @@
           </geometry>
       </visual>
       <collision>
-          <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
           <geometry>
-              <box size="0.1 0.012 0.035" />
+              <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_finger.dae"/>
           </geometry>
+          <!-- <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/> -->
+          <!-- <geometry> -->
+          <!--     <box size="0.1 0.012 0.035" /> -->
+          <!-- </geometry> -->
       </collision>
+
+
   </link>
+
+  <gazebo reference="${prefix}_gripper_finger">
+    <self_collide>1</self_collide>
+  </gazebo>
 
   <link name="${prefix}_arm_tip">
     <inertial>
@@ -261,7 +283,16 @@
       <parent link="${prefix}_gripper_thumb"/>
       <child link="${prefix}_gripper_finger"/>
       <axis xyz="1 0 0"/>
-      <limit lower="-1.2" upper="0.35" effort="10." velocity="0.0"/>
+
+
+      <xacro:if value="${side == 'right'}">
+        <limit lower="-1.2" upper="0.35" effort="10." velocity="0.0"/>
+      </xacro:if>
+      <xacro:if value="${side == 'left'}">
+        <limit lower="-0.35" upper="1.2" effort="10." velocity="0.0"/>
+      </xacro:if>
+
+
       <dynamics damping="${damping}" friction="${friction}"/>
   </joint>
 
@@ -285,6 +316,30 @@
       </plugin>
     </gazebo>
   </xacro:if>
+
+
+  <!-- Doesn't work... -->
+  <!-- <xacro:if value="$(arg use_gazebo)"> -->
+  <!--   <gazebo reference="${prefix}_gripper_thumb"> -->
+  <!--     <provideFeedback>true</provideFeedback> -->
+  <!--   </gazebo> -->
+  <!--   <gazebo> -->
+  <!--     <plugin name="gazebo_ros_force_sensor" filename="libgazebo_ros_force.so"> -->
+
+  <!--       <ros> -->
+  <!--         <!-\- Add namespace and remap the default topic -\-> -->
+  <!--         <namespace>/${prefix}_force_sensor</namespace> -->
+  <!--       </ros> -->
+
+  <!--       <link_name>${prefix}_gripper_thumb</link_name> -->
+  <!--       <force_frame>world</force_frame> -->
+  <!--       <update_rate>200</update_rate> -->
+  <!--       <update_rate>1</update_rate> -->
+  <!--       <gaussian_noise>0.01</gaussian_noise> -->
+  <!--     </plugin> -->
+  <!--   </gazebo> -->
+  <!-- </xacro:if> -->
+
 
 
 

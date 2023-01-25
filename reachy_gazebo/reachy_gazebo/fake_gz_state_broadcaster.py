@@ -21,7 +21,7 @@ from rclpy.qos import QoSProfile, QoSDurabilityPolicy
 
 from control_msgs.msg import DynamicJointState, InterfaceValue
 from sensor_msgs.msg import JointState
-
+from geometry_msgs.msg import WrenchStamped
 
 DUMMY_JOINT_INTERFACE_NAMES=['torque','p_gain','i_gain','d_gain','temperature']
 DUMMY_SPECIAL_INTERFACES={'l_shoulder_fan':'state','l_elbow_fan':'state','l_wrist_fan':'state','l_antenna_fan':'state', 'l_force_gripper':'force',
@@ -52,7 +52,30 @@ class FakeDynState(Node):
             self.joint_state_callback,
             10)
 
+        self.l_gripper_force_sub= self.create_subscription(
+            WrenchStamped,
+            '/l_force_sensor/l_gripper_ft_sensor',
+            self.l_force_cb,
+            10)
+
+
+        self.r_gripper_force_sub= self.create_subscription(
+            WrenchStamped,
+            '/r_force_sensor/r_gripper_ft_sensor',
+            self.r_force_cb,
+            10)
+
+        self._curr_l_force=0.0
+        self._curr_r_force=0.0
         self.logger.info(f'Fake broadcaster for /dynamic_joint_states and /joint_states')
+
+
+    def l_force_cb(self,msg):
+        self._curr_l_force=msg.wrench.force.z
+
+    def r_force_cb(self,msg):
+        self._curr_r_force=msg.wrench.force.z
+
 
     def joint_state_callback(self,msg):
         self.js_publisher.publish(msg)
@@ -81,7 +104,12 @@ class FakeDynState(Node):
                 fake.joint_names.append(k)
                 inter= InterfaceValue()
                 inter.interface_names.append(v)
-                inter.values.append(0.0)
+                if k == 'r_force_gripper':
+                    inter.values.append(self._curr_r_force)
+                elif k == 'l_force_gripper':
+                    inter.values.append(self._curr_l_force)
+                else:
+                    inter.values.append(0.0)
                 fake.interface_values.append(inter)
             should_publish=True
         if not dummy_joint_interface_present: #there is non of the special interface for the joint
