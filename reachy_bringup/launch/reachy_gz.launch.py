@@ -4,7 +4,7 @@ from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.descriptions import ParameterValue
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetUseSimTime
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
@@ -18,7 +18,7 @@ def generate_launch_description():
 
     start_rviz_arg = DeclareLaunchArgument(
         'start_rviz',
-        default_value='true',
+        default_value='false',
         description='Start RViz2 automatically with this launch file.',
     )
     start_rviz = LaunchConfiguration('start_rviz')
@@ -67,10 +67,15 @@ def generate_launch_description():
         condition=IfCondition(start_rviz),
     )
 
+
+    gazebo_state_broadcaster_params = PathJoinSubstitution(
+        [FindPackageShare('reachy_gazebo'), 'config', 'gz_state_broadcaster_params.yaml']
+    )
+
     joint_state_broadcaster_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_state_broadcaster', '--controller-manager', '/controller_manager'],
+        arguments=['joint_state_broadcaster', '-p',gazebo_state_broadcaster_params,'--controller-manager', '/controller_manager'],
     )
 
     neck_forward_position_controller_spawner = Node(
@@ -122,6 +127,10 @@ def generate_launch_description():
         ),
     )
 
+    gazebo_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+                FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py'])
+    )
     #For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
 
     delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
@@ -139,12 +148,14 @@ def generate_launch_description():
         ),
     )
 
+
+
+
     return LaunchDescription(arguments + [
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([
-                FindPackageShare("reachy_bringup"), '/launch', '/gazebo.launch.py'])
-        ),
+        SetUseSimTime(True),
+
         robot_state_publisher_node,
+        gazebo_node,
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,

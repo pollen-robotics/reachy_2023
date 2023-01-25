@@ -1,226 +1,533 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-<xacro:macro name="head" params="parent damping friction">
 
-  <xacro:include filename="$(find reachy_description)/ros2_control/head.ros2_control.xacro"/>
+  <xacro:arg name="depth_camera" default="true"/>
+  <xacro:property name="camera_link" value="0.05" /> <!-- Size of square 'camera' box -->
+  <xacro:property name="camera_convergence" value="0.0" /> <!-- convergence angle (rad) of the cameras. 0=parallel-->
 
-  <joint name="neck_roll" type="revolute">
+  <xacro:macro name="head" params="parent damping friction">
+
+    <xacro:include filename="$(find reachy_description)/ros2_control/head.ros2_control.xacro"/>
+
+    <joint name="neck_roll" type="revolute">
       <origin xyz="0.015 0.0 0.095" rpy="0 0.174 0" />
       <parent link="${parent}"/>
       <child link="head_x"/>
       <axis xyz="1 0 0"/>
-    <limit lower="-0.8" upper="0.8" effort="10." velocity="0.0"/>
-    <dynamics damping="${damping}" friction="${friction}"/>
-  </joint>
+      <limit lower="-0.8" upper="0.8" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+    </joint>
 
-  <link name="head_x">
-    <inertial>
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <mass value="0.001"/>
-          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
-    </inertial>
+    <link name="head_x">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
     </link>
 
-  <joint name="neck_pitch" type="revolute">
+    <joint name="neck_pitch" type="revolute">
       <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
       <parent link="head_x"/>
       <child link="head_y"/>
       <axis xyz="0 1 0"/>
-    <limit lower="-0.8" upper="1.13" effort="10." velocity="0.0"/>
-    <dynamics damping="${damping}" friction="${friction}"/>
-  </joint>
+      <limit lower="-0.8" upper="1.13" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+    </joint>
 
-  <link name="head_y" >
-    <inertial>
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <mass value="0.001"/>
-          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
-    </inertial>
+    <link name="head_y" >
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
     </link>
 
-  <joint name="neck_yaw" type="revolute">
+    <joint name="neck_yaw" type="revolute">
       <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
       <parent link="head_y"/>
       <child link="head_z"/>
       <axis xyz="0 0 1"/>
-    <limit lower="-2.79" upper="2.79" effort="10." velocity="0.0"/>
-    <dynamics damping="${damping}" friction="${friction}"/>
-  </joint>
+      <limit lower="-2.79" upper="2.79" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+    </joint>
 
-  <link name="head_z">
-    <inertial>
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <mass value="0.001"/>
-          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
-    </inertial>
-  </link>
+    <link name="head_z">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
+    </link>
 
-  <joint name="neck_fixed" type="fixed">
+    <joint name="neck_fixed" type="fixed">
       <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
       <parent link="head_z" />
       <child link="head" />
-  </joint>
+    </joint>
 
-  <!-- Fixed Orbita Arms Visuals -->
+    <!-- Fixed Orbita Arms Visuals -->
 
-  <joint name="neck_top" type="fixed">
+    <joint name="neck_top" type="fixed">
       <origin xyz="0.0067 0.0 0.0478" rpy="0 0.174 0"/>
       <parent link="${parent}"/>
       <child link="top_neck_arm"/>
-  </joint>
+    </joint>
 
-  <link name="top_neck_arm">
-    <inertial>
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <mass value="0.001"/>
-          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
-    </inertial>
+    <link name="top_neck_arm">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
 
       <visual name="">
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.5236"/>
-          <geometry>
-              <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
-          </geometry>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.5236"/>
+        <geometry>
+          <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
+        </geometry>
       </visual>
       <collision>
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <geometry>
-              <cylinder length="0.0" radius="0.0" />
-          </geometry>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <cylinder length="0.0" radius="0.0" />
+        </geometry>
       </collision>
-  </link>
+    </link>
 
-  <joint name="neck_middle" type="fixed">
+    <joint name="neck_middle" type="fixed">
       <origin xyz="0.0067 0.0 0.0478" rpy="0 0.174 0"/>
       <parent link="${parent}"/>
       <child link="middle_neck_arm"/>
-  </joint>
+    </joint>
 
-  <link name="middle_neck_arm">
-    <inertial>
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <mass value="0.001"/>
-          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
-    </inertial>
+    <link name="middle_neck_arm">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
       <visual name="">
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 2.618"/>
-          <geometry>
-              <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
-          </geometry>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 2.618"/>
+        <geometry>
+          <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
+        </geometry>
       </visual>
       <collision>
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <geometry>
-              <cylinder length="0.0" radius="0.0" />
-          </geometry>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <cylinder length="0.0" radius="0.0" />
+        </geometry>
       </collision>
-  </link>
+    </link>
 
-  <joint name="neck_bottom" type="fixed">
+    <joint name="neck_bottom" type="fixed">
       <origin xyz="0.0067 0.0 0.0478" rpy="0 0.174 0"/>
       <parent link="${parent}"/>
       <child link="bottom_neck_arm"/>
-  </joint>
+    </joint>
 
-  <link name="bottom_neck_arm">
-    <inertial>
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <mass value="0.001"/>
-          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
-    </inertial>
-      <visual name="">
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 -1.57"/>
-          <geometry>
-              <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
-          </geometry>
-      </visual>
-      <collision>
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <geometry>
-              <cylinder length="0.0" radius="0.0" />
-          </geometry>
-      </collision>
-  </link>
-
-  <!-- Head Links -->
-
-  <link name="head">
+    <link name="bottom_neck_arm">
       <inertial>
-          <origin xyz="-0.009 -0.002 0.059" rpy="0.0 0.0 0.0"/>
-          <mass value="0.237"/>
-          <inertia ixx="1.676e-3" ixy="3.068e-6" ixz="1.2449e-4" iyy="1.368e-3" iyz="3.360e-5" izz="8.425e-4"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
       </inertial>
       <visual name="">
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <geometry>
-              <mesh filename="file://$(find reachy_description)/meshes/head.dae"/>
-          </geometry>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 -1.57"/>
+        <geometry>
+          <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
+        </geometry>
       </visual>
       <collision>
-          <origin xyz="-0.009 -0.002 0.059" rpy="1.57 0.0 0.0"/>
-          <geometry>
-              <cylinder length="0.15" radius="0.06" />
-          </geometry>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <cylinder length="0.0" radius="0.0" />
+        </geometry>
       </collision>
-  </link>
+    </link>
 
-  <link name="l_antenna_link">
+    <!-- Head Links -->
+
+    <link name="head">
       <inertial>
-          <origin xyz="-0.001 0.0 0.008" rpy="0.0 0.0 0.0"/>
-          <mass value="0.004"/>
-          <inertia ixx="1.794e-7" ixy="-1.240e-5" ixz="1.91701e-8" iyy="1.5e-7" iyz="3.169e-6" izz="1.933e-7"/>
+        <origin xyz="-0.009 -0.002 0.059" rpy="0.0 0.0 0.0"/>
+        <mass value="0.237"/>
+        <inertia ixx="1.676e-3" ixy="3.068e-6" ixz="1.2449e-4" iyy="1.368e-3" iyz="3.360e-5" izz="8.425e-4"/>
       </inertial>
       <visual name="">
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <geometry>
-              <mesh filename="file://$(find reachy_description)/meshes/antenna.dae"/>
-          </geometry>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <mesh filename="file://$(find reachy_description)/meshes/head.dae"/>
+        </geometry>
       </visual>
       <collision>
-          <origin xyz="0.1 0.0 0.1" rpy="0.0 0 0.0"/>
-          <geometry>
-              <cylinder length="0.0" radius="0.0" />
-          </geometry>
+        <origin xyz="-0.009 -0.002 0.059" rpy="1.57 0.0 0.0"/>
+        <geometry>
+          <cylinder length="0.15" radius="0.06" />
+        </geometry>
       </collision>
-  </link>
+    </link>
 
-  <joint name="l_antenna" type="revolute">
+    <link name="l_antenna_link">
+      <inertial>
+        <origin xyz="-0.001 0.0 0.008" rpy="0.0 0.0 0.0"/>
+        <mass value="0.004"/>
+        <inertia ixx="1.794e-7" ixy="-1.240e-5" ixz="1.91701e-8" iyy="1.5e-7" iyz="3.169e-6" izz="1.933e-7"/>
+      </inertial>
+      <visual name="">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <mesh filename="file://$(find reachy_description)/meshes/antenna.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0.1 0.0 0.1" rpy="0.0 0 0.0"/>
+        <geometry>
+          <cylinder length="0.0" radius="0.0" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="l_antenna" type="revolute">
       <origin xyz="-0.052 0.057 0.086" rpy="0.166 -1.054 -1.11"/>
       <parent link="head"/>
       <child link="l_antenna_link"/>
       <axis xyz="0 0 1"/>
-    <limit lower="-2.618" upper="2.618" effort="10." velocity="0.0"/>
-  </joint>
+      <limit lower="-2.618" upper="2.618" effort="10." velocity="0.0"/>
+    </joint>
 
-  <link name="r_antenna_link">
+    <link name="r_antenna_link">
       <inertial>
-          <origin xyz="-0.001 0.0 0.008" rpy="0.0 0.0 0.0"/>
-          <mass value="0.004"/>
-          <inertia ixx="1.794e-7" ixy="-1.240e-5" ixz="1.91701e-8" iyy="1.5e-7" iyz="3.169e-6" izz="1.933e-7"/>
+        <origin xyz="-0.001 0.0 0.008" rpy="0.0 0.0 0.0"/>
+        <mass value="0.004"/>
+        <inertia ixx="1.794e-7" ixy="-1.240e-5" ixz="1.91701e-8" iyy="1.5e-7" iyz="3.169e-6" izz="1.933e-7"/>
       </inertial>
       <visual name="">
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <geometry>
-              <mesh filename="file://$(find reachy_description)/meshes/antenna.dae"/>
-          </geometry>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <mesh filename="file://$(find reachy_description)/meshes/antenna.dae"/>
+        </geometry>
       </visual>
       <collision>
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <geometry>
-              <cylinder length="0.0" radius="0.0" />
-          </geometry>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <cylinder length="0.0" radius="0.0" />
+        </geometry>
       </collision>
-  </link>
+    </link>
 
-  <joint name="r_antenna" type="revolute">
+    <joint name="r_antenna" type="revolute">
       <origin xyz="-0.052 -0.057 0.086" rpy="-0.166 -1.054 1.11"/>
       <parent link="head"/>
       <child link="r_antenna_link"/>
       <axis xyz="0 0 1"/>
-    <limit lower="-2.618" upper="2.618" effort="10." velocity="0.0"/>
-  </joint>
+      <limit lower="-2.618" upper="2.618" effort="10." velocity="0.0"/>
+    </joint>
 
-  <xacro:head_control/>
+    <xacro:head_control/>
+
+    <!-- Cameras -->
+    <xacro:if value="$(arg use_gazebo)">
+      <joint name="left_cam_fixed" type="fixed">
+	<origin xyz="0.02 0.03625 0.06105" rpy="0.0 0.0  ${-camera_convergence/2.0}"/>
+	<parent link="head" />
+	<child link="left_camera" />
+      </joint>
+
+      <link name="left_camera" >
+	<!-- <collision> -->
+	<!--     <origin xyz="0 0 0" rpy="0 0 0"/> -->
+	<!--     <geometry> -->
+	<!--   <box size="${camera_link} ${camera_link} ${camera_link}"/> -->
+	<!--     </geometry> -->
+	<!--   </collision> -->
+
+	<!-- <visual> -->
+	<!--   <origin xyz="0 0 0" rpy="0 0 0"/> -->
+	<!--   <geometry> -->
+	<!-- <box size="${camera_link} ${camera_link} ${camera_link}"/> -->
+	<!--   </geometry> -->
+	<!--   <material name="red"/> -->
+	<!-- </visual> -->
+
+	<inertial>
+	  <mass value="1e-5" />
+	  <origin xyz="0 0 0" rpy="0 0 0"/>
+	  <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+	</inertial>
+      </link>
+
+
+
+
+      <link name="left_camera_optical">
+      </link>
+
+
+      <joint name="left_camera_optical_joint" type="fixed">
+	<!-- these values have to be these values otherwise the gazebo camera
+             image won't be aligned properly with the frame it is supposedly
+             originating from -->
+	<origin xyz="0 0 0" rpy="${-pi/2.0} 0 ${-pi/2.0}"/>
+	<parent link="left_camera"/>
+	<child link="left_camera_optical"/>
+      </joint>
+
+
+
+      <joint name="right_cam_fixed" type="fixed">
+	<origin xyz="0.02 -0.03625 0.06105" rpy="0.0 0.0 ${camera_convergence/2.0}"/>
+	<parent link="head" />
+	<child link="right_camera" />
+      </joint>
+
+
+
+      <link name="right_camera" >
+
+	<!-- <collision> -->
+	<!--     <origin xyz="0 0 0" rpy="0 0 0"/> -->
+	<!--     <geometry> -->
+	<!--   <box size="${camera_link} ${camera_link} ${camera_link}"/> -->
+	<!--     </geometry> -->
+	<!--   </collision> -->
+
+	<!-- <visual> -->
+	<!--   <origin xyz="0 0 0" rpy="0 0 0"/> -->
+	<!--   <geometry> -->
+	<!-- <box size="${camera_link} ${camera_link} ${camera_link}"/> -->
+	<!--   </geometry> -->
+	<!--   <material name="red"/> -->
+	<!-- </visual> -->
+
+	<inertial>
+	  <mass value="1e-5" />
+	  <origin xyz="0 0 0" rpy="0 0 0"/>
+	  <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+	</inertial>
+      </link>
+
+
+      <link name="right_camera_optical">
+      </link>
+
+
+      <joint name="right_camera_optical_joint" type="fixed">
+	<!-- these values have to be these values otherwise the gazebo camera
+             image won't be aligned properly with the frame it is supposedly
+             originating from -->
+	<origin xyz="0 0 0" rpy="${-pi/2.0} 0 ${-pi/2.0}"/>
+	<parent link="right_camera"/>
+	<child link="right_camera_optical"/>
+      </joint>
+
+
+      <gazebo reference="left_camera">
+	<!-- <link name="left_camera"> -->
+	<sensor type="camera" name="left_camera">
+
+
+          <!-- Set always_on only sensor, not on plugin -->
+          <always_on>0</always_on>
+
+          <!-- Set update_rate only sensor, not on plugin -->
+          <update_rate>30</update_rate>
+
+          <camera name="left_camera">
+            <horizontal_fov>1.3962634</horizontal_fov>
+            <image>
+              <width>800</width>
+              <height>800</height>
+              <format>R8G8B8</format>
+            </image>
+            <distortion>
+              <k1>0.0</k1>
+              <k2>0.0</k2>
+              <k3>0.0</k3>
+              <p1>0.0</p1>
+              <p2>0.0</p2>
+              <center>0.5 0.5</center>
+            </distortion>
+
+            <noise>
+              <type>gaussian</type>
+              <mean>0.0</mean>
+              <stddev>0.007</stddev>
+            </noise>
+
+          </camera>
+
+          <!-- Use camera, not camera_triggered -->
+          <plugin name="left_camera_controller" filename="libgazebo_ros_camera.so">
+
+            <!-- <ros> -->
+            <!--   <namespace>custom_ns</namespace> -->
+            <!--   <argument>image_raw:=custom_img</argument> -->
+            <!--   <argument>camera_info:=custom_info</argument> -->
+            <!-- </ros> -->
+
+            <!-- Set camera name. If empty, defaults to sensor name (i.e. "sensor_name") -->
+            <camera_name>left_camera</camera_name>
+
+            <!-- Set TF frame name. If empty, defaults to link name (i.e. "link_name") -->
+            <frame_name>left_camera_optical</frame_name>
+
+            <hack_baseline>0.07</hack_baseline>
+
+            <!-- No need to repeat distortion parameters or to set autoDistortion -->
+          </plugin>
+        </sensor>
+      </gazebo>
+
+
+
+
+
+
+
+      <gazebo reference="right_camera">
+	<sensor type="camera" name="right_camera">
+
+
+          <!-- Set always_on only sensor, not on plugin -->
+          <always_on>0</always_on>
+
+          <!-- Set update_rate only sensor, not on plugin -->
+          <update_rate>30</update_rate>
+
+          <camera name="right_camera">
+            <horizontal_fov>1.3962634</horizontal_fov>
+            <image>
+              <width>800</width>
+              <height>800</height>
+              <format>R8G8B8</format>
+            </image>
+            <distortion>
+              <k1>0.0</k1>
+              <k2>0.0</k2>
+              <k3>0.0</k3>
+              <p1>0.0</p1>
+              <p2>0.0</p2>
+              <center>0.5 0.5</center>
+            </distortion>
+
+            <noise>
+              <type>gaussian</type>
+              <mean>0.0</mean>
+              <stddev>0.007</stddev>
+            </noise>
+
+          </camera>
+
+          <!-- Use camera, not camera_triggered -->
+          <plugin name="right_camera_controller" filename="libgazebo_ros_camera.so">
+
+            <!-- <ros> -->
+            <!--   <namespace>custom_ns</namespace> -->
+            <!--   <argument>image_raw:=custom_img</argument> -->
+            <!--   <argument>camera_info:=custom_info</argument> -->
+            <!-- </ros> -->
+
+            <!-- Set camera name. If empty, defaults to sensor name (i.e. "sensor_name") -->
+            <camera_name>right_camera</camera_name>
+
+            <!-- Set TF frame name. If empty, defaults to link name (i.e. "link_name") -->
+            <frame_name>right_camera_optical</frame_name>
+
+            <hack_baseline>0.07</hack_baseline>
+
+            <!-- No need to repeat distortion parameters or to set autoDistortion -->
+          </plugin>
+        </sensor>
+      </gazebo>
+
+
+
+      <link name="depth_camera_link" >
+	<!-- <collision> -->
+	<!--     <origin xyz="0 0 0" rpy="0 0 0"/> -->
+	<!--     <geometry> -->
+	<!--   <box size="${camera_link} ${camera_link} ${camera_link}"/> -->
+	<!--     </geometry> -->
+	<!--   </collision> -->
+
+	<!-- <visual> -->
+	<!--   <origin xyz="0 0 0" rpy="0 0 0"/> -->
+	<!--   <geometry> -->
+	<!-- <box size="${camera_link} ${camera_link} ${camera_link}"/> -->
+	<!--   </geometry> -->
+	<!--   <material name="red"/> -->
+	<!-- </visual> -->
+
+	<inertial>
+	  <mass value="1e-5" />
+	  <origin xyz="0 0 0" rpy="0 0 0"/>
+	  <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+	</inertial>
+
+      </link>
+
+      <joint name="depth_cam_fixed" type="fixed">
+	<origin xyz="0.02 0 0.06105" rpy="0.0 0.0 0"/>
+	<parent link="head" />
+	<child link="depth_camera_link" />
+      </joint>
+
+      <link name="depth_camera_optical">
+      </link>
+
+
+      <joint name="depth_camera_optical_joint" type="fixed">
+	<!-- these values have to be these values otherwise the gazebo camera
+             image won't be aligned properly with the frame it is supposedly
+             originating from -->
+	<origin xyz="0 0 0" rpy="${-pi/2.0} 0 ${-pi/2.0}"/>
+	<parent link="depth_camera_link"/>
+	<child link="depth_camera_optical"/>
+      </joint>
+
+
+
+      <xacro:if value="$(arg depth_camera)">
+	<gazebo reference="depth_camera_link">
+	  <sensor name="depth_camera" type="depth">
+            <always_on>true</always_on>
+            <update_rate>15</update_rate>
+            <pose>0 0 0 0 0 0</pose>
+            <camera name="realsense_depth_camera">
+              <horizontal_fov>1.46608</horizontal_fov>
+              <image>
+                <width>424</width>
+                <height>240</height>
+                <format>B8G8R8</format>
+              </image>
+              <clip>
+                <near>0.05</near>
+                <far>8</far>
+              </clip>
+            </camera>
+            <!-- https://github.com/mlherd/ros2_turtlebot3_waffle_intel_realsense -->
+            <!-- <plugin name="intel_realsense_d430_depth_driver" filename="libgazebo_ros_camera.so"> -->
+            <plugin name="intel_realsense_r200_depth_driver" filename="libgazebo_ros_camera.so">
+              <ros>
+                <namespace>depth_camera</namespace>
+                <remapping>depth_camera/image_raw:=color/image_raw</remapping>
+                <remapping>depth_camera/depth/image_raw:=depth/image_rect_raw</remapping>
+                <remapping>depth_camera/camera_info:=camera_info</remapping>
+                <remapping>depth_camera/depth/camera_info:=depth/camera_info</remapping>
+                <remapping>depth_camera/points:=depth/points</remapping>
+              </ros>
+              <camera_name>depth_camera</camera_name>
+              <frame_name>depth_camera_optical</frame_name>
+              <hack_baseline>0.07</hack_baseline>
+              <min_depth>0.05</min_depth>
+              <max_depth>8.0</max_depth>
+            </plugin>
+	  </sensor>
+	</gazebo>
+      </xacro:if>
+</xacro:if>
 
 
 

@@ -265,6 +265,29 @@
       <dynamics damping="${damping}" friction="${friction}"/>
   </joint>
 
+  <xacro:if value="$(arg use_gazebo)">
+    <gazebo reference="${prefix}_gripper">
+      <provideFeedback>true</provideFeedback>
+    </gazebo>
+    <gazebo>
+      <plugin name="gazebo_ros_ft" filename="libgazebo_ros_ft_sensor.so">
+
+        <ros>
+          <!-- Add namespace and remap the default topic -->
+          <namespace>/${prefix}_force_sensor</namespace>
+          <argument>wrench:=${prefix}_gripper_ft_sensor</argument>
+        </ros>
+
+        <joint_name>${prefix}_gripper</joint_name>
+        <update_rate>200</update_rate>
+        <update_rate>1</update_rate>
+        <gaussian_noise>0.01</gaussian_noise>
+      </plugin>
+    </gazebo>
+  </xacro:if>
+
+
+
   <xacro:arm_control
     name="${prefix}"
     serial_port="${serial_port}"

@@ -23,10 +23,11 @@ def generate_launch_description():
             PathJoinSubstitution([
                 FindPackageShare("gazebo_ros"),
                 "launch",
-                "gazebo.launch.py"
+                "gazebo.launch.py",
             ])
         ),
-        launch_arguments={'verbose': 'true'}.items()
+        launch_arguments={'verbose': 'true'}.items(),
+
     )
 
     # Note: Environment variable GAZEBO_MODEL_PATH is extended as in
@@ -43,8 +44,16 @@ def generate_launch_description():
         output="screen"
     )
 
+    fake_broadcaster = Node(
+        package="reachy_gazebo",
+        executable="fake_gz_state_broadcaster",
+        output="screen"
+    )
+
+
     return LaunchDescription(
         launch_args + [
             gazebo,
+            fake_broadcaster,
             spawn_entity
         ])
