@@ -119,7 +119,7 @@ class BodyControlNode(Node):
 
             self.target_pos_sub[arm] = self.create_publisher(
                 msg_type=PoseStamped,
-                topic=f'/{arm}/target_pose',
+                topic=f'/{arm}/averaged_target_pose',
                 qos_profile=5,
             )
 
