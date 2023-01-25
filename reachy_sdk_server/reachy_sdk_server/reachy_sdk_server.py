@@ -173,6 +173,9 @@ class ReachySDKServer(
     def ComputeArmFK(self, request: arm_kinematics_pb2.ArmFKRequest, context) -> arm_kinematics_pb2.ArmFKSolution:
         return self.body_control_node.arm_forward_kinematics(request)
 
+    def ComputeArmIK(self, request: arm_kinematics_pb2.ArmIKRequest, context) -> arm_kinematics_pb2.ArmIKSolution:
+        return self.body_control_node.arm_inverse_kinematics(request)
+
 
 def main():
     """Run the Node and the gRPC server."""

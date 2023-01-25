@@ -8,7 +8,6 @@ import yaml
 import numpy as np
 
 from google.protobuf.wrappers_pb2 import FloatValue, UInt32Value, BoolValue
-from scipy.spatial.transform import Rotation
 
 from ament_index_python.packages import get_package_share_directory 
 
@@ -18,16 +17,21 @@ from rclpy.node import Node
 from control_msgs.msg import DynamicJointState
 from std_msgs.msg import Float64MultiArray
 
-from reachy_msgs.srv import GetForwardKinematics
+from reachy_msgs.srv import GetForwardKinematics, GetInverseKinematics
 
-from reachy_sdk_api.arm_kinematics_pb2 import ArmEndEffector, ArmFKRequest, ArmFKSolution, ArmSide
+from reachy_sdk_api.arm_kinematics_pb2 import (
+    ArmEndEffector, ArmSide, ArmJointPosition,
+    ArmFKRequest, ArmFKSolution, 
+    ArmIKRequest, ArmIKSolution,
+)
 from reachy_sdk_api.fan_pb2 import FanId, FanState, FansCommand
 from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand
 from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState, JointField, PIDValue, PIDGains
+from reachy_sdk_api.kinematics_pb2 import JointPosition
 from reachy_sdk_api.orbita_kinematics_pb2 import OrbitaIKRequest
 from reachy_sdk_api.sensor_pb2 import SensorId, SensorState, ForceSensorState
 
-from .type_conversion import pb_matrix_from_ros_pose
+from .type_conversion import pb_matrix_from_ros_pose, ros_pose_from_pb_matrix
 
 
 class BodyControlNode(Node):
@@ -91,6 +95,7 @@ class BodyControlNode(Node):
 
         # Create clients for kinematics services
         self.forward_kin_client = {}
+        self.inverse_kin_client = {}
         
         for arm in ('l_arm', 'r_arm'):
             forward_srv = self.create_client(
@@ -100,6 +105,14 @@ class BodyControlNode(Node):
 
             if forward_srv.service_is_ready():
                 self.forward_kin_client[arm] = forward_srv
+
+            inverse_srv = self.create_client(
+                srv_type=GetInverseKinematics,
+                srv_name=f'/{arm}/inverse_kinematics',
+            )
+
+            if inverse_srv.service_is_ready():
+                self.inverse_kin_client[arm] = inverse_srv
 
         self.joint_state_pub_event = Event()
         self.sensor_state_pub_event = Event()
@@ -460,6 +473,10 @@ class BodyControlNode(Node):
     # Kinematics related methods
     def arm_forward_kinematics(self, request: ArmFKRequest) -> ArmFKSolution:
         arm = 'l_arm' if request.arm_position.side == ArmSide.LEFT else 'r_arm'
+
+        if arm not in self.forward_kin_client:
+            return ArmFKSolution(success=False)
+
         fk_cli = self.forward_kin_client[arm]
 
         joint_positions = request.arm_position.positions
@@ -480,3 +497,30 @@ class BodyControlNode(Node):
 
         return sol
 
+    def arm_inverse_kinematics(self, request: ArmIKRequest) -> ArmIKSolution:
+        arm = 'l_arm' if request.target.side == ArmSide.LEFT else 'r_arm'
+
+        if arm not in self.inverse_kin_client:
+            return ArmFKSolution(success=False)
+
+        ik_cli = self.inverse_kin_client[arm]
+
+        ros_req = GetInverseKinematics.Request()
+        ros_req.pose = ros_pose_from_pb_matrix(request.target.pose)
+        ros_req.q0.name =  [self._get_joint_name(id) for id in request.q0.ids]
+        ros_req.q0.position =  request.q0.positions
+
+        resp = ik_cli.call(ros_req)
+
+        sol = ArmIKSolution(
+            success=resp.success,
+            arm_position=ArmJointPosition(
+                side=request.target.side,
+                positions=JointPosition(
+                    ids=[JointId(uid=self.joints[name]['uid']) for name in resp.joint_position.name],
+                    positions=resp.joint_position.position,
+                ),
+            ),
+        )
+
+        return sol
