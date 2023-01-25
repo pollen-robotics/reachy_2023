@@ -107,6 +107,12 @@ def generate_launch_description():
         arguments=['antenna_forward_position_controller', '-c', '/controller_manager'],
     )
 
+    gripper_forward_position_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['gripper_forward_position_controller', '-c', '/controller_manager'],
+    )
+
     forward_torque_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
@@ -140,6 +146,7 @@ def generate_launch_description():
                 r_arm_forward_position_controller_spawner,
                 l_arm_forward_position_controller_spawner,
                 antenna_forward_position_controller_spawner,
+                gripper_forward_position_controller_spawner,
                 forward_torque_controller_spawner,
                 pid_controller_spawner,
                 forward_fan_controller_spawner,
