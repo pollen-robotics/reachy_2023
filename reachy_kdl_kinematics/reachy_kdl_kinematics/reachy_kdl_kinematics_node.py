@@ -142,6 +142,7 @@ class ReachyKdlKinematics(Node):
 
         # TODO: use error
         response.success = True
+        response.joint_position.name = self.get_chain_joints_name(self.chain[name])
         response.joint_position.position = sol
 
         return response
@@ -192,9 +193,10 @@ class ReachyKdlKinematics(Node):
 
     def check_position(self, js: JointState, chain) -> List[float]:
         pos = dict(zip(js.name, js.position))
-        joints = [chain.getSegment(i).getJoint().getName() for i in range(chain.getNrOfJoints())]
+        return [pos[j] for j in self.get_chain_joints_name(chain)]
 
-        return [pos[j] for j in joints]
+    def get_chain_joints_name(self, chain):
+        return [chain.getSegment(i).getJoint().getName() for i in range(chain.getNrOfJoints())]
 
 def main():
     rclpy.init()
