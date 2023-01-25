@@ -184,6 +184,19 @@ class ReachySDKServer(
     ) -> fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck:
         return self.body_control_node.handle_fullbody_cartesian_command(request)
 
+    def StreamFullBodyCartesianCommands(
+        self,
+        request_iterator: Iterator[fullbody_cartesian_command_pb2.FullBodyCartesianCommand],
+        context,
+    ) -> fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck:
+        for request in request_iterator:
+            _ = self.SendCartesianCommand(request, context)
+
+        return fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck(
+            left_arm_command_success=True,
+            right_arm_command_success=True,
+            neck_command_success=True,
+        )
 
 def main():
     """Run the Node and the gRPC server."""
