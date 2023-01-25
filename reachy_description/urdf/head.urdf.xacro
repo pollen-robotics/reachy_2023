@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <xacro:arg name="depth_camera" default="true"/>
+  <xacro:arg name="depth_camera" default="false"/>
   <xacro:property name="camera_link" value="0.05" /> <!-- Size of square 'camera' box -->
   <xacro:property name="camera_convergence" value="0.0" /> <!-- convergence angle (rad) of the cameras. 0=parallel-->
 

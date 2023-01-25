@@ -18,7 +18,7 @@ def generate_launch_description():
 
     start_rviz_arg = DeclareLaunchArgument(
         'start_rviz',
-        default_value='false',
+        default_value='true',
         description='Start RViz2 automatically with this launch file.',
     )
     start_rviz = LaunchConfiguration('start_rviz')
@@ -36,7 +36,7 @@ def generate_launch_description():
                 [FindPackageShare('reachy_description'), 'urdf', 'reachy.urdf.xacro']
             ),
             ' ',
-            'use_fake_hardware:=true use_gazebo:=true',
+            'use_fake_hardware:=true use_gazebo:=true depth_camera:=false',
             ' ',
 
         ]
