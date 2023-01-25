@@ -16,15 +16,18 @@ import rclpy
 from rclpy.node import Node
 
 from control_msgs.msg import DynamicJointState
-from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float64MultiArray
 
-from reachy_sdk_api.arm_kinematics_pb2 import ArmIKRequest, ArmSide
+from reachy_msgs.srv import GetForwardKinematics
+
+from reachy_sdk_api.arm_kinematics_pb2 import ArmEndEffector, ArmFKRequest, ArmFKSolution, ArmSide
 from reachy_sdk_api.fan_pb2 import FanId, FanState, FansCommand
 from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand
 from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState, JointField, PIDValue, PIDGains
 from reachy_sdk_api.orbita_kinematics_pb2 import OrbitaIKRequest
 from reachy_sdk_api.sensor_pb2 import SensorId, SensorState, ForceSensorState
+
+from .type_conversion import pb_matrix_from_ros_pose
 
 
 class BodyControlNode(Node):
@@ -85,6 +88,18 @@ class BodyControlNode(Node):
             )
             for c in self.forward_controllers
         }
+
+        # Create clients for kinematics services
+        self.forward_kin_client = {}
+        
+        for arm in ('l_arm', 'r_arm'):
+            forward_srv = self.create_client(
+                srv_type=GetForwardKinematics,
+                srv_name=f'/{arm}/forward_kinematics',
+            )
+
+            if forward_srv.service_is_ready():
+                self.forward_kin_client[arm] = forward_srv
 
         self.joint_state_pub_event = Event()
         self.sensor_state_pub_event = Event()
@@ -441,3 +456,27 @@ class BodyControlNode(Node):
                     data=fan_data
                 )
             )
+
+    # Kinematics related methods
+    def arm_forward_kinematics(self, request: ArmFKRequest) -> ArmFKSolution:
+        arm = 'l_arm' if request.arm_position.side == ArmSide.LEFT else 'r_arm'
+        fk_cli = self.forward_kin_client[arm]
+
+        joint_positions = request.arm_position.positions
+
+        ros_req = GetForwardKinematics.Request()
+        ros_req.joint_position.name = [self._get_joint_name(id) for id in joint_positions.ids]
+        ros_req.joint_position.position = joint_positions.positions
+
+        resp = fk_cli.call(ros_req)
+
+        sol = ArmFKSolution(
+            success=resp.success,
+            end_effector=ArmEndEffector(
+                side=request.arm_position.side,
+                pose=pb_matrix_from_ros_pose(resp.pose),
+            ),
+        )
+
+        return sol
+

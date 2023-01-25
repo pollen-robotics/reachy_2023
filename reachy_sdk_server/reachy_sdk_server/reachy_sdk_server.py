@@ -34,10 +34,11 @@ from reachy_sdk_server.body_control_ros_node import BodyControlNode
 
 
 class ReachySDKServer(
-                      joint_pb2_grpc.JointServiceServicer,
-                      sensor_pb2_grpc.SensorServiceServicer,
-                      fan_pb2_grpc.FanControllerServiceServicer,
-                      ):
+    arm_kinematics_pb2_grpc.ArmKinematicsServicer,
+    joint_pb2_grpc.JointServiceServicer,
+    sensor_pb2_grpc.SensorServiceServicer,
+    fan_pb2_grpc.FanControllerServiceServicer,
+):
     """Reachy SDK server node."""
 
     def __init__(self, node_name: str, timeout_sec: float = 5, pub_frequency: float = 100) -> None:
@@ -52,7 +53,7 @@ class ReachySDKServer(
 
         rclpy.init()
         self.body_control_node = BodyControlNode(
-            controllers_file='reachy_no_orbita_controllers'
+            controllers_file='reachy_controllers',
         )
         threading.Thread(target=lambda: rclpy.spin(self.body_control_node)).start()
 
@@ -168,12 +169,18 @@ class ReachySDKServer(
             yield sensors_state
             last_pub = time.time()
 
+    # Arm kinematics servicer
+    def ComputeArmFK(self, request: arm_kinematics_pb2.ArmFKRequest, context) -> arm_kinematics_pb2.ArmFKSolution:
+        return self.body_control_node.arm_forward_kinematics(request)
+
 
 def main():
     """Run the Node and the gRPC server."""
     sdk_server = ReachySDKServer(node_name='reachy_sdk_server')
 
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
+
+    arm_kinematics_pb2_grpc.add_ArmKinematicsServicer_to_server(sdk_server, server)
     joint_pb2_grpc.add_JointServiceServicer_to_server(sdk_server, server)
     sensor_pb2_grpc.add_SensorServiceServicer_to_server(sdk_server, server)
     fan_pb2_grpc.add_FanControllerServiceServicer_to_server(sdk_server, server)

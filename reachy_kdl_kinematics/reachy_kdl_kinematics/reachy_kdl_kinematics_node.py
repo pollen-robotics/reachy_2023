@@ -1,4 +1,5 @@
 from functools import partial
+from typing import List
 
 import numpy as np
 
@@ -8,6 +9,7 @@ import rclpy
 from geometry_msgs.msg import PoseStamped
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
+from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray, String
 
 from reachy_msgs.srv import (
@@ -92,9 +94,15 @@ class ReachyKdlKinematics(Node):
         response: GetForwardKinematics.Response,
         name,
     ) -> GetForwardKinematics.Response:
+        try:
+            joint_position = self.check_position(request.joint_position, self.chain[name])
+        except KeyError:
+            response.success = False
+            return response
+
         error, sol = forward_kinematics(
             self.fk_solver[name], 
-            request.joint_position.position, 
+            joint_position, 
             self.chain[name].getNrOfJoints(),
         )
 
@@ -182,6 +190,11 @@ class ReachyKdlKinematics(Node):
 
         return self.urdf
 
+    def check_position(self, js: JointState, chain) -> List[float]:
+        pos = dict(zip(js.name, js.position))
+        joints = [chain.getSegment(i).getJoint().getName() for i in range(chain.getNrOfJoints())]
+
+        return [pos[j] for j in joints]
 
 def main():
     rclpy.init()
