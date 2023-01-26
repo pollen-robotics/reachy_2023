@@ -36,6 +36,8 @@ class BodyControlNode(Node):
         self.joint_uids = {}
 
         self.requested_torques = {}
+        self.requested_torque_limit = {}
+        self.requested_speed_limit = {}
         self.requested_pid = {}
         self.requested_fans = {}
 
@@ -81,6 +83,14 @@ class BodyControlNode(Node):
         self._torque_pub_t = Thread(target=self._publish_torque_update)
         self._torque_pub_t.start()
 
+        self.torque_limit_need_update = Event()
+        self._torque_limit_pub_t = Thread(target=self._publish_torque_limit_update)
+        self._torque_limit_pub_t.start()
+
+        self.speed_limit_need_update = Event()
+        self._speed_limit_pub_t = Thread(target=self._publish_speed_limit_update)
+        self._speed_limit_pub_t.start()
+
         self.pid_need_update = Event()
         self._pid_pub_t = Thread(target=self._publish_pid_update)
         self._pid_pub_t.start()
@@ -119,7 +129,7 @@ class BodyControlNode(Node):
                     'pid': PIDValue(pid=PIDGains(p=values['pid']['p'], i=values['pid']['i'], d=values['pid']['d'])),
                     'compliant': BoolValue(value=values['compliant']),
                     'torque_limit': FloatValue(value=values['torque_limit']),
-                    'speed_limit': FloatValue(value=values['speed_limit']),
+                    'max_speed': FloatValue(value=values['speed_limit']),
                 }
                 break
 
@@ -148,7 +158,7 @@ class BodyControlNode(Node):
                 kwargs['torque_limit'] = FloatValue(value=values['torque_limit'])
 
             elif field == JointField.SPEED_LIMIT:
-                kwargs['speed_limit'] = FloatValue(value=values['max_speed'])
+                kwargs['max_speed'] = FloatValue(value=values['speed_limit'])
 
         return JointState(**kwargs)
 
@@ -310,6 +320,8 @@ class BodyControlNode(Node):
 
         for cmd in req.commands:
             if cmd.HasField('compliant'):
+                self.logger.info('deep inside update torque')
+
                 need_update = True
                 name = self._get_joint_name(cmd.id)
                 comp = cmd.compliant.value
@@ -317,6 +329,36 @@ class BodyControlNode(Node):
 
         if need_update:
             self.torque_need_update.set()
+
+    def _update_torque_limit(self, req: JointsCommand):
+        need_update = False
+
+        for cmd in req.commands:
+            if cmd.HasField('torque_limit'):
+                self.logger.info('deep inside update torque limit')
+
+                need_update = True
+                name = self._get_joint_name(cmd.id)
+                comp = cmd.torque_limit.value
+                self.requested_torque_limit[name] = comp
+
+        if need_update:
+            self.torque_limit_need_update.set()
+
+    def _update_speed_limit(self, req: JointsCommand):
+        need_update = False
+
+        for cmd in req.commands:
+            if cmd.HasField('speed_limit'):
+                self.logger.info('deep inside update speed limit')
+
+                need_update = True
+                name = self._get_joint_name(cmd.id)
+                comp = cmd.speed_limit.value
+                self.requested_speed_limit[name] = comp
+
+        if need_update:
+            self.speed_limit_need_update.set()
 
     def _update_pid(self, req: JointsCommand):
         need_update = False
@@ -348,12 +390,15 @@ class BodyControlNode(Node):
     def handle_joint_msg(self, grpc_req: JointsCommand):
         self._update_joint_target_pos(grpc_req)
         self._update_torque(grpc_req)
+        self._update_torque_limit(grpc_req)
+        self._update_speed_limit(grpc_req)
         self._update_pid(grpc_req)
 
     def _publish_joint_command(self):
         while rclpy.ok():
             for controller, joint_dic in self.forward_controllers.items():
-                if controller in ('forward_torque_controller', 'pid_controller', 'forward_fan_controller'):
+                if controller in ('forward_torque_controller', 'forward_torque_limit_controller',
+                                  'forward_speed_limit_controller', 'pid_controller', 'forward_fan_controller'):
                     continue
                 pos = [self.joints[joint]['target_position'] for joint in joint_dic.keys()]
                 self.forward_publishers[controller].publish(Float64MultiArray(data=pos))
@@ -361,21 +406,71 @@ class BodyControlNode(Node):
             time.sleep(0.01)
     
     def _publish_torque_update(self):
+        self.logger.info('publish_update_torque init')
+
         while rclpy.ok():
             self.torque_need_update.wait()
             self.torque_need_update.clear()
+            self.logger.info('inner publish_update_torque')
 
             for joint, torque in self.requested_torques.items():
                 self.joints[joint]['compliant'] = torque
-                
+                self.logger.info("requested {} for joint {}".format(str(torque), str(joint)))
+
             self.requested_torques.clear()
 
             joint_dic = self.forward_controllers['forward_torque_controller']
             torque_data = [float(not self.joints[joint]['compliant']) for joint in joint_dic.keys()]
+            self.logger.info("Will ask for update :: {}\n".format(str(torque_data)))
 
             self.forward_publishers['forward_torque_controller'].publish(
                 Float64MultiArray(
                     data=torque_data
+                )
+            )
+
+    def _publish_torque_limit_update(self):
+
+        while rclpy.ok():
+            self.torque_limit_need_update.wait()
+            self.torque_limit_need_update.clear()
+            self.logger.info('publish_update_torque_limit init')
+
+            for joint, torque_limit in self.requested_torque_limit.items():
+                self.joints[joint]['torque_limit'] = torque_limit
+                self.logger.info("requested {} for joint {}".format(str(torque_limit), str(joint)))
+
+            self.requested_torque_limit.clear()
+
+            joint_dic = self.forward_controllers['forward_torque_limit_controller']
+            torque_limit_data = [self.joints[joint]['torque_limit'] for joint in joint_dic.keys()]
+            self.logger.info("Will ask for update :: {}\n".format(str(torque_limit_data)))
+
+            self.forward_publishers['forward_torque_limit_controller'].publish(
+                Float64MultiArray(
+                    data=torque_limit_data
+                )
+            )
+
+    def _publish_speed_limit_update(self):
+
+        while rclpy.ok():
+            self.speed_limit_need_update.wait()
+            self.speed_limit_need_update.clear()
+            self.logger.info('publish_update_speed_limit init')
+
+            for joint, speed_limit in self.requested_speed_limit.items():
+                self.joints[joint]['speed_limit'] = speed_limit
+                self.logger.info("requested {} for joint {}".format(str(speed_limit), str(joint)))
+            self.requested_speed_limit.clear()
+
+            joint_dic = self.forward_controllers['forward_speed_limit_controller']
+            speed_limit_data = [self.joints[joint]['speed_limit'] for joint in joint_dic.keys()]
+            self.logger.info("Will ask for update :: {}\n".format(str(speed_limit_data)))
+
+            self.forward_publishers['forward_speed_limit_controller'].publish(
+                Float64MultiArray(
+                    data=speed_limit_data
                 )
             )
 

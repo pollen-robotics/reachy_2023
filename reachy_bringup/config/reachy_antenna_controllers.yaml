@@ -13,6 +13,12 @@ controller_manager:
     forward_torque_controller:
       type: forward_command_controller/ForwardCommandController
 
+    forward_torque_limit_controller:
+      type: forward_command_controller/ForwardCommandController
+
+    forward_speed_limit_controller:
+      type: forward_command_controller/ForwardCommandController
+
     forward_fan_controller:
       type: forward_command_controller/ForwardCommandController
 
@@ -41,6 +47,22 @@ forward_torque_controller:
       - l_antenna
       - r_antenna
     interface_name: torque
+    use_sim_time: false
+
+forward_torque_limit_controller:
+  ros__parameters:
+    joints:
+      - l_antenna
+      - r_antenna
+    interface_name: torque_limit
+    use_sim_time: false
+
+forward_speed_limit_controller:
+  ros__parameters:
+    joints:
+      - l_antenna
+      - r_antenna
+    interface_name: max_speed
     use_sim_time: false
 
 forward_fan_controller:

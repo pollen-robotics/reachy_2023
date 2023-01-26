@@ -33,8 +33,9 @@ private:
   double hw_xl320_states_velocity_[2];
   double hw_xl320_states_effort_[2];
   double hw_xl320_states_temperature_[2];
-  double hw_xl320_states_max_speed_[2];
+//  double hw_xl320_states_speed_limit_[2];
   double hw_xl320_states_torque_limit_[2];
+  double hw_xl320_states_max_speed_[2];
   double hw_xl320_states_torque_[2];
   double hw_xl320_states_p_gain_[2];
   double hw_xl320_states_i_gain_[2];
@@ -43,6 +44,7 @@ private:
   double hw_xl320_commands_position_[2];
   double hw_xl320_commands_max_speed_[2];
   double hw_xl320_commands_torque_limit_[2];
+//  double hw_xl320_commands_speed_limit_[2];
   double hw_xl320_commands_torque_[2];
   double hw_xl320_commands_p_gain_[2];
   double hw_xl320_commands_i_gain_[2];
