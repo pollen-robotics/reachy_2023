@@ -36,9 +36,6 @@ def generate_launch_description():
                 [FindPackageShare('reachy_description'), 'urdf', 'reachy.urdf.xacro']
             ),
             ' ',
-            'use_fake_hardware:=true',
-            ' ',
-
         ]
     )
     robot_description = {
@@ -110,12 +107,6 @@ def generate_launch_description():
         arguments=['antenna_forward_position_controller', '-c', '/controller_manager'],
     )
 
-    gripper_forward_position_controller_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['gripper_forward_position_controller', '-c', '/controller_manager'],
-    )
-
     forward_torque_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
@@ -134,6 +125,27 @@ def generate_launch_description():
         arguments=['forward_fan_controller', '-c', '/controller_manager'],
     )
 
+    camera_publisher = Node(
+        package='camera_controllers',
+        executable='camera_publisher',
+    ),
+    camera_focus = Node(
+        package='camera_controllers',
+        executable='camera_focus',
+    ),
+    camera_zoom_service = Node(
+        package='camera_controllers',
+        executable='camera_zoom_service',
+    ),
+    reachy_sdk_server = Node(
+        package='reachy_sdk_server',
+        executable='reachy_sdk_server',
+    ),
+    camera_server = Node(
+        package='reachy_sdk_server',
+        executable='camera_server',
+    ),
+
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -145,11 +157,10 @@ def generate_launch_description():
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
             on_exit=[
-                neck_forward_position_controller_spawner,
+                # neck_forward_position_controller_spawner,
                 r_arm_forward_position_controller_spawner,
                 l_arm_forward_position_controller_spawner,
                 antenna_forward_position_controller_spawner,
-                gripper_forward_position_controller_spawner,
                 forward_torque_controller_spawner,
                 pid_controller_spawner,
                 forward_fan_controller_spawner,
@@ -163,4 +174,9 @@ def generate_launch_description():
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
+        camera_publisher,
+        camera_focus,
+        camera_zoom_service,
+        reachy_sdk_server,
+        camera_server,
     ])
