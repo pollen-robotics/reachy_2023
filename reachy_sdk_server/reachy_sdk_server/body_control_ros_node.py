@@ -118,6 +118,8 @@ class BodyControlNode(Node):
                     'goal_position': FloatValue(value=values['target_position']),
                     'pid': PIDValue(pid=PIDGains(p=values['pid']['p'], i=values['pid']['i'], d=values['pid']['d'])),
                     'compliant': BoolValue(value=values['compliant']),
+                    'torque_limit': FloatValue(value=values['torque_limit']),
+                    'speed_limit': FloatValue(value=values['speed_limit']),
                 }
                 break
 
@@ -141,6 +143,12 @@ class BodyControlNode(Node):
 
             elif field == JointField.PRESENT_POSITION:
                 kwargs['present_position'] = FloatValue(value=values['present_position'])
+
+            elif field == JointField.TORQUE_LIMIT:
+                kwargs['torque_limit'] = FloatValue(value=values['torque_limit'])
+
+            elif field == JointField.SPEED_LIMIT:
+                kwargs['speed_limit'] = FloatValue(value=values['max_speed'])
 
         return JointState(**kwargs)
 
@@ -184,6 +192,10 @@ class BodyControlNode(Node):
                             self.joints[name]['pid']['d'] = v
                         elif k == 'torque':
                             self.joints[name]['compliant'] = (v == 0.0)
+                        elif k == 'torque_limit':
+                            self.joints[name]['torque_limit'] = v
+                        elif k == 'max_speed':
+                            self.joints[name]['speed_limit'] = v
 
                 elif 'force' in kv.interface_names:
                     self.sensors[name] = {}
@@ -217,6 +229,10 @@ class BodyControlNode(Node):
                         self.joints[name]['pid']['i'] = v
                     elif k == 'd_gain':
                         self.joints[name]['pid']['d'] = v
+                    elif k == 'torque_limit':
+                        self.joints[name]['torque_limit'] = v
+                    elif k == 'max_speed':
+                        self.joints[name]['speed_limit'] = v
 
             elif 'force' in kv.interface_names:
                 self.sensors[name]['force'] = kv.values[0]

@@ -184,6 +184,10 @@ HeadSystem::export_state_interfaces()
         joint.name, "i_gain", &hw_xl320_states_i_gain_[i]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
         joint.name, "d_gain", &hw_xl320_states_d_gain_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        joint.name, "torque_limit", &hw_xl320_states_torque_limit_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        joint.name, "max_speed", &hw_xl320_states_max_speed_[i]));
 
     RCLCPP_INFO(
       rclcpp::get_logger("HeadSystem"),
@@ -279,6 +283,35 @@ HeadSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
       RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
+      );
+  }
+
+  if (head_hwi_get_torque_limit(this->uid, hw_xl320_states_torque_limit_)) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) READ TORQUE_LIMIT ERROR!", info_.name.c_str()
+      );
+  }
+  else{
+
+        RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) READ TORQUE_LIMIT SUCCESS %f %f!", info_.name.c_str(), hw_xl320_commands_torque_limit_[0],hw_xl320_commands_torque_limit_[1]
+      );
+  }
+
+
+  if (head_hwi_get_moving_speed(this->uid, hw_xl320_states_max_speed_)) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) READ SPEED_LIMIT ERROR!", info_.name.c_str()
+      );
+  }
+  else{
+
+        RCLCPP_INFO(
+        rclcpp::get_logger("HeadSystem"),
+        "(%s) READ SPEED_LIMIT SUCCESS %f %f!", info_.name.c_str(), hw_xl320_states_max_speed_[0],hw_xl320_states_max_speed_[1]
       );
   }
 

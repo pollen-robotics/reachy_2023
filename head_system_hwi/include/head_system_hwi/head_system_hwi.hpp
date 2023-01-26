@@ -33,6 +33,8 @@ private:
   double hw_xl320_states_velocity_[2];
   double hw_xl320_states_effort_[2];
   double hw_xl320_states_temperature_[2];
+  double hw_xl320_states_max_speed_[2];
+  double hw_xl320_states_torque_limit_[2];
   double hw_xl320_states_torque_[2];
   double hw_xl320_states_p_gain_[2];
   double hw_xl320_states_i_gain_[2];
