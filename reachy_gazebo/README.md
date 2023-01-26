@@ -20,6 +20,12 @@ ros2 launch reachy_sdk_server camera_server.launch.py
 * Access to the cameras (only the images with no zoom control, an extra simulated rgbd camera can be activated in the launch)
 
 
+## Install
+
+```bash
+sudo apt install ros-humble-gazebo-ros2-control ros-humble-compressed-image-transport
+```
+
 ---
 This package is part of the ROS2-based software release of the version 2023 of Reachy.
 
