@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-#  File Name	: fake_gz_state_broadcaster.py
+#  File Name	: fake_gz_interface.py
 #  Author	: Steve NGUYEN
 #  Contact      : steve.nguyen@pollen-robotics.com
 #  Created	: lundi, janvier 23 2023
@@ -23,14 +23,21 @@ from control_msgs.msg import DynamicJointState, InterfaceValue
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import WrenchStamped
 
+from reachy_msgs.srv import GetCameraZoomLevel, GetCameraZoomSpeed
+from reachy_msgs.srv import SetCameraZoomLevel, SetCameraZoomSpeed
+from reachy_msgs.srv import GetCameraZoomFocus, SetCameraZoomFocus
+from reachy_msgs.srv import SetFocusState
+
+
+
 DUMMY_JOINT_INTERFACE_NAMES=['torque','p_gain','i_gain','d_gain','temperature']
 DUMMY_SPECIAL_INTERFACES={'l_shoulder_fan':'state','l_elbow_fan':'state','l_wrist_fan':'state','l_antenna_fan':'state', 'l_force_gripper':'force',
                   'r_shoulder_fan':'state','r_elbow_fan':'state','r_wrist_fan':'state','r_antenna_fan':'state', 'r_force_gripper':'force'}
 
 
-class FakeDynState(Node):
+class FakeGzInterface(Node):
     def __init__(self):
-        super().__init__('fake_gz_state_broadcaster')
+        super().__init__('fake_gz_interface')
         latching_qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
         self.dyn_publisher = self.create_publisher(
             DynamicJointState, '/dynamic_joint_states', qos_profile=latching_qos)
@@ -65,12 +72,28 @@ class FakeDynState(Node):
             self.r_force_cb,
             10)
 
+
+        #Dummy camera service
+        self.get_zoom_level_service = self.create_service(GetCameraZoomLevel, 'get_camera_zoom_level', self.dummy_service_cb)
+        self.get_zoom_speed_service = self.create_service(GetCameraZoomSpeed, 'get_camera_zoom_speed', self.dummy_service_cb)
+        self.set_zoom_level_service = self.create_service(SetCameraZoomLevel, 'set_camera_zoom_level', self.dummy_service_cb)
+        self.set_zoom_speed_service = self.create_service(SetCameraZoomSpeed, 'set_camera_zoom_speed', self.dummy_service_cb)
+        self.get_zoom_focus_service = self.create_service(GetCameraZoomFocus, 'get_camera_zoom_focus', self.dummy_service_cb)
+        self.set_zoom_focus_service = self.create_service(SetCameraZoomFocus, 'set_camera_zoom_focus', self.dummy_service_cb)
+        self.set_focus_state_service = self.create_service(SetFocusState, 'set_focus_state', self.dummy_service_cb)
+
+
         self._curr_l_force=0.0
         self._curr_r_force=0.0
-        self.logger.info(f'Fake broadcaster for /dynamic_joint_states and /joint_states')
+        self.logger.info(f'Fake Gaebo interface for /dynamic_joint_states and /joint_states and camera services')
 
+
+    def dummy_service_cb(self, request, response):
+        # Juste make the camera services exist, used for Reachy camera server
+        return response
 
     def l_force_cb(self,msg):
+        # We simulate the gripper force sensor using the Gazebo plugin ft_sensor (force sensor plugin seems broken...)
         self._curr_l_force=msg.wrench.force.z
 
     def r_force_cb(self,msg):
@@ -78,10 +101,11 @@ class FakeDynState(Node):
 
 
     def joint_state_callback(self,msg):
+        # Nothing to do here (for now), just forward the message
         self.js_publisher.publish(msg)
 
     def dyn_state_callback(self, msg):
-        
+        # Here we just add the extra fake joints (like fans) and interfaces not handleled by Gazebo (like pid)
         joints=[]
         joint_interface={}
         dummy_joint_interface_present=False
@@ -142,7 +166,7 @@ class FakeDynState(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    publisher = FakeDynState()
+    publisher = FakeGzInterface()
 
     rclpy.spin(publisher)
 

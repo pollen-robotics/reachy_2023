@@ -10,13 +10,14 @@ Then we can launch ReachySDK with:
 
 ```bash
 ros2 launch reachy_sdk_server reachy_sdk_server.launch.py
+ros2 launch reachy_sdk_server camera_server.launch.py
 ```
 
 ## ReachySDK compatibility
 
 * Access to the joints (only **goal_position** and **present_position**)
 * Access to the simulated force sensors (**l_force_gripper** and **r_force_gripper**)
-* Access to the cameras (an extra simulated rgbd camera can be activated in the launch)
+* Access to the cameras (only the images with no zoom control, an extra simulated rgbd camera can be activated in the launch)
 
 
 ---

@@ -44,9 +44,9 @@ def generate_launch_description():
         output="screen"
     )
 
-    fake_broadcaster = Node(
+    fake_gz_interface = Node(
         package="reachy_gazebo",
-        executable="fake_gz_state_broadcaster",
+        executable="fake_gz_interface",
         output="screen"
     )
 
@@ -54,6 +54,6 @@ def generate_launch_description():
     return LaunchDescription(
         launch_args + [
             gazebo,
-            fake_broadcaster,
+            fake_gz_interface,
             spawn_entity
         ])

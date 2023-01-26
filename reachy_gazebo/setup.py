@@ -24,7 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'fake_gz_state_broadcaster = reachy_gazebo.fake_gz_state_broadcaster:main'
+            'fake_gz_interface = reachy_gazebo.fake_gz_interface:main'
         ],
     },
 )
