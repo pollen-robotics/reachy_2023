@@ -155,7 +155,10 @@ def generate_launch_description():
     )
 
 
-
+    kinematics_node = Node(
+        package='reachy_kdl_kinematics',
+        executable='reachy_kdl_kinematics',
+    )
 
     return LaunchDescription(arguments + [
         SetUseSimTime(True), #does not seem to work...
@@ -164,4 +167,5 @@ def generate_launch_description():
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
+        kinematics_node,
     ])
