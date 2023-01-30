@@ -348,6 +348,7 @@ class BodyControlNode(Node):
                 controller = self.joint_to_position_controller[joint]
                 with self.requested_goal_lock:
                     self.requested_goal_positions[controller][joint] = cmd.goal_position.value
+                    
     def _on_target_position_update(self, data: Float64MultiArray, controller_name):
         # Callback of the /*_forward_position_controller subscription
         joints = self.forward_controllers[controller_name]
