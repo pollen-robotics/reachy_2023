@@ -434,7 +434,7 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
 
   auto t1 = clock_.now();
   rclcpp::Duration dt = t1 - t0;
-      RCLCPP_INFO_THROTTLE(
+      RCLCPP_DEBUG_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
         LOG_THROTTLE_DURATION,
