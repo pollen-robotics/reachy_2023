@@ -54,6 +54,7 @@ class ReachySDKServer(
 
         rclpy.init()
         self.body_control_node = BodyControlNode(
+            node_name=node_name,
             controllers_file='reachy_controllers',
         )
         threading.Thread(target=lambda: rclpy.spin(self.body_control_node)).start()

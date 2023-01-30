@@ -36,8 +36,8 @@ from .type_conversion import pb_matrix_from_ros_pose, ros_pose_from_pb_matrix
 
 
 class BodyControlNode(Node):
-    def __init__(self, controllers_file):
-        super().__init__(node_name='body_control_server_node')
+    def __init__(self, node_name, controllers_file):
+        super().__init__(node_name=node_name)
         self.logger = self.get_logger()
         self.forward_controllers = self._parse_controller(controllers_file)
         self.joint_to_position_controller = {}
