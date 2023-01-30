@@ -76,4 +76,14 @@
     damping="${damping}" friction="${friction}"
   />
 
+  <xacro:if value="$(arg use_gazebo)">
+  <gazebo>
+    <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+      <parameters>$(find reachy_bringup)/config/reachy_controllers.yaml</parameters>
+      <robotNamespace>/reachy</robotNamespace>
+    </plugin>
+  </gazebo>
+  </xacro:if>
+
+
 </robot>

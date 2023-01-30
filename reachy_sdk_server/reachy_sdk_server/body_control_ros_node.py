@@ -1,3 +1,5 @@
+from collections import defaultdict
+from functools import partial
 import time
 from threading import Event, Lock, Thread
 from typing import List
@@ -6,7 +8,6 @@ import yaml
 import numpy as np
 
 from google.protobuf.wrappers_pb2 import FloatValue, UInt32Value, BoolValue
-from scipy.spatial.transform import Rotation
 
 from ament_index_python.packages import get_package_share_directory 
 
@@ -17,20 +18,33 @@ from control_msgs.msg import DynamicJointState
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float64MultiArray
 
-from reachy_sdk_api.arm_kinematics_pb2 import ArmIKRequest, ArmSide
+from reachy_msgs.srv import GetForwardKinematics, GetInverseKinematics
+
+from reachy_sdk_api.arm_kinematics_pb2 import (
+    ArmEndEffector, ArmSide, ArmJointPosition,
+    ArmFKRequest, ArmFKSolution, 
+    ArmIKRequest, ArmIKSolution,
+)
 from reachy_sdk_api.fan_pb2 import FanId, FanState, FansCommand
-from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand
+from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand, FullBodyCartesianCommandAck
 from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState, JointField, PIDValue, PIDGains
+from reachy_sdk_api.kinematics_pb2 import JointPosition
 from reachy_sdk_api.orbita_kinematics_pb2 import OrbitaIKRequest
 from reachy_sdk_api.sensor_pb2 import SensorId, SensorState, ForceSensorState
+
+from .type_conversion import pb_matrix_from_ros_pose, ros_pose_from_pb_matrix
 
 
 class BodyControlNode(Node):
     def __init__(self, controllers_file):
         super().__init__(node_name='body_control_server_node')
         self.logger = self.get_logger()
-
         self.forward_controllers = self._parse_controller(controllers_file)
+        self.joint_to_position_controller = {}
+        for c, joints in self.forward_controllers.items():
+            if c.endswith('forward_position_controller'):
+                for j in joints:
+                    self.joint_to_position_controller[j] = c
 
         self.joints = {}
         self.joint_uids = {}
@@ -49,8 +63,7 @@ class BodyControlNode(Node):
 
         # Subscribe to: 
         #  - /dynamic_joint_states (for present_position, torque and temperature)
-        #  - /neck_forward_position_controller/commands for (neck roll pitch yaw) target_position
-        #  - TODO: where to get arm target_position?
+        #  - /*_forward_position_controller/commands for target_position
         self.joint_state_ready = Event()
         self.joint_state_sub = self.create_subscription(
             msg_type=DynamicJointState, 
@@ -58,6 +71,19 @@ class BodyControlNode(Node):
             qos_profile=5,
             callback=self._on_joint_state,
         )
+        # We both listen and publish to the forward position
+        # Indeed, as the joints can be controlled either directly or via the kinematics
+        # We need to detect both modifications
+        self.target_pos_sub = {
+            c: self.create_subscription(
+                msg_type=Float64MultiArray,
+                topic=f'/{c}/commands',
+                qos_profile=5,
+                callback=partial(self._on_target_position_update, controller_name=c),
+            )
+            for c in self.forward_controllers 
+            if c.endswith('forward_position_controller')
+        }
 
         # Publish to each controllers
         self.forward_publishers = {
@@ -69,10 +95,41 @@ class BodyControlNode(Node):
             for c in self.forward_controllers
         }
 
+        # Create clients for kinematics services/pub
+        self.forward_kin_client = {}
+        self.inverse_kin_client = {}
+        self.target_pose_publisher = {}
+        
+        for arm in ('l_arm', 'r_arm'):
+            forward_srv = self.create_client(
+                srv_type=GetForwardKinematics,
+                srv_name=f'/{arm}/forward_kinematics',
+            )
+
+            if not forward_srv.service_is_ready():
+                continue
+
+            self.forward_kin_client[arm] = forward_srv
+
+            inverse_srv = self.create_client(
+                srv_type=GetInverseKinematics,
+                srv_name=f'/{arm}/inverse_kinematics',
+            )
+
+            self.inverse_kin_client[arm] = inverse_srv
+
+            self.target_pos_sub[arm] = self.create_publisher(
+                msg_type=PoseStamped,
+                topic=f'/{arm}/averaged_target_pose',
+                qos_profile=5,
+            )
+
         self.joint_state_pub_event = Event()
         self.sensor_state_pub_event = Event()
         self.fan_state_pub_event = Event()
 
+        self.requested_goal_positions = defaultdict(dict)
+        self.requested_goal_lock = Lock()
         self.wait_for_setup()
 
         t = Thread(target=self._publish_joint_command)
@@ -313,7 +370,16 @@ class BodyControlNode(Node):
     def _update_joint_target_pos(self, req: JointsCommand):
         for cmd in req.commands:
             if cmd.HasField('goal_position'):
-                self.joints[self._get_joint_name(cmd.id)]['target_position'] = cmd.goal_position.value
+                joint = self._get_joint_name(cmd.id)
+                controller = self.joint_to_position_controller[joint]
+                with self.requested_goal_lock:
+                    self.requested_goal_positions[controller][joint] = cmd.goal_position.value
+                    
+    def _on_target_position_update(self, data: Float64MultiArray, controller_name):
+        # Callback of the /*_forward_position_controller subscription
+        joints = self.forward_controllers[controller_name]
+        for j, pos in zip(joints, data.data):
+            self.joints[j]['target_position'] = pos
 
     def _update_torque(self, req: JointsCommand):
         need_update = False
@@ -390,13 +456,18 @@ class BodyControlNode(Node):
 
     def _publish_joint_command(self):
         while rclpy.ok():
-            for controller, joint_dic in self.forward_controllers.items():
-                if controller in ('forward_torque_controller', 'forward_torque_limit_controller',
-                                  'forward_speed_limit_controller', 'pid_controller', 'forward_fan_controller'):
-                    continue
-                pos = [self.joints[joint]['target_position'] for joint in joint_dic.keys()]
-                self.forward_publishers[controller].publish(Float64MultiArray(data=pos))
+            with self.requested_goal_lock:
+                if self.requested_goal_positions:
+                    for controller_name, joints_to_update in self.requested_goal_positions.items():
+                        controller_joints = self.forward_controllers[controller_name]
 
+                        target_pos = {j: self.joints[j]['target_position'] for j in controller_joints}
+                        target_pos.update(joints_to_update)
+
+                        pos = [target_pos[j] for j in controller_joints]
+                        self.forward_publishers[controller_name].publish(Float64MultiArray(data=pos))
+
+                    self.requested_goal_positions.clear()
             time.sleep(0.01)
     
     def _publish_torque_update(self):
@@ -500,3 +571,82 @@ class BodyControlNode(Node):
                     data=fan_data
                 )
             )
+
+    # Kinematics related methods
+    def arm_forward_kinematics(self, request: ArmFKRequest) -> ArmFKSolution:
+        arm = 'l_arm' if request.arm_position.side == ArmSide.LEFT else 'r_arm'
+
+        if arm not in self.forward_kin_client:
+            self.logger.warning(f'Could not find FK service for {arm}')
+            return ArmFKSolution(success=False)
+
+        fk_cli = self.forward_kin_client[arm]
+
+        joint_positions = request.arm_position.positions
+
+        ros_req = GetForwardKinematics.Request()
+        ros_req.joint_position.name = [self._get_joint_name(id) for id in joint_positions.ids]
+        ros_req.joint_position.position = joint_positions.positions
+
+        resp = fk_cli.call(ros_req)
+
+        sol = ArmFKSolution(
+            success=resp.success,
+            end_effector=ArmEndEffector(
+                side=request.arm_position.side,
+                pose=pb_matrix_from_ros_pose(resp.pose),
+            ),
+        )
+
+        return sol
+
+    def arm_inverse_kinematics(self, request: ArmIKRequest) -> ArmIKSolution:
+        arm = 'l_arm' if request.target.side == ArmSide.LEFT else 'r_arm'
+
+        if arm not in self.inverse_kin_client:
+            self.logger.warning(f'Could not find IK service for {arm}')
+            return ArmFKSolution(success=False)
+
+        ik_cli = self.inverse_kin_client[arm]
+
+        ros_req = GetInverseKinematics.Request()
+        ros_req.pose = ros_pose_from_pb_matrix(request.target.pose)
+        ros_req.q0.name =  [self._get_joint_name(id) for id in request.q0.ids]
+        ros_req.q0.position =  request.q0.positions
+
+        resp = ik_cli.call(ros_req)
+
+        sol = ArmIKSolution(
+            success=resp.success,
+            arm_position=ArmJointPosition(
+                side=request.target.side,
+                positions=JointPosition(
+                    ids=[JointId(uid=self.joints[name]['uid']) for name in resp.joint_position.name],
+                    positions=resp.joint_position.position,
+                ),
+            ),
+        )
+
+        return sol
+
+    def handle_fullbody_cartesian_command(self, cmd: FullBodyCartesianCommand):
+        ack = FullBodyCartesianCommandAck()
+
+        if cmd.HasField('left_arm'):
+            ack.left_arm_command_success = self.handle_arm_cartesian_request(cmd.left_arm, 'l_arm')
+        if cmd.HasField('right_arm'):
+            ack.right_arm_command_success = self.handle_arm_cartesian_request(cmd.right_arm, 'r_arm')
+
+        return ack
+
+    def handle_arm_cartesian_request(self, request: ArmIKRequest, name) -> bool:
+        if name not in self.target_pos_sub:
+            return False
+
+        pose = PoseStamped()
+        pose.header.stamp = self.get_clock().now().to_msg()
+        pose.pose = ros_pose_from_pb_matrix(request.target.pose)
+
+        self.target_pos_sub[name].publish(pose)
+
+        return True
