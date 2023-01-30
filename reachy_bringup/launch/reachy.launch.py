@@ -113,6 +113,18 @@ def generate_launch_description():
         arguments=['forward_torque_controller', '-c', '/controller_manager'],
     )
 
+    forward_torque_limit_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['forward_torque_limit_controller', '-c', '/controller_manager'],
+    )
+
+    forward_speed_limit_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['forward_speed_limit_controller', '-c', '/controller_manager'],
+    )
+
     pid_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
@@ -141,6 +153,8 @@ def generate_launch_description():
                 l_arm_forward_position_controller_spawner,
                 antenna_forward_position_controller_spawner,
                 forward_torque_controller_spawner,
+                forward_torque_limit_controller_spawner,
+                forward_speed_limit_controller_spawner,
                 pid_controller_spawner,
                 forward_fan_controller_spawner,
             ],

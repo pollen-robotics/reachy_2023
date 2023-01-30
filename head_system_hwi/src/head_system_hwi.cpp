@@ -292,26 +292,12 @@ HeadSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         "(%s) READ TORQUE_LIMIT ERROR!", info_.name.c_str()
       );
   }
-  else{
-
-        RCLCPP_INFO(
-        rclcpp::get_logger("HeadSystem"),
-        "(%s) READ TORQUE_LIMIT SUCCESS %f %f!", info_.name.c_str(), hw_xl320_states_torque_limit_[0],hw_xl320_states_torque_limit_[1]
-      );
-  }
 
 
   if (head_hwi_get_moving_speed(this->uid, hw_xl320_states_max_speed_)) {
       RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) READ SPEED_LIMIT ERROR!", info_.name.c_str()
-      );
-  }
-  else{
-
-        RCLCPP_INFO(
-        rclcpp::get_logger("HeadSystem"),
-        "(%s) READ SPEED_LIMIT SUCCESS %f %f!", info_.name.c_str(), hw_xl320_states_max_speed_[0],hw_xl320_states_max_speed_[1]
       );
   }
 
@@ -361,22 +347,12 @@ HeadSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
         "(%s) WRITE TORQUE_LIMIT ERROR!", info_.name.c_str()
       );
   }
-  else{
-          RCLCPP_INFO(
-        rclcpp::get_logger("HeadSystem"),
-        "(%s) WRITE TORQUE_LIMIT SUCCESS %f %f!", info_.name.c_str(), hw_xl320_commands_torque_limit_[0],hw_xl320_commands_torque_limit_[1]);
-  }
   
   if (head_hwi_set_xl320_speed_limit(this->uid, hw_xl320_states_max_speed_) != 0) {
         RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) WRITE SPEED_LIMIT ERROR!", info_.name.c_str()
       );
-  }
-  else{
-          RCLCPP_INFO(
-        rclcpp::get_logger("HeadSystem"),
-        "(%s) WRITE SPEED_LIMIT SUCCESS %f %f!", info_.name.c_str(), hw_xl320_states_max_speed_[0],hw_xl320_states_max_speed_[1]);
   }
 
   if (head_hwi_set_xl320_target_position_speed_load(
