@@ -86,8 +86,6 @@ class GripperState:
         self.interpolated_goal_position.append(interpolated_goal_position)
         self.error.append(interpolated_goal_position - new_present_position)
 
-        print(f'STATE: {self._hidden_collision_state} Target: {np.rad2deg(new_user_requested_goal_position)} Pres: {np.rad2deg(new_present_position)} Interp: {np.rad2deg(interpolated_goal_position)}')
-
         self.in_collision.append(collision_state in (CollisionState.ENTERING_COLLISION, CollisionState.STILL_COLLIDING))
 
         self.elapsed_dts_since_change_of_direction += 1
@@ -96,9 +94,6 @@ class GripperState:
     def check_collision_state(self) -> CollisionState:
         if not hasattr(self, '_hidden_collision_state'):
             self._hidden_collision_state = CollisionState.NO_COLLISION
-
-        if self.name.endswith('action_finger'):
-            return self._hidden_collision_state
 
         if not self.in_collision[-1] and self.entering_collision():
             self._hidden_collision_state = CollisionState.STILL_COLLIDING

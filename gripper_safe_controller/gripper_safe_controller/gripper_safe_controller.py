@@ -19,10 +19,8 @@ from .gripper_state import GripperState, DT
 
 # Gripper OPEN/CLOSE position (in rads)
 # Defined for the direct orientation
-POSITION_LIMIT = {
-    'grasping_finger': (-0.785, 2.094),
-    'action_finger': (0.0, 2.7),
-}
+# TODO: use correct limits
+POSITION_LIMIT = (-0.87, 0.35)
 
 
 class GripperSafeController(Node):
@@ -75,12 +73,11 @@ class GripperSafeController(Node):
             for name, value in self.grippers.items()
         }
         self.limits = {}
+        lower, upper = POSITION_LIMIT
         for name, state in self.gripper_states.items():
-            for k, (lower, upper) in POSITION_LIMIT.items():
-                if k in name:
-                    open_pos = lower if state.is_direct else -upper
-                    close_pos = upper if state.is_direct else -lower
-                    self.limits[name] = (open_pos, close_pos)
+            open_pos = lower if state.is_direct else -upper
+            close_pos = upper if state.is_direct else -lower
+            self.limits[name] = (open_pos, close_pos)
         self.logger.info(f'Setup done, basic state: {self.gripper_states} with limits {self.limits}')
 
         self.last_grippers_pid = {
@@ -121,11 +118,9 @@ class GripperSafeController(Node):
                 self.logger.warning(f'Unhandled gripper "{name}"!')
                 continue
 
-            opening = np.clip(opening, 0.0, 1.0)
-            if name.startswith('l'):
-                opening = 1 - opening
             open_pos, close_pos = self.limits[name]
-            goal_pos = open_pos + (close_pos - open_pos) * opening
+            goal_pos = np.clip(opening, open_pos, close_pos)
+
             self.grippers[name]['user_requested_goal_position'] = goal_pos
 
     def joint_states_callback(self, msg: JointState):
