@@ -3,7 +3,7 @@
 ## Getting started
 
 ```bash
-ros2 launch reachy_bringup reachy_gz_launch.py
+ros2 launch reachy_bringup reachy_gz.launch.py
 ```
 
 Then we can launch ReachySDK with:
