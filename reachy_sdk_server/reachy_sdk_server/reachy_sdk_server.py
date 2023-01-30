@@ -33,6 +33,15 @@ from reachy_sdk_api import mobile_platform_reachy_pb2, mobile_platform_reachy_pb
 from reachy_sdk_server.body_control_ros_node import BodyControlNode
 
 
+def get_reachy_config():
+    import yaml
+    import os
+    config_file = os.path.expanduser('~/.reachy.yaml')
+    with open(config_file) as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+        return config
+
+
 class ReachySDKServer(
                       joint_pb2_grpc.JointServiceServicer,
                       sensor_pb2_grpc.SensorServiceServicer,
@@ -52,7 +61,7 @@ class ReachySDKServer(
 
         rclpy.init()
         self.body_control_node = BodyControlNode(
-            controllers_file='reachy_no_orbita_controllers'
+            controllers_file=f"reachy_{get_reachy_config()['model']}_controllers"
         )
         threading.Thread(target=lambda: rclpy.spin(self.body_control_node)).start()
 
