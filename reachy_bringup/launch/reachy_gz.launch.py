@@ -14,7 +14,7 @@ def generate_launch_description():
         default_value=['reachy_controllers.yaml'],
         description='YAML file with the controllers configuration.',
     )
-
+    controllers_file = LaunchConfiguration('controllers_file')
 
     start_rviz_arg = DeclareLaunchArgument(
         'start_rviz',
@@ -46,6 +46,13 @@ def generate_launch_description():
         'robot_description': ParameterValue(robot_description_content, value_type=str),
     }
 
+    robot_controllers = PathJoinSubstitution(
+        [
+            FindPackageShare('reachy_bringup'),
+            'config',
+            controllers_file,
+        ]
+    )
 
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
@@ -161,10 +168,15 @@ def generate_launch_description():
         ),
     )
 
-
     kinematics_node = Node(
         package='reachy_kdl_kinematics',
         executable='reachy_kdl_kinematics',
+    )
+
+    gripper_safe_controller_node = Node(
+        package='gripper_safe_controller',
+        executable='gripper_safe_controller',
+        arguments=['--controllers-file', robot_controllers]
     )
 
     return LaunchDescription(arguments + [
@@ -175,4 +187,5 @@ def generate_launch_description():
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         kinematics_node,
+        gripper_safe_controller_node,
     ])
