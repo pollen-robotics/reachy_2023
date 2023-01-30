@@ -43,10 +43,12 @@ def get_reachy_config():
 
 
 class ReachySDKServer(
-                      joint_pb2_grpc.JointServiceServicer,
-                      sensor_pb2_grpc.SensorServiceServicer,
-                      fan_pb2_grpc.FanControllerServiceServicer,
-                      ):
+    arm_kinematics_pb2_grpc.ArmKinematicsServicer,
+    fullbody_cartesian_command_pb2_grpc.FullBodyCartesianCommandServiceServicer,
+    joint_pb2_grpc.JointServiceServicer,
+    sensor_pb2_grpc.SensorServiceServicer,
+    fan_pb2_grpc.FanControllerServiceServicer,
+):
     """Reachy SDK server node."""
 
     def __init__(self, node_name: str, timeout_sec: float = 5, pub_frequency: float = 100) -> None:
@@ -177,12 +179,46 @@ class ReachySDKServer(
             yield sensors_state
             last_pub = time.time()
 
+    # Arm kinematics servicer
+    def ComputeArmFK(self, request: arm_kinematics_pb2.ArmFKRequest, context) -> arm_kinematics_pb2.ArmFKSolution:
+        """Compute forward kinematics for requested arm."""
+        return self.body_control_node.arm_forward_kinematics(request)
+
+    def ComputeArmIK(self, request: arm_kinematics_pb2.ArmIKRequest, context) -> arm_kinematics_pb2.ArmIKSolution:
+        """Compute inverse kinematics for requested arm."""
+        return self.body_control_node.arm_inverse_kinematics(request)
+
+    def SendFullBodyCartesianCommands(
+        self, 
+        request: fullbody_cartesian_command_pb2.FullBodyCartesianCommand,
+        context,
+    ) -> fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck:
+        """Compute movement given the requested commands in cartesian space."""
+        return self.body_control_node.handle_fullbody_cartesian_command(request)
+
+    def StreamFullBodyCartesianCommands(
+        self,
+        request_iterator: Iterator[fullbody_cartesian_command_pb2.FullBodyCartesianCommand],
+        context,
+    ) -> fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck:
+        """Compute movement from stream of commands in cartesian space."""
+        for request in request_iterator:
+            _ = self.SendCartesianCommand(request, context)
+
+        return fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck(
+            left_arm_command_success=True,
+            right_arm_command_success=True,
+            neck_command_success=True,
+        )
 
 def main():
     """Run the Node and the gRPC server."""
     sdk_server = ReachySDKServer(node_name='reachy_sdk_server')
 
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
+
+    arm_kinematics_pb2_grpc.add_ArmKinematicsServicer_to_server(sdk_server, server)
+    fullbody_cartesian_command_pb2_grpc.add_FullBodyCartesianCommandServiceServicer_to_server(sdk_server, server)
     joint_pb2_grpc.add_JointServiceServicer_to_server(sdk_server, server)
     sensor_pb2_grpc.add_SensorServiceServicer_to_server(sdk_server, server)
     fan_pb2_grpc.add_FanControllerServiceServicer_to_server(sdk_server, server)

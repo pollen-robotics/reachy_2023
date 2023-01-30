@@ -268,16 +268,20 @@ HeadSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
     hw_xl320_states_position_,
     hw_xl320_states_velocity_,
     hw_xl320_states_effort_) != 0) {
-      RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("HeadSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ POS/VEL/EFF ERROR!", info_.name.c_str()
       );
   }
 
 
   if (head_hwi_get_xl320_temperature(this->uid, hw_xl320_states_temperature_)) {
-      RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("HeadSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
       );
   }
@@ -287,26 +291,39 @@ HeadSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
     hw_xl320_states_p_gain_,
     hw_xl320_states_i_gain_,
     hw_xl320_states_d_gain_)) {
-      RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("HeadSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ PID ERROR!", info_.name.c_str()
       );
     }
 
     if (head_hwi_is_xl320_torque_on(this->uid, hw_xl320_states_torque_)) {
-      RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("HeadSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ TORQUE ERROR!", info_.name.c_str()
       );
     }
 
 
     if (head_hwi_get_fan_state(this->uid, hw_fans_states_) != 0) {
-      RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("HeadSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ FAN ERROR!", info_.name.c_str()
       );
     }
+//
+//    if (head_hwi_get_fan_state(this->uid, hw_fans_states_) != 0) {
+//      RCLCPP_INFO(
+//        rclcpp::get_logger("HeadSystem"),
+//        "(%s) READ FAN ERROR!", info_.name.c_str()
+//      );
+//    }
 
   return hardware_interface::return_type::OK;
 }
@@ -316,8 +333,10 @@ HeadSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
 {
 
   if (head_hwi_set_xl320_torque(this->uid, hw_xl320_commands_torque_) != 0) {
-        RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("HeadSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) WRITE TORQUE ERROR!", info_.name.c_str()
       );
   }
@@ -327,8 +346,10 @@ HeadSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
     hw_xl320_commands_position_,
     hw_xl320_commands_max_speed_,
     hw_xl320_commands_torque_limit_) != 0) {
-    RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("HeadSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) WRITE POS/SPEED/TORQUE ERROR!", info_.name.c_str()
       );
   }
@@ -339,8 +360,10 @@ HeadSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
     hw_xl320_commands_i_gain_,
     hw_xl320_commands_d_gain_
   ) != 0) {
-        RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("HeadSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) WRITE PID ERROR!", info_.name.c_str()
       );
   }
@@ -349,8 +372,10 @@ HeadSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
     this->uid,
     hw_fans_commands_
   ) != 0) {
-    RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("HeadSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) WRITE FAN ERROR!", info_.name.c_str()
       );
   }
