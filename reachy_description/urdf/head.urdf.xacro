@@ -169,6 +169,23 @@
       </collision>
     </link>
 
+
+
+    <link name="head_tip" >
+    </link>
+
+    <joint name="head_tip_fixed" type="fixed">
+      <!-- between the cameras -->
+      <!-- <origin xyz="0.02 0 0.06105" rpy="0.0 0.0 0"/> -->
+
+      <!-- Rotation center -->
+      <origin xyz="0.0 0 0.0" rpy="0.0 0.0 0"/>
+      <parent link="head" />
+      <child link="head_tip" />
+    </joint>
+
+
+
     <link name="l_antenna_link">
       <inertial>
         <origin xyz="-0.001 0.0 0.008" rpy="0.0 0.0 0.0"/>
