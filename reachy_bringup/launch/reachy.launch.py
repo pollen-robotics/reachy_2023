@@ -159,6 +159,12 @@ def generate_launch_description():
         executable='reachy_kdl_kinematics',
     )
 
+    gripper_safe_controller_node = Node(
+        package='gripper_safe_controller',
+        executable='gripper_safe_controller',
+        arguments=['--controllers-file', robot_controllers]
+    )
+
     return LaunchDescription(arguments + [
         control_node,
         robot_state_publisher_node,
@@ -166,4 +172,5 @@ def generate_launch_description():
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         kinematics_node,
+        gripper_safe_controller_node,
     ])
