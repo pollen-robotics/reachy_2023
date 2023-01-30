@@ -1,5 +1,6 @@
 from collections import defaultdict
 from functools import partial
+import os
 import time
 from threading import Event, Lock, Thread
 from typing import List
@@ -36,10 +37,10 @@ from .type_conversion import pb_matrix_from_ros_pose, ros_pose_from_pb_matrix
 
 
 class BodyControlNode(Node):
-    def __init__(self, node_name, controllers_file):
+    def __init__(self, node_name, reachy_model):
         super().__init__(node_name=node_name)
         self.logger = self.get_logger()
-        self.forward_controllers = self._parse_controller(controllers_file)
+        self.forward_controllers = self._parse_controller(reachy_model)
         self.joint_to_position_controller = {}
         for c, joints in self.forward_controllers.items():
             if c.endswith('forward_position_controller'):
@@ -309,13 +310,18 @@ class BodyControlNode(Node):
         else:
             return self.joints[joint_id.name]['uid']
 
-    def _parse_controller(self, controllers_file):
+    def _parse_controller(self, reachy_model):
         d = {}
-        controllers_file_folder_path = get_package_share_directory('reachy_bringup') + '/config/'
 
-        try: 
-            with open(f'{controllers_file_folder_path+controllers_file}.yaml', 'r') as f:
-                self.logger.info(f'Using reachy_description/ros2_control/{controllers_file}.yaml controller file.')
+        try:
+            controllers_file = os.path.join(
+                get_package_share_directory('reachy_bringup'),
+                'config',
+                f'{reachy_model}.yaml',
+            ) 
+
+            with open(controllers_file, 'r') as f:
+                self.logger.info(f'Using {controllers_file} controllers file.')
                 config = yaml.safe_load(f)
 
                 controller_config = config['controller_manager']['ros__parameters']
@@ -337,7 +343,7 @@ class BodyControlNode(Node):
 
             return d
         except FileNotFoundError:
-            self.logger.error(f'Controller file {controllers_file}.yaml does not exist in reachy_description/ros2_control.')
+            self.logger.error(f'Controller file {controllers_file} does not exist.')
             import sys
             sys.exit()
 
@@ -348,6 +354,7 @@ class BodyControlNode(Node):
                 controller = self.joint_to_position_controller[joint]
                 with self.requested_goal_lock:
                     self.requested_goal_positions[controller][joint] = cmd.goal_position.value
+
     def _on_target_position_update(self, data: Float64MultiArray, controller_name):
         # Callback of the /*_forward_position_controller subscription
         joints = self.forward_controllers[controller_name]

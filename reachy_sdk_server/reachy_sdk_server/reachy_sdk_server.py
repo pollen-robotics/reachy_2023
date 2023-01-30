@@ -42,7 +42,7 @@ class ReachySDKServer(
 ):
     """Reachy SDK server node."""
 
-    def __init__(self, node_name: str, timeout_sec: float = 5, pub_frequency: float = 100) -> None:
+    def __init__(self, node_name: str, reachy_model: str, timeout_sec: float = 5, pub_frequency: float = 100) -> None:
         """Set up the node.
 
         Subscribe to /joint_states, /joint_temperatures, /force_sensors.
@@ -55,7 +55,7 @@ class ReachySDKServer(
         rclpy.init()
         self.body_control_node = BodyControlNode(
             node_name=node_name,
-            controllers_file='reachy_controllers',
+            reachy_model=reachy_model,
         )
         threading.Thread(target=lambda: rclpy.spin(self.body_control_node)).start()
 
@@ -205,7 +205,17 @@ class ReachySDKServer(
 
 def main():
     """Run the Node and the gRPC server."""
-    sdk_server = ReachySDKServer(node_name='reachy_sdk_server')
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ros-args', action='store_true')
+    parser.add_argument('--reachy-model')
+    args = parser.parse_args()
+
+    sdk_server = ReachySDKServer(
+        node_name='reachy_sdk_server',
+        reachy_model=args.reachy_model,
+    )
 
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
 
