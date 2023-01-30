@@ -445,7 +445,6 @@ class BodyControlNode(Node):
 
             for joint, speed_limit in self.requested_speed_limit.items():
                 self.joints[joint]['speed_limit'] = speed_limit
-                self.logger.info("requested {} for joint {}".format(str(speed_limit), str(joint)))
             self.requested_speed_limit.clear()
 
             joint_dic = self.forward_controllers['forward_speed_limit_controller']

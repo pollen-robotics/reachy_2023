@@ -348,7 +348,7 @@ HeadSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
       );
   }
   
-  if (head_hwi_set_xl320_speed_limit(this->uid, hw_xl320_states_max_speed_) != 0) {
+  if (head_hwi_set_xl320_speed_limit(this->uid, hw_xl320_commands_max_speed_) != 0) {
         RCLCPP_INFO(
         rclcpp::get_logger("HeadSystem"),
         "(%s) WRITE SPEED_LIMIT ERROR!", info_.name.c_str()
