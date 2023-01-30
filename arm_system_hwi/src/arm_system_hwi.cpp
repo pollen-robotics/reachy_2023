@@ -393,20 +393,6 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
       );
   }
 
-  if (arm_hwi_set_mx_torque_limit(this->uid, hw_mx_commands_torque_limit_) != 0) {
-        RCLCPP_INFO(
-        rclcpp::get_logger("ArmSystem"),
-        "(%s) WRITE TORQUE_LIMIT ERROR!", info_.name.c_str()
-      );
-  }
-  
-  if (arm_hwi_set_mx_speed_limit(this->uid, hw_mx_commands_max_speed_) != 0) {
-        RCLCPP_INFO(
-        rclcpp::get_logger("ArmSystem"),
-        "(%s) WRITE SPEED_LIMIT ERROR!", info_.name.c_str()
-      );
-  }
-
   if (arm_hwi_set_mx_target_position_speed_load(
     this->uid,
     hw_mx_commands_position_,
