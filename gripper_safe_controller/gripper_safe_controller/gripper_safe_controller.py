@@ -210,13 +210,13 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--ros-args', action='store_true')
-    parser.add_argument('--params-file')
+    parser.add_argument('--controllers-file')
     args = parser.parse_args()
 
     """Run gripper controller main loop."""
     rclpy.init()
 
-    gripper = GripperSafeController(controllers_file=args.params_file)
+    gripper = GripperSafeController(controllers_file=args.controllers_file)
     rclpy.spin(gripper)
 
     rclpy.shutdown()
