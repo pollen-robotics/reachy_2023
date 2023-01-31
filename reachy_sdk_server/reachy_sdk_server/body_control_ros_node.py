@@ -192,6 +192,8 @@ class BodyControlNode(Node):
                     'name': name,
                     'uid': UInt32Value(value=values['uid']),
                     'present_position': FloatValue(value=values['present_position']),
+                    'present_speed': FloatValue(value=values['present_speed']),
+                    'present_load': FloatValue(value=values['present_load']),
                     'temperature': FloatValue(value=values['present_temperature']),
                     'goal_position': FloatValue(value=values['target_position']),
                     'pid': PIDValue(pid=PIDGains(p=values['pid']['p'], i=values['pid']['i'], d=values['pid']['d'])),
@@ -221,6 +223,12 @@ class BodyControlNode(Node):
 
             elif field == JointField.PRESENT_POSITION:
                 kwargs['present_position'] = FloatValue(value=values['present_position'])
+
+            elif field == JointField.PRESENT_SPEED:
+                kwargs['present_speed'] = FloatValue(value=values['present_speed'])
+
+            elif field == JointField.PRESENT_LOAD:
+                kwargs['present_load'] = FloatValue(value=values['present_load'])
 
             elif field == JointField.TORQUE_LIMIT:
                 kwargs['torque_limit'] = FloatValue(value=values['torque_limit'])
@@ -260,6 +268,10 @@ class BodyControlNode(Node):
                         if k == 'position':
                             self.joints[name]['present_position'] = v
                             self.joints[name]['target_position'] = v
+                        elif k == 'velocity':
+                            self.joints[name]['present_speed'] = v
+                        elif k == 'effort':
+                            self.joints[name]['present_load'] = v
                         elif k == 'temperature':
                             self.joints[name]['present_temperature'] = v
                         elif k == 'p_gain':
@@ -297,6 +309,10 @@ class BodyControlNode(Node):
                 for k, v in zip(kv.interface_names, kv.values):
                     if k == 'position':
                         self.joints[name]['present_position'] = v
+                    elif k == 'velocity':
+                        self.joints[name]['present_speed'] = v
+                    elif k == 'effort':
+                        self.joints[name]['present_load'] = v
                     elif k == 'temperature':
                         self.joints[name]['present_temperature'] = v
                     elif k == 'torque':
