@@ -19,6 +19,7 @@ from control_msgs.msg import DynamicJointState
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float64MultiArray
 
+from reachy_msgs.msg import Gripper
 from reachy_msgs.srv import GetForwardKinematics, GetInverseKinematics
 
 from reachy_sdk_api.arm_kinematics_pb2 import (
@@ -95,6 +96,15 @@ class BodyControlNode(Node):
             )
             for c in self.forward_controllers
         }
+
+        # Safe gripper pub
+        self.safe_gripper_publisher = self.create_publisher(
+            msg_type=Gripper,
+            topic='/grippers/commands',
+            qos_profile=5,
+        )
+        self.requested_gripper_goal_positions = {}
+        self.requested_gripper_goal_lock = Lock()
 
         # Create clients for kinematics services/pub
         self.forward_kin_client = {}
@@ -377,10 +387,15 @@ class BodyControlNode(Node):
         for cmd in req.commands:
             if cmd.HasField('goal_position'):
                 joint = self._get_joint_name(cmd.id)
-                controller = self.joint_to_position_controller[joint]
-                with self.requested_goal_lock:
-                    self.requested_goal_positions[controller][joint] = cmd.goal_position.value
-    
+
+                if joint.endswith('gripper'):
+                    with self.requested_gripper_goal_lock:
+                        self.requested_gripper_goal_positions[joint] = cmd.goal_position.value
+                else:
+                    controller = self.joint_to_position_controller[joint]
+                    with self.requested_goal_lock:
+                        self.requested_goal_positions[controller][joint] = cmd.goal_position.value
+                    
     def _on_target_position_update(self, data: Float64MultiArray, controller_name):
         # Callback of the /*_forward_position_controller subscription
         joints = self.forward_controllers[controller_name]
@@ -474,6 +489,18 @@ class BodyControlNode(Node):
                         self.forward_publishers[controller_name].publish(Float64MultiArray(data=pos))
 
                     self.requested_goal_positions.clear()
+
+            with self.requested_gripper_goal_lock:
+                if self.requested_gripper_goal_positions:
+                    msg = Gripper()
+                    for name, pos in self.requested_gripper_goal_positions.items():
+                        msg.name.append(name)
+                        msg.opening.append(pos)
+
+                    self.safe_gripper_publisher.publish(msg)
+
+                    self.requested_gripper_goal_positions.clear()
+
             time.sleep(0.01)
     
     def _publish_torque_update(self):

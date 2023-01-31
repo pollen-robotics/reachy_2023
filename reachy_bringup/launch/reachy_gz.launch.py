@@ -52,6 +52,22 @@ def generate_launch_description():
     }
 
 
+    robot_controllers = PathJoinSubstitution(
+        [
+            FindPackageShare('reachy_bringup'),
+            'config',
+            f'reachy_{robot_config}_controllers.yaml',
+        ]
+    )
+
+    robot_controllers = PathJoinSubstitution(
+        [
+            FindPackageShare('reachy_bringup'),
+            'config',
+            robot_controllers,
+        ]
+    )
+
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
     )
@@ -190,10 +206,15 @@ def generate_launch_description():
         ),
     )
 
-
     kinematics_node = Node(
         package='reachy_kdl_kinematics',
         executable='reachy_kdl_kinematics',
+    )
+
+    gripper_safe_controller_node = Node(
+        package='gripper_safe_controller',
+        executable='gripper_safe_controller',
+        arguments=['--controllers-file', robot_controllers]
     )
 
     return LaunchDescription(arguments + [
@@ -204,4 +225,5 @@ def generate_launch_description():
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         kinematics_node,
+        gripper_safe_controller_node,
     ])
