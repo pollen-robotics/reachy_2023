@@ -311,7 +311,16 @@ class BodyControlNode(Node):
         self.joint_state_pub_event.set()
         self.sensor_state_pub_event.set()
         self.fan_state_pub_event.set()
-        
+
+    def _check_valid_request(self, joint_id: JointId) -> bool:
+        if joint_id.HasField('uid'):
+            if joint_id.uid not in self.joint_uids.keys():
+                return False
+        else:
+            if joint_id.name not in self.joints.keys():
+                return False
+        return True
+
     def _get_joint_name(self, joint_id: JointId) -> str:
         if joint_id.HasField('uid'):
             return self.joint_uids[joint_id.uid]
