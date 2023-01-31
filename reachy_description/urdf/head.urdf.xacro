@@ -176,10 +176,10 @@
 
     <joint name="head_tip_fixed" type="fixed">
       <!-- between the cameras -->
-      <!-- <origin xyz="0.02 0 0.06105" rpy="0.0 0.0 0"/> -->
+      <origin xyz="0.02 0 0.06105" rpy="0.0 0.0 0"/>
 
       <!-- Rotation center -->
-      <origin xyz="0.0 0 0.0" rpy="0.0 0.0 0"/>
+      <!-- <origin xyz="0.0 0 0.0" rpy="0.0 0.0 0"/> -->
       <parent link="head" />
       <child link="head_tip" />
     </joint>

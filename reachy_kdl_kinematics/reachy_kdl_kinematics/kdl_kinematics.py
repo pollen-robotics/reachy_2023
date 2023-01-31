@@ -11,7 +11,7 @@ import PyKDL as kdl
 from .kdl_parser_py import urdf
 
 
-def generate_solver(urdf_str: str, root: str, tip: str):
+def generate_solver(urdf_str: str, root: str, tip: str, L: np.ndarray = np.array([1.0, 1.0, 1.0, 0.01, 0.01, 0.01])):
     """Create an FK/IK solvers for each arm (left/right)."""
     success, urdf_tree = urdf.treeFromString(urdf_str)
     if not success:
@@ -25,6 +25,7 @@ def generate_solver(urdf_str: str, root: str, tip: str):
         eps=1e-5,
         maxiter=500,
         eps_joints=1e-15,
+        L=L
     )
 
     return chain, fk_solver, ik_solver

@@ -120,7 +120,7 @@ class ReachyKdlKinematics(Node):
                 self.ik_solver[arm] = ik_solver
 
         # Kinematics for the head
-        chain, fk_solver, ik_solver = generate_solver(self.urdf, 'torso', 'head_tip')
+        chain, fk_solver, ik_solver = generate_solver(self.urdf, 'torso', 'head_tip', L=np.array([1e-6, 1e-6, 1e-6, 1.0, 1.0, 1.0]))  # L weight matrix to considere only the orientation
 
         # We automatically loads the kinematics corresponding to the config
         if chain.getNrOfJoints():

@@ -3,7 +3,8 @@ from scipy.spatial.transform import Rotation
 
 from geometry_msgs.msg import Pose
 
-from reachy_sdk_api.kinematics_pb2 import Matrix4x4
+from reachy_sdk_api.kinematics_pb2 import Matrix4x4, Quaternion
+
 
 def pb_matrix_from_ros_pose(pose: Pose) -> Matrix4x4:
     M = np.eye(4)
@@ -38,5 +39,20 @@ def ros_pose_from_pb_matrix(m: Matrix4x4) -> Pose:
     pose.orientation.y = q[1]
     pose.orientation.z = q[2]
     pose.orientation.w = q[3]
+
+    return pose
+
+
+def ros_pose_from_pb_quaternion(q: Quaternion) -> Pose:
+    pose = Pose()
+
+    pose.position.x = 0.0
+    pose.position.y = 0.0
+    pose.position.z = 0.0
+
+    pose.orientation.x = q.x
+    pose.orientation.y = q.y
+    pose.orientation.z = q.z
+    pose.orientation.w = q.w
 
     return pose

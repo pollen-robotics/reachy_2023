@@ -61,7 +61,7 @@ class ReachySDKServer(
         self.logger = self.body_control_node.get_logger()
         self.clock = self.body_control_node.get_clock()
 
-        self.logger.info('SDK ready to be served!')
+        self.logger.info('SDK ready to be served! (port 50055)')
 
     def GetJointsState(self, request: joint_pb2.JointsStateRequest, context) -> joint_pb2.JointsState:
         """Get the requested joints id."""
@@ -111,14 +111,14 @@ class ReachySDKServer(
 
     def GetAllJointsId(self, request: Empty, context) -> joint_pb2.JointsId:
         names, uids = zip(*[
-            (joint['name'], joint['uid']) 
+            (joint['name'], joint['uid'])
             for joint in self.body_control_node.joints.values()
         ])
         return joint_pb2.JointsId(names=names, uids=uids)
 
     def GetAllForceSensorsId(self, request: Empty, context) -> sensor_pb2.SensorsId:
         names, uids = zip(*[
-            (sensor['name'], sensor['uid']) 
+            (sensor['name'], sensor['uid'])
             for sensor in self.body_control_node.sensors.values()
         ])
         return sensor_pb2.SensorsId(names=names, uids=uids)
