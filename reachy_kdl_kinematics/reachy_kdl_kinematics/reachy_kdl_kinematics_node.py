@@ -78,7 +78,7 @@ class ReachyKdlKinematics(Node):
                 )
                 self.logger.info(f'Adding service "{self.ik_srv[arm].srv_name}"...')
 
-                # Create cartesian control subscription
+                # Create cartesian control pub/subscription
                 forward_position_pub = self.create_publisher(
                     msg_type=Float64MultiArray,
                     topic=f'/{arm}_forward_position_controller/commands',
@@ -168,7 +168,7 @@ class ReachyKdlKinematics(Node):
                 topic='/head/averaged_target_pose',
                 qos_profile=5,
                 callback=partial(
-                    self.on_averaged_target_pose, 
+                    self.on_averaged_target_pose,
                     name='head',
                     # head straight
                     q0=[0, 0, 0],
@@ -184,15 +184,11 @@ class ReachyKdlKinematics(Node):
             self.fk_solver['head'] = fk_solver
             self.ik_solver['head'] = ik_solver
 
-
-
-
-
         self.logger.info(f'Kinematics node ready!')
 
     def forward_kinematics_srv(
-        self, 
-        request: GetForwardKinematics.Request, 
+        self,
+        request: GetForwardKinematics.Request,
         response: GetForwardKinematics.Response,
         name,
     ) -> GetForwardKinematics.Response:
@@ -203,8 +199,8 @@ class ReachyKdlKinematics(Node):
             return response
 
         error, sol = forward_kinematics(
-            self.fk_solver[name], 
-            joint_position, 
+            self.fk_solver[name],
+            joint_position,
             self.chain[name].getNrOfJoints(),
         )
 
@@ -230,7 +226,7 @@ class ReachyKdlKinematics(Node):
         request: GetInverseKinematics.Request,
         response: GetInverseKinematics.Response,
         name,
-    ) -> GetInverseKinematics.Response: 
+    ) -> GetInverseKinematics.Response:
 
         M = ros_pose_to_matrix(request.pose)
         q0 = request.q0.position
@@ -345,6 +341,7 @@ class ReachyKdlKinematics(Node):
 
     def get_chain_joints_name(self, chain):
         return [chain.getSegment(i).getJoint().getName() for i in range(chain.getNrOfJoints())]
+
 
 def main():
     rclpy.init()

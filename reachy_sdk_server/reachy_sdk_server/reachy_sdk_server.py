@@ -26,6 +26,8 @@ from reachy_sdk_api import joint_pb2, joint_pb2_grpc
 from reachy_sdk_api import sensor_pb2, sensor_pb2_grpc
 from reachy_sdk_api import kinematics_pb2
 from reachy_sdk_api import arm_kinematics_pb2, arm_kinematics_pb2_grpc
+from reachy_sdk_api import orbita_kinematics_pb2, orbita_kinematics_pb2_grpc
+from reachy_sdk_api import head_kinematics_pb2, head_kinematics_pb2_grpc
 from reachy_sdk_api import fullbody_cartesian_command_pb2, fullbody_cartesian_command_pb2_grpc
 from reachy_sdk_api import fan_pb2, fan_pb2_grpc
 from reachy_sdk_api import mobile_platform_reachy_pb2, mobile_platform_reachy_pb2_grpc
@@ -35,6 +37,7 @@ from reachy_sdk_server.body_control_ros_node import BodyControlNode
 
 class ReachySDKServer(
     arm_kinematics_pb2_grpc.ArmKinematicsServicer,
+    head_kinematics_pb2_grpc.HeadKinematicsServicer,
     fullbody_cartesian_command_pb2_grpc.FullBodyCartesianCommandServiceServicer,
     joint_pb2_grpc.JointServiceServicer,
     sensor_pb2_grpc.SensorServiceServicer,
@@ -125,7 +128,7 @@ class ReachySDKServer(
 
     def GetAllFansId(self, request: Empty, context) -> fan_pb2.FansId:
         names, uids = zip(*[
-            (fan['name'], fan['uid']) 
+            (fan['name'], fan['uid'])
             for fan in self.body_control_node.fans.values()
         ])
         return fan_pb2.FansId(names=names, uids=uids)
@@ -179,8 +182,19 @@ class ReachySDKServer(
         """Compute inverse kinematics for requested arm."""
         return self.body_control_node.arm_inverse_kinematics(request)
 
+    # Head kinematics servicer
+
+    def ComputeHeadFK(self, request: head_kinematics_pb2.HeadFKRequest, context) -> head_kinematics_pb2.HeadFKSolution:
+        """Compute forward kinematics for the head."""
+        return self.body_control_node.head_forward_kinematics(request)
+
+    def ComputeHeadIK(self, request: head_kinematics_pb2.HeadIKRequest, context) -> head_kinematics_pb2.HeadIKSolution:
+        """Compute inverse kinematics for the head."""
+
+        return self.body_control_node.head_inverse_kinematics(request)
+
     def SendFullBodyCartesianCommands(
-        self, 
+        self,
         request: fullbody_cartesian_command_pb2.FullBodyCartesianCommand,
         context,
     ) -> fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck:
@@ -202,6 +216,7 @@ class ReachySDKServer(
             neck_command_success=True,
         )
 
+
 def main():
     """Run the Node and the gRPC server."""
     sdk_server = ReachySDKServer(node_name='reachy_sdk_server')
@@ -209,6 +224,7 @@ def main():
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
 
     arm_kinematics_pb2_grpc.add_ArmKinematicsServicer_to_server(sdk_server, server)
+    head_kinematics_pb2_grpc.add_HeadKinematicsServicer_to_server(sdk_server, server)
     fullbody_cartesian_command_pb2_grpc.add_FullBodyCartesianCommandServiceServicer_to_server(sdk_server, server)
     joint_pb2_grpc.add_JointServiceServicer_to_server(sdk_server, server)
     sensor_pb2_grpc.add_SensorServiceServicer_to_server(sdk_server, server)

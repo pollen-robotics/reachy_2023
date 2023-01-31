@@ -56,3 +56,14 @@ def ros_pose_from_pb_quaternion(q: Quaternion) -> Pose:
     pose.orientation.w = q.w
 
     return pose
+
+
+def pb_quaternion_from_ros_pose(pose: Pose) -> Quaternion:
+
+    q = Quaternion()
+    q.x = pose.orientation.x
+    q.y = pose.orientation.y
+    q.z = pose.orientation.z
+    q.w = pose.orientation.w
+
+    return q
