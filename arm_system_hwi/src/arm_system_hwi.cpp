@@ -196,6 +196,11 @@ ArmSystem::export_state_interfaces()
         joint.name, "i_gain", &hw_mx_states_i_gain_[i]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
         joint.name, "d_gain", &hw_mx_states_d_gain_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        joint.name, "torque_limit", &hw_mx_states_torque_limit_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        joint.name, "max_speed", &hw_mx_states_max_speed_[i]));       
+        
 
     RCLCPP_INFO(
       rclcpp::get_logger("ArmSystem"),
@@ -308,6 +313,21 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
       );
   }
+  
+  if (arm_hwi_get_torque_limit(this->uid, hw_mx_states_torque_limit_)) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("ArmSystem"),
+        "(%s) READ TORQUE_LIMIT ERROR!", info_.name.c_str()
+      );
+  }
+
+
+  if (arm_hwi_get_moving_speed(this->uid, hw_mx_states_max_speed_)) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("ArmSystem"),
+        "(%s) READ SPEED_LIMIT ERROR!", info_.name.c_str()
+      );
+  }
 
   if (arm_hwi_get_mx_pid(
     this->uid, 
@@ -414,7 +434,7 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
 
   auto t1 = clock_.now();
   rclcpp::Duration dt = t1 - t0;
-      RCLCPP_INFO_THROTTLE(
+      RCLCPP_DEBUG_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
         LOG_THROTTLE_DURATION,
