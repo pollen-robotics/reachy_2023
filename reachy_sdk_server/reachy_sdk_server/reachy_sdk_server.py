@@ -33,6 +33,15 @@ from reachy_sdk_api import mobile_platform_reachy_pb2, mobile_platform_reachy_pb
 from reachy_sdk_server.body_control_ros_node import BodyControlNode
 
 
+def get_reachy_config():
+    import yaml
+    import os
+    config_file = os.path.expanduser('~/.reachy.yaml')
+    with open(config_file) as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+        return config
+
+
 class ReachySDKServer(
     arm_kinematics_pb2_grpc.ArmKinematicsServicer,
     fullbody_cartesian_command_pb2_grpc.FullBodyCartesianCommandServiceServicer,

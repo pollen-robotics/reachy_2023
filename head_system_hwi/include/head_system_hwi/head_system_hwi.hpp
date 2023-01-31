@@ -8,6 +8,8 @@
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 
+#define LOG_THROTTLE_DURATION 30000
+
 namespace head_system_hwi
 {
   using namespace hardware_interface;
@@ -33,6 +35,8 @@ private:
   double hw_xl320_states_velocity_[2];
   double hw_xl320_states_effort_[2];
   double hw_xl320_states_temperature_[2];
+  double hw_xl320_states_torque_limit_[2];
+  double hw_xl320_states_max_speed_[2];
   double hw_xl320_states_torque_[2];
   double hw_xl320_states_p_gain_[2];
   double hw_xl320_states_i_gain_[2];

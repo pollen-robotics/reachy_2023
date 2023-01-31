@@ -21,9 +21,9 @@ The node can also be used as an cartesian controller. Indeed, it listens to spec
 For each arm, two topics can be used (for the right arm):
 
 * **/r_arm/target_pose** ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html)) - Compute the inverse kinematics of the given pose and directly send the joint solution to the corresponding forward position controller.
-* **/r_arm/target_pose** ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html)) - Average the pose (over the n last), compute the inverse kinematics, clip the joint solution according to a max velocity and then publish the result to the corresponding forward posiiotn controller. This version is typically meant to be used at a rather high frequency (> 10Hz).
+* **/r_arm/averaged_target_pose** ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html)) - Average the pose (over the n last), compute the inverse kinematics, clip the joint solution according to a max velocity and then publish the result to the corresponding forward posiiotn controller. This version is typically meant to be used at a rather high frequency (> 10Hz).
 
-Similarly for the left arm: **/l_arm/target_pose** and **/l_arm/target_pose**.
+Similarly for the left arm: **/l_arm/target_pose** and **/l_arm/averaged_target_pose**.
 
 ## Requirements
 
