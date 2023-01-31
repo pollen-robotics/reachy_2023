@@ -214,16 +214,18 @@ class ReachySDKServer(
 
 def main():
     """Run the Node and the gRPC server."""
-    import argparse
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--ros-args', action='store_true')
-    parser.add_argument('--reachy-model')
-    args = parser.parse_args()
+    def get_reachy_config():
+        import yaml
+        import os
+        config_file = os.path.expanduser('~/.reachy.yaml')
+        with open(config_file) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+            return config
 
     sdk_server = ReachySDKServer(
         node_name='reachy_sdk_server',
-        reachy_model=args.reachy_model,
+        reachy_model=get_reachy_config()["model"],
     )
 
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
