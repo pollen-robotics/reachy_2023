@@ -4,6 +4,8 @@
   <xacro:arg name="use_fake_hardware" default="false"/>
   <xacro:arg name="use_gazebo" default="false"/>
 
+  <xacro:arg name="robot_config" default="full_kit"/>
+
   <xacro:include filename="$(find reachy_description)/urdf/arm.urdf.xacro"/>
   <xacro:include filename="$(find reachy_description)/urdf/head.urdf.xacro"/>
 
@@ -43,38 +45,63 @@
   <!--MODEL PARAMETERS-->
   <xacro:property name="damping" value="0.1"/>
   <xacro:property name="friction" value="0.1"/>
+  <xacro:property name="robot_config" value="$(arg robot_config)"/>
 
-  <!-- RIGHT ARM-->
-  <xacro:arm
-    prefix="r" parent="torso" side="right"
-    damping="${damping}" friction="${friction}"
-    serial_port="/dev/usb2ax_right_arm"
-    mx_ids="10, 11, 12, 13, 14, 15, 16, 17"
-    offsets="1.57, 1.57, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0"
-    is_direct="0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0"
-    reductions="1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -2.0"
-    force_sensor_id="40"
-    fan_id="41"
-  />
+  <xacro:if value="${robot_config == 'full_kit'}">
+    <xacro:property name="use_right_arm" value="true"/>
+    <xacro:property name="use_left_arm" value="true"/>
+    <xacro:property name="use_head" value="true"/>
+  </xacro:if>
 
-  <!-- LEFT ARM-->
-  <xacro:arm
-    prefix="l" parent="torso" side="left"
-    damping="${damping}" friction="${friction}"
-    serial_port="/dev/usb2ax_left_arm"
-    mx_ids="20, 21, 22, 23, 24, 25, 26, 27"
-    offsets="1.57, -1.57, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0"
-    is_direct="1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0"
-    reductions="1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -2.0"
-    force_sensor_id="50"
-    fan_id="51"
-  />
+  <xacro:if value="${robot_config == 'starter_kit_left'}">
+    <xacro:property name="use_right_arm" value="false"/>
+    <xacro:property name="use_left_arm" value="true"/>
+    <xacro:property name="use_head" value="true"/>
+  </xacro:if>
 
-  <!-- HEAD-->
-  <xacro:head
-    parent="torso"
-    damping="${damping}" friction="${friction}"
-  />
+  <xacro:if value="${robot_config == 'starter_kit_right'}">
+    <xacro:property name="use_right_arm" value="true"/>
+    <xacro:property name="use_left_arm" value="false"/>
+    <xacro:property name="use_head" value="true"/>
+  </xacro:if>
+
+  <xacro:if value="${use_right_arm}">
+    <!-- RIGHT ARM-->
+    <xacro:arm
+      prefix="r" parent="torso" side="right"
+      damping="${damping}" friction="${friction}"
+      serial_port="/dev/usb2ax_right_arm"
+      mx_ids="10, 11, 12, 13, 14, 15, 16, 17"
+      offsets="1.57, 1.57, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0"
+      is_direct="0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0"
+      reductions="1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -2.0"
+      force_sensor_id="40"
+      fan_id="41"
+    />
+  </xacro:if>
+
+  <xacro:if value="${use_left_arm}">
+    <!-- LEFT ARM-->
+    <xacro:arm
+      prefix="l" parent="torso" side="left"
+      damping="${damping}" friction="${friction}"
+      serial_port="/dev/usb2ax_left_arm"
+      mx_ids="20, 21, 22, 23, 24, 25, 26, 27"
+      offsets="1.57, -1.57, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0"
+      is_direct="1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0"
+      reductions="1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -2.0"
+      force_sensor_id="50"
+      fan_id="51"
+    />
+  </xacro:if>
+  
+  <xacro:if value="${use_head}">
+    <!-- HEAD-->
+    <xacro:head
+      parent="torso"
+      damping="${damping}" friction="${friction}"
+    />
+  </xacro:if>
 
   <xacro:if value="$(arg use_gazebo)">
   <gazebo>
@@ -84,6 +111,4 @@
     </plugin>
   </gazebo>
   </xacro:if>
-
-
 </robot>
