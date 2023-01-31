@@ -156,7 +156,6 @@ forward_fan_controller:
       - l_antenna_fan
       - r_antenna_fan
       - l_elbow_fan
-      - neck_fan
       - l_wrist_fan
       - l_shoulder_fan
     interface_name: state

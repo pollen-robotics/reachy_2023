@@ -157,6 +157,5 @@ forward_fan_controller:
       - r_shoulder_fan
       - r_wrist_fan
       - r_elbow_fan
-      - neck_fan
     interface_name: state
     use_sim_time: false

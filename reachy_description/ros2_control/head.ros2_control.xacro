@@ -30,12 +30,6 @@
                  <xacro:position_joint_control name="neck_roll"/>
                  <xacro:position_joint_control name="neck_pitch"/>
                  <xacro:position_joint_control name="neck_yaw"/>
-            <!--      <joint name="neck_fan">-->
-                   <!-- <state_interface name="state">
-                     <param name="initial_value">0.0</param>
-                   </state_interface> -->
-                   <!-- <command_interface name="state"/> -->
-                 <!-- </joint> -->
         </ros2_control>
 
         <ros2_control name="antennas" type="system">
