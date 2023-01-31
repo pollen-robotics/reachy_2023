@@ -60,14 +60,6 @@ def generate_launch_description():
         ]
     )
 
-    robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare('reachy_bringup'),
-            'config',
-            robot_controllers,
-        ]
-    )
-
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
     )
