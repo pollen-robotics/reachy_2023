@@ -208,7 +208,6 @@ forward_fan_controller:
       - l_elbow_fan
       - r_wrist_fan
       - r_elbow_fan
-      - neck_fan
       - l_wrist_fan
       - l_shoulder_fan
     interface_name: state
