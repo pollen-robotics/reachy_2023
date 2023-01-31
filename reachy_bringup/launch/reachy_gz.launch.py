@@ -2,20 +2,25 @@ from launch import LaunchDescription, LaunchContext
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription, TimerAction
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.descriptions import ParameterValue
 from launch_ros.actions import Node, SetUseSimTime
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
-def generate_launch_description():
-    controllers_file_arg = DeclareLaunchArgument(
-        'controllers_file',
-        default_value=['reachy_controllers.yaml'],
-        description='YAML file with the controllers configuration.',
-    )
-    controllers_file = LaunchConfiguration('controllers_file')
 
+def get_reachy_config():
+    import yaml
+    import os
+    config_file = os.path.expanduser('~/.reachy.yaml')
+    with open(config_file) as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+        return config
+
+robot_config = get_reachy_config()["model"]
+
+
+def generate_launch_description():
     start_rviz_arg = DeclareLaunchArgument(
         'start_rviz',
         default_value='false',
@@ -24,7 +29,6 @@ def generate_launch_description():
     start_rviz = LaunchConfiguration('start_rviz')
 
     arguments = [
-        controllers_file_arg,
         start_rviz_arg,
     ]
 
@@ -38,7 +42,8 @@ def generate_launch_description():
             ' ',
             'use_fake_hardware:=true use_gazebo:=true depth_camera:=false',
             ' ',
-
+            f'robot_config:={robot_config}',
+            ' ',
         ]
     )
 
@@ -46,11 +51,20 @@ def generate_launch_description():
         'robot_description': ParameterValue(robot_description_content, value_type=str),
     }
 
+
     robot_controllers = PathJoinSubstitution(
         [
             FindPackageShare('reachy_bringup'),
             'config',
-            controllers_file,
+            f'reachy_{robot_config}_controllers.yaml',
+        ]
+    )
+
+    robot_controllers = PathJoinSubstitution(
+        [
+            FindPackageShare('reachy_bringup'),
+            'config',
+            robot_controllers,
         ]
     )
 
@@ -101,12 +115,22 @@ def generate_launch_description():
         package='controller_manager',
         executable='spawner',
         arguments=['r_arm_forward_position_controller', '-c', '/controller_manager'],
+        condition=IfCondition(
+            PythonExpression(
+                ["'", f'{robot_config}', "' == 'full_kit' or '", f'{robot_config}', "' == 'starter_kit_right'"]
+            )
+        ),
     )
 
     l_arm_forward_position_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
         arguments=['l_arm_forward_position_controller', '-c', '/controller_manager'],
+        condition=IfCondition(
+            PythonExpression(
+                ["'", f'{robot_config}', "' == 'full_kit' or '", f'{robot_config}', "' == 'starter_kit_left'"]
+            )
+        ),
     )
 
     antenna_forward_position_controller_spawner = Node(
@@ -125,6 +149,18 @@ def generate_launch_description():
         package='controller_manager',
         executable='spawner',
         arguments=['forward_torque_controller', '-c', '/controller_manager'],
+    )
+
+    forward_torque_limit_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['forward_torque_limit_controller', '-c', '/controller_manager'],
+    )
+
+    forward_speed_limit_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['forward_speed_limit_controller', '-c', '/controller_manager'],
     )
 
     pid_controller_spawner = Node(
@@ -162,6 +198,8 @@ def generate_launch_description():
                 antenna_forward_position_controller_spawner,
                 gripper_forward_position_controller_spawner,
                 forward_torque_controller_spawner,
+                forward_speed_limit_controller_spawner,
+                forward_torque_limit_controller_spawner,
                 pid_controller_spawner,
                 forward_fan_controller_spawner,
             ],

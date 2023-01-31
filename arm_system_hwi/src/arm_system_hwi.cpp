@@ -196,6 +196,11 @@ ArmSystem::export_state_interfaces()
         joint.name, "i_gain", &hw_mx_states_i_gain_[i]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
         joint.name, "d_gain", &hw_mx_states_d_gain_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        joint.name, "torque_limit", &hw_mx_states_torque_limit_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        joint.name, "max_speed", &hw_mx_states_max_speed_[i]));       
+        
 
     RCLCPP_INFO(
       rclcpp::get_logger("ArmSystem"),
@@ -292,16 +297,35 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
     hw_mx_states_position_,
     hw_mx_states_velocity_,
     hw_mx_states_effort_) != 0) {
-      RCLCPP_INFO(
+        RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ POS/VEL/EFF ERROR!", info_.name.c_str()
       );
   }
 
   if (arm_hwi_get_mx_temperature(this->uid, hw_mx_states_temperature_)) {
+        RCLCPP_INFO_THROTTLE(
+        rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
+        "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
+      );
+  }
+  
+  if (arm_hwi_get_torque_limit(this->uid, hw_mx_states_torque_limit_)) {
       RCLCPP_INFO(
         rclcpp::get_logger("ArmSystem"),
-        "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
+        "(%s) READ TORQUE_LIMIT ERROR!", info_.name.c_str()
+      );
+  }
+
+
+  if (arm_hwi_get_moving_speed(this->uid, hw_mx_states_max_speed_)) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("ArmSystem"),
+        "(%s) READ SPEED_LIMIT ERROR!", info_.name.c_str()
       );
   }
 
@@ -310,29 +334,37 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
     hw_mx_states_p_gain_, 
     hw_mx_states_i_gain_, 
     hw_mx_states_d_gain_)) {
-      RCLCPP_INFO(
+        RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ PID ERROR!", info_.name.c_str()
       );
     }
 
     if (arm_hwi_is_mx_torque_on(this->uid, hw_mx_states_torque_)) {
-      RCLCPP_INFO(
+        RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ TORQUE ERROR!", info_.name.c_str()
       );
     }
 
     if (arm_hwi_read_force_sensor(this->uid, &hw_force_sensor_) != 0) {
-      RCLCPP_INFO(
+        RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ FORCE SENSOR ERROR!", info_.name.c_str()
       );
     }
 
     if (arm_hwi_get_fan_state(this->uid, hw_fans_states_) != 0) {
-      RCLCPP_INFO(
+        RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ FAN ERROR!", info_.name.c_str()
       );
     }
@@ -353,8 +385,10 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
   auto t0 = clock_.now();
 
   if (arm_hwi_set_mx_torque(this->uid, hw_mx_commands_torque_) != 0) {
-        RCLCPP_INFO(
+          RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) WRITE TORQUE ERROR!", info_.name.c_str()
       );
   }
@@ -364,8 +398,10 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
     hw_mx_commands_position_,
     hw_mx_commands_max_speed_,
     hw_mx_commands_torque_limit_) != 0) {
-    RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) WRITE POS/SPEED/TORQUE ERROR!", info_.name.c_str()
       );
   }
@@ -376,8 +412,10 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
     hw_mx_commands_i_gain_,
     hw_mx_commands_d_gain_
   ) != 0) {
-        RCLCPP_INFO(
+          RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) WRITE PID ERROR!", info_.name.c_str()
       );
   }
@@ -386,16 +424,20 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
     this->uid,
     hw_fans_commands_
   ) != 0) {
-    RCLCPP_INFO(
+      RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) WRITE FAN ERROR!", info_.name.c_str()
       );
   }
 
   auto t1 = clock_.now();
   rclcpp::Duration dt = t1 - t0;
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("ArmSystem"),
+      RCLCPP_DEBUG_THROTTLE(
+        rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
     "(%s) WRITE ITER DT %fms", info_.name.c_str(), dt.seconds() * 1000.0    
   );
 

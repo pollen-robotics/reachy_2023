@@ -33,6 +33,15 @@ from reachy_sdk_api import mobile_platform_reachy_pb2, mobile_platform_reachy_pb
 from reachy_sdk_server.body_control_ros_node import BodyControlNode
 
 
+def get_reachy_config():
+    import yaml
+    import os
+    config_file = os.path.expanduser('~/.reachy.yaml')
+    with open(config_file) as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+        return config
+
+
 class ReachySDKServer(
     arm_kinematics_pb2_grpc.ArmKinematicsServicer,
     fullbody_cartesian_command_pb2_grpc.FullBodyCartesianCommandServiceServicer,
@@ -42,7 +51,7 @@ class ReachySDKServer(
 ):
     """Reachy SDK server node."""
 
-    def __init__(self, node_name: str, timeout_sec: float = 5, pub_frequency: float = 100) -> None:
+    def __init__(self, node_name: str, reachy_model: str, timeout_sec: float = 5, pub_frequency: float = 100) -> None:
         """Set up the node.
 
         Subscribe to /joint_states, /joint_temperatures, /force_sensors.
@@ -54,7 +63,8 @@ class ReachySDKServer(
 
         rclpy.init()
         self.body_control_node = BodyControlNode(
-            controllers_file='reachy_controllers',
+            node_name=node_name,
+            reachy_model=reachy_model,
         )
         threading.Thread(target=lambda: rclpy.spin(self.body_control_node)).start()
 
@@ -204,7 +214,19 @@ class ReachySDKServer(
 
 def main():
     """Run the Node and the gRPC server."""
-    sdk_server = ReachySDKServer(node_name='reachy_sdk_server')
+
+    def get_reachy_config():
+        import yaml
+        import os
+        config_file = os.path.expanduser('~/.reachy.yaml')
+        with open(config_file) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+            return config
+
+    sdk_server = ReachySDKServer(
+        node_name='reachy_sdk_server',
+        reachy_model=get_reachy_config()["model"],
+    )
 
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
 
