@@ -77,6 +77,11 @@ class ReachySDKServer(
         """Get the requested joints id."""
         params = {}
 
+        for id in request.ids:
+            if not self.body_control_node._check_valid_request(id):
+                self.logger.error(f'Got invalid joint request for GetJointsState, received {id}')
+                return joint_pb2.JointsState(**params)
+
         params['ids'] = request.ids
         params['states'] = [
             self.body_control_node.get_joint_state(uid=id, joint_fields=request.requested_fields)
@@ -91,6 +96,11 @@ class ReachySDKServer(
         """Continuously stream requested joints up-to-date state."""
         dt = 1.0 / request.publish_frequency if request.publish_frequency > 0 else -1.0
         last_pub = 0.0
+
+        for id in request.request.ids:
+            if not self.body_control_node._check_valid_request(id):
+                self.logger.error(f'Got invalid joint request for StreamJointsState, received {id}')
+                return joint_pb2.JointsState()
 
         while True:
             elapsed_time = time.time() - last_pub
@@ -107,6 +117,11 @@ class ReachySDKServer(
             last_pub = time.time()
 
     def SendJointsCommands(self, request: joint_pb2.JointsCommand, context) -> joint_pb2.JointsCommandAck:
+        for cmd in request.commands:
+            if not self.body_control_node._check_valid_request(cmd.id):
+                self.logger.error(f'Got invalid joint request for SendJointsCommand, received {cmd.id}')
+                return joint_pb2.JointsCommandAck(success=False)
+        
         self.body_control_node.handle_joint_msg(grpc_req=request)
         return joint_pb2.JointsCommandAck(success=True)
 
@@ -115,6 +130,12 @@ class ReachySDKServer(
         return fan_pb2.FansCommandAck(success=True)
 
     def StreamJointsCommands(self, request_iterator: Iterator[joint_pb2.JointsCommand], context) -> joint_pb2.JointsCommandAck:
+        for request in request_iterator:
+            for cmd in request.commands:
+                if not self.body_control_node._check_valid_request(cmd.id):
+                    self.logger.error(f'Got invalid joint request for StreamJointsCommand, received {cmd.id}')
+                    return joint_pb2.JointsCommandAck(success=False)
+
         for request in request_iterator:
             self.body_control_node.handle_joint_msg(grpc_req=request)
         return joint_pb2.JointsCommandAck(success=True)
