@@ -596,8 +596,8 @@ class BodyControlNode(Node):
             ack.left_arm_command_success = self.handle_arm_cartesian_request(cmd.left_arm, 'l_arm')
         if cmd.HasField('right_arm'):
             ack.right_arm_command_success = self.handle_arm_cartesian_request(cmd.right_arm, 'r_arm')
-        if cmd.HasField('neck'):
-            ack.neck_command_success = self.handle_head_cartesian_request(cmd.neck, 'head')
+        if cmd.HasField('head'):
+            ack.head_command_success = self.handle_head_cartesian_request(cmd.head, 'head')
 
         return ack
 
@@ -613,7 +613,7 @@ class BodyControlNode(Node):
 
         return True
 
-    def handle_head_cartesian_request(self, request: OrbitaIKRequest, name) -> bool:
+    def handle_head_cartesian_request(self, request: HeadIKRequest, name) -> bool:
         if name not in self.target_pose_publisher:
             return False
 

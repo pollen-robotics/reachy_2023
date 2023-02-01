@@ -190,7 +190,6 @@ class ReachySDKServer(
 
     def ComputeHeadIK(self, request: head_kinematics_pb2.HeadIKRequest, context) -> head_kinematics_pb2.HeadIKSolution:
         """Compute inverse kinematics for the head."""
-
         return self.body_control_node.head_inverse_kinematics(request)
 
     def SendFullBodyCartesianCommands(
