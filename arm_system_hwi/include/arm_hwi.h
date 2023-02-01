@@ -30,6 +30,10 @@ int32_t arm_hwi_set_mx_target_position_speed_load(uint32_t uid,
                                                   double *moving_speed,
                                                   double *torque_limit);
 
+int32_t arm_hwi_set_mx_torque_limit(uint32_t uid, double *torque_limit);
+
+int32_t arm_hwi_set_mx_speed_limit(uint32_t uid, double *speed_limit);
+
 int32_t arm_hwi_get_mx_temperature(uint32_t uid, double *temperature);
 
 int32_t arm_hwi_is_mx_torque_on(uint32_t uid, double *is_on);

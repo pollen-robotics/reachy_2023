@@ -30,9 +30,26 @@ from reachy_msgs.srv import SetFocusState
 
 
 
-DUMMY_JOINT_INTERFACE_NAMES=['torque','p_gain','i_gain','d_gain','temperature']
-DUMMY_SPECIAL_INTERFACES={'l_shoulder_fan':'state','l_elbow_fan':'state','l_wrist_fan':'state','l_antenna_fan':'state', 'l_force_gripper':'force',
-                  'r_shoulder_fan':'state','r_elbow_fan':'state','r_wrist_fan':'state','r_antenna_fan':'state', 'r_force_gripper':'force'}
+DUMMY_JOINT_INTERFACE_NAMES = [
+    'torque', 
+    'p_gain', 'i_gain', 'd_gain',
+    'temperature',
+    'max_speed',
+    'torque_limit',
+]
+
+DUMMY_SPECIAL_INTERFACES = {
+    'l_shoulder_fan': 'state',
+    'l_elbow_fan': 'state',
+    'l_wrist_fan': 'state',
+    'l_antenna_fan': 'state', 
+    'l_force_gripper': 'force',
+    'r_shoulder_fan': 'state',
+    'r_elbow_fan': 'state', 
+    'r_wrist_fan': 'state', 
+    'r_antenna_fan': 'state',
+    'r_force_gripper': 'force',
+}
 
 
 class FakeGzInterface(Node):

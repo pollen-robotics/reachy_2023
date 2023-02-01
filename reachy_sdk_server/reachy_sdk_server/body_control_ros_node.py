@@ -1,5 +1,6 @@
 from collections import defaultdict
 from functools import partial
+import os
 import time
 from threading import Event, Lock, Thread
 from typing import List
@@ -18,6 +19,7 @@ from control_msgs.msg import DynamicJointState
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float64MultiArray
 
+from reachy_msgs.msg import Gripper
 from reachy_msgs.srv import GetForwardKinematics, GetInverseKinematics
 
 from reachy_sdk_api.arm_kinematics_pb2 import (
@@ -39,10 +41,10 @@ from .type_conversion import pb_matrix_from_ros_pose, ros_pose_from_pb_matrix, r
 
 
 class BodyControlNode(Node):
-    def __init__(self, controllers_file):
-        super().__init__(node_name='body_control_server_node')
+    def __init__(self, node_name, reachy_model):
+        super().__init__(node_name=node_name)
         self.logger = self.get_logger()
-        self.forward_controllers = self._parse_controller(controllers_file)
+        self.forward_controllers = self._parse_controller(reachy_model)
         self.joint_to_position_controller = {}
         for c, joints in self.forward_controllers.items():
             if c.endswith('forward_position_controller'):
@@ -53,6 +55,8 @@ class BodyControlNode(Node):
         self.joint_uids = {}
 
         self.requested_torques = {}
+        self.requested_torque_limit = {}
+        self.requested_speed_limit = {}
         self.requested_pid = {}
         self.requested_fans = {}
 
@@ -95,6 +99,15 @@ class BodyControlNode(Node):
             )
             for c in self.forward_controllers
         }
+
+        # Safe gripper pub
+        self.safe_gripper_publisher = self.create_publisher(
+            msg_type=Gripper,
+            topic='/grippers/commands',
+            qos_profile=5,
+        )
+        self.requested_gripper_goal_positions = {}
+        self.requested_gripper_goal_lock = Lock()
 
         # Create clients for kinematics services/pub
         self.forward_kin_client = {}
@@ -141,6 +154,14 @@ class BodyControlNode(Node):
         self._torque_pub_t = Thread(target=self._publish_torque_update)
         self._torque_pub_t.start()
 
+        self.torque_limit_need_update = Event()
+        self._torque_limit_pub_t = Thread(target=self._publish_torque_limit_update)
+        self._torque_limit_pub_t.start()
+
+        self.speed_limit_need_update = Event()
+        self._speed_limit_pub_t = Thread(target=self._publish_speed_limit_update)
+        self._speed_limit_pub_t.start()
+
         self.pid_need_update = Event()
         self._pid_pub_t = Thread(target=self._publish_pid_update)
         self._pid_pub_t.start()
@@ -174,10 +195,14 @@ class BodyControlNode(Node):
                     'name': name,
                     'uid': UInt32Value(value=values['uid']),
                     'present_position': FloatValue(value=values['present_position']),
+                    'present_speed': FloatValue(value=values['present_speed']),
+                    'present_load': FloatValue(value=values['present_load']),
                     'temperature': FloatValue(value=values['present_temperature']),
                     'goal_position': FloatValue(value=values['target_position']),
                     'pid': PIDValue(pid=PIDGains(p=values['pid']['p'], i=values['pid']['i'], d=values['pid']['d'])),
                     'compliant': BoolValue(value=values['compliant']),
+                    'torque_limit': FloatValue(value=values['torque_limit']),
+                    'speed_limit': FloatValue(value=values['speed_limit']),
                 }
                 break
 
@@ -201,6 +226,18 @@ class BodyControlNode(Node):
 
             elif field == JointField.PRESENT_POSITION:
                 kwargs['present_position'] = FloatValue(value=values['present_position'])
+
+            elif field == JointField.PRESENT_SPEED:
+                kwargs['present_speed'] = FloatValue(value=values['present_speed'])
+
+            elif field == JointField.PRESENT_LOAD:
+                kwargs['present_load'] = FloatValue(value=values['present_load'])
+
+            elif field == JointField.TORQUE_LIMIT:
+                kwargs['torque_limit'] = FloatValue(value=values['torque_limit'])
+
+            elif field == JointField.SPEED_LIMIT:
+                kwargs['speed_limit'] = FloatValue(value=values['speed_limit'])
 
         return JointState(**kwargs)
 
@@ -234,6 +271,10 @@ class BodyControlNode(Node):
                         if k == 'position':
                             self.joints[name]['present_position'] = v
                             self.joints[name]['target_position'] = v
+                        elif k == 'velocity':
+                            self.joints[name]['present_speed'] = v
+                        elif k == 'effort':
+                            self.joints[name]['present_load'] = v
                         elif k == 'temperature':
                             self.joints[name]['present_temperature'] = v
                         elif k == 'p_gain':
@@ -244,6 +285,10 @@ class BodyControlNode(Node):
                             self.joints[name]['pid']['d'] = v
                         elif k == 'torque':
                             self.joints[name]['compliant'] = (v == 0.0)
+                        elif k == 'torque_limit':
+                            self.joints[name]['torque_limit'] = v
+                        elif k == 'max_speed':
+                            self.joints[name]['speed_limit'] = v
 
                 elif 'force' in kv.interface_names:
                     self.sensors[name] = {}
@@ -267,6 +312,10 @@ class BodyControlNode(Node):
                 for k, v in zip(kv.interface_names, kv.values):
                     if k == 'position':
                         self.joints[name]['present_position'] = v
+                    elif k == 'velocity':
+                        self.joints[name]['present_speed'] = v
+                    elif k == 'effort':
+                        self.joints[name]['present_load'] = v
                     elif k == 'temperature':
                         self.joints[name]['present_temperature'] = v
                     elif k == 'torque':
@@ -277,6 +326,10 @@ class BodyControlNode(Node):
                         self.joints[name]['pid']['i'] = v
                     elif k == 'd_gain':
                         self.joints[name]['pid']['d'] = v
+                    elif k == 'torque_limit':
+                        self.joints[name]['torque_limit'] = v
+                    elif k == 'max_speed':
+                        self.joints[name]['speed_limit'] = v
 
             elif 'force' in kv.interface_names:
                 self.sensors[name]['force'] = kv.values[0]
@@ -287,6 +340,15 @@ class BodyControlNode(Node):
         self.joint_state_pub_event.set()
         self.sensor_state_pub_event.set()
         self.fan_state_pub_event.set()
+
+    def _check_valid_request(self, joint_id: JointId) -> bool:
+        if joint_id.HasField('uid'):
+            if joint_id.uid not in self.joint_uids.keys():
+                return False
+        else:
+            if joint_id.name not in self.joints.keys():
+                return False
+        return True
 
     def _get_joint_name(self, joint_id: JointId) -> str:
         if joint_id.HasField('uid'):
@@ -312,13 +374,18 @@ class BodyControlNode(Node):
         else:
             return self.joints[joint_id.name]['uid']
 
-    def _parse_controller(self, controllers_file):
+    def _parse_controller(self, reachy_model):
         d = {}
-        controllers_file_folder_path = get_package_share_directory('reachy_bringup') + '/config/'
 
         try:
-            with open(f'{controllers_file_folder_path+controllers_file}.yaml', 'r') as f:
-                self.logger.info(f'{controllers_file_folder_path}{controllers_file}.yaml controller file.')
+            controllers_file = os.path.join(
+                get_package_share_directory('reachy_bringup'),
+                'config',
+                f'reachy_{reachy_model}_controllers.yaml',
+            )
+
+            with open(controllers_file, 'r') as f:
+                self.logger.info(f'Using {controllers_file} controllers file.')
                 config = yaml.safe_load(f)
 
                 controller_config = config['controller_manager']['ros__parameters']
@@ -340,7 +407,7 @@ class BodyControlNode(Node):
 
             return d
         except FileNotFoundError:
-            self.logger.error(f'Controller file {controllers_file}.yaml does not exist in reachy_description/ros2_control.')
+            self.logger.error(f'Controller file {controllers_file} does not exist.')
             import sys
             sys.exit()
 
@@ -348,9 +415,14 @@ class BodyControlNode(Node):
         for cmd in req.commands:
             if cmd.HasField('goal_position'):
                 joint = self._get_joint_name(cmd.id)
-                controller = self.joint_to_position_controller[joint]
-                with self.requested_goal_lock:
-                    self.requested_goal_positions[controller][joint] = cmd.goal_position.value
+
+                if joint.endswith('gripper'):
+                    with self.requested_gripper_goal_lock:
+                        self.requested_gripper_goal_positions[joint] = cmd.goal_position.value
+                else:
+                    controller = self.joint_to_position_controller[joint]
+                    with self.requested_goal_lock:
+                        self.requested_goal_positions[controller][joint] = cmd.goal_position.value
 
     def _on_target_position_update(self, data: Float64MultiArray, controller_name):
         # Callback of the /*_forward_position_controller subscription
@@ -370,6 +442,32 @@ class BodyControlNode(Node):
 
         if need_update:
             self.torque_need_update.set()
+
+    def _update_torque_limit(self, req: JointsCommand):
+        need_update = False
+
+        for cmd in req.commands:
+            if cmd.HasField('torque_limit'):
+                need_update = True
+                name = self._get_joint_name(cmd.id)
+                comp = cmd.torque_limit.value
+                self.requested_torque_limit[name] = comp
+
+        if need_update:
+            self.torque_limit_need_update.set()
+
+    def _update_speed_limit(self, req: JointsCommand):
+        need_update = False
+
+        for cmd in req.commands:
+            if cmd.HasField('speed_limit'):
+                need_update = True
+                name = self._get_joint_name(cmd.id)
+                comp = cmd.speed_limit.value
+                self.requested_speed_limit[name] = comp
+
+        if need_update:
+            self.speed_limit_need_update.set()
 
     def _update_pid(self, req: JointsCommand):
         need_update = False
@@ -401,6 +499,8 @@ class BodyControlNode(Node):
     def handle_joint_msg(self, grpc_req: JointsCommand):
         self._update_joint_target_pos(grpc_req)
         self._update_torque(grpc_req)
+        self._update_torque_limit(grpc_req)
+        self._update_speed_limit(grpc_req)
         self._update_pid(grpc_req)
 
     def _publish_joint_command(self):
@@ -415,8 +515,20 @@ class BodyControlNode(Node):
 
                         pos = [target_pos[j] for j in controller_joints]
                         self.forward_publishers[controller_name].publish(Float64MultiArray(data=pos))
-
+                        self.logger.warning(f'publish {controller_name} {pos}')
                     self.requested_goal_positions.clear()
+
+            with self.requested_gripper_goal_lock:
+                if self.requested_gripper_goal_positions:
+                    msg = Gripper()
+                    for name, pos in self.requested_gripper_goal_positions.items():
+                        msg.name.append(name)
+                        msg.opening.append(pos)
+
+                    self.safe_gripper_publisher.publish(msg)
+
+                    self.requested_gripper_goal_positions.clear()
+
             time.sleep(0.01)
 
     def _publish_torque_update(self):
@@ -435,6 +547,44 @@ class BodyControlNode(Node):
             self.forward_publishers['forward_torque_controller'].publish(
                 Float64MultiArray(
                     data=torque_data
+                )
+            )
+
+    def _publish_torque_limit_update(self):
+        while rclpy.ok():
+            self.torque_limit_need_update.wait()
+            self.torque_limit_need_update.clear()
+
+            for joint, torque_limit in self.requested_torque_limit.items():
+                self.joints[joint]['torque_limit'] = torque_limit
+
+            self.requested_torque_limit.clear()
+
+            joint_dic = self.forward_controllers['forward_torque_limit_controller']
+            torque_limit_data = [self.joints[joint]['torque_limit'] for joint in joint_dic.keys()]
+
+            self.forward_publishers['forward_torque_limit_controller'].publish(
+                Float64MultiArray(
+                    data=torque_limit_data
+                )
+            )
+
+    def _publish_speed_limit_update(self):
+
+        while rclpy.ok():
+            self.speed_limit_need_update.wait()
+            self.speed_limit_need_update.clear()
+
+            for joint, speed_limit in self.requested_speed_limit.items():
+                self.joints[joint]['speed_limit'] = speed_limit
+            self.requested_speed_limit.clear()
+
+            joint_dic = self.forward_controllers['forward_speed_limit_controller']
+            speed_limit_data = [self.joints[joint]['speed_limit'] for joint in joint_dic.keys()]
+
+            self.forward_publishers['forward_speed_limit_controller'].publish(
+                Float64MultiArray(
+                    data=speed_limit_data
                 )
             )
 

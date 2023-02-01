@@ -35,6 +35,15 @@ from reachy_sdk_api import mobile_platform_reachy_pb2, mobile_platform_reachy_pb
 from reachy_sdk_server.body_control_ros_node import BodyControlNode
 
 
+def get_reachy_config():
+    import yaml
+    import os
+    config_file = os.path.expanduser('~/.reachy.yaml')
+    with open(config_file) as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+        return config
+
+
 class ReachySDKServer(
     arm_kinematics_pb2_grpc.ArmKinematicsServicer,
     head_kinematics_pb2_grpc.HeadKinematicsServicer,
@@ -45,7 +54,7 @@ class ReachySDKServer(
 ):
     """Reachy SDK server node."""
 
-    def __init__(self, node_name: str, timeout_sec: float = 5, pub_frequency: float = 100) -> None:
+    def __init__(self, node_name: str, reachy_model: str, timeout_sec: float = 5, pub_frequency: float = 100) -> None:
         """Set up the node.
 
         Subscribe to /joint_states, /joint_temperatures, /force_sensors.
@@ -57,7 +66,8 @@ class ReachySDKServer(
 
         rclpy.init()
         self.body_control_node = BodyControlNode(
-            controllers_file='reachy_controllers',
+            node_name=node_name,
+            reachy_model=reachy_model,
         )
         threading.Thread(target=lambda: rclpy.spin(self.body_control_node)).start()
 
@@ -69,6 +79,11 @@ class ReachySDKServer(
     def GetJointsState(self, request: joint_pb2.JointsStateRequest, context) -> joint_pb2.JointsState:
         """Get the requested joints id."""
         params = {}
+
+        for id in request.ids:
+            if not self.body_control_node._check_valid_request(id):
+                self.logger.error(f'Got invalid joint request for GetJointsState, received {id}')
+                return joint_pb2.JointsState(**params)
 
         params['ids'] = request.ids
         params['states'] = [
@@ -85,6 +100,11 @@ class ReachySDKServer(
         dt = 1.0 / request.publish_frequency if request.publish_frequency > 0 else -1.0
         last_pub = 0.0
 
+        for id in request.request.ids:
+            if not self.body_control_node._check_valid_request(id):
+                self.logger.error(f'Got invalid joint request for StreamJointsState, received {id}')
+                return joint_pb2.JointsState()
+
         while True:
             elapsed_time = time.time() - last_pub
             if elapsed_time < dt:
@@ -100,6 +120,11 @@ class ReachySDKServer(
             last_pub = time.time()
 
     def SendJointsCommands(self, request: joint_pb2.JointsCommand, context) -> joint_pb2.JointsCommandAck:
+        for cmd in request.commands:
+            if not self.body_control_node._check_valid_request(cmd.id):
+                self.logger.error(f'Got invalid joint request for SendJointsCommand, received {cmd.id}')
+                return joint_pb2.JointsCommandAck(success=False)
+        
         self.body_control_node.handle_joint_msg(grpc_req=request)
         return joint_pb2.JointsCommandAck(success=True)
 
@@ -108,6 +133,12 @@ class ReachySDKServer(
         return fan_pb2.FansCommandAck(success=True)
 
     def StreamJointsCommands(self, request_iterator: Iterator[joint_pb2.JointsCommand], context) -> joint_pb2.JointsCommandAck:
+        for request in request_iterator:
+            for cmd in request.commands:
+                if not self.body_control_node._check_valid_request(cmd.id):
+                    self.logger.error(f'Got invalid joint request for StreamJointsCommand, received {cmd.id}')
+                    return joint_pb2.JointsCommandAck(success=False)
+
         for request in request_iterator:
             self.body_control_node.handle_joint_msg(grpc_req=request)
         return joint_pb2.JointsCommandAck(success=True)
@@ -218,7 +249,19 @@ class ReachySDKServer(
 
 def main():
     """Run the Node and the gRPC server."""
-    sdk_server = ReachySDKServer(node_name='reachy_sdk_server')
+
+    def get_reachy_config():
+        import yaml
+        import os
+        config_file = os.path.expanduser('~/.reachy.yaml')
+        with open(config_file) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+            return config
+
+    sdk_server = ReachySDKServer(
+        node_name='reachy_sdk_server',
+        reachy_model=get_reachy_config()["model"],
+    )
 
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))
 

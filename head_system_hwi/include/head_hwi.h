@@ -29,6 +29,10 @@ int32_t head_hwi_set_xl320_target_position_speed_load(uint32_t uid,
                                                       double *moving_speed,
                                                       double *torque_limit);
 
+int32_t head_hwi_set_xl320_torque_limit(uint32_t uid, double *torque_limit);
+
+int32_t head_hwi_set_xl320_speed_limit(uint32_t uid, double *speed_limit);
+
 int32_t head_hwi_get_xl320_temperature(uint32_t uid, double *temperature);
 
 int32_t head_hwi_is_xl320_torque_on(uint32_t uid, double *is_on);
