@@ -136,8 +136,8 @@ class ReachySDKServer(
                     self.logger.error(f'Got invalid joint request for StreamJointsCommand, received {cmd.id}')
                     return joint_pb2.JointsCommandAck(success=False)
 
-        for request in request_iterator:
             self.body_control_node.handle_joint_msg(grpc_req=request)
+
         return joint_pb2.JointsCommandAck(success=True)
 
     def GetAllJointsId(self, request: Empty, context) -> joint_pb2.JointsId:
