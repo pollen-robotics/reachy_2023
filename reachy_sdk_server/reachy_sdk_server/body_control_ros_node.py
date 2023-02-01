@@ -515,7 +515,7 @@ class BodyControlNode(Node):
 
                         pos = [target_pos[j] for j in controller_joints]
                         self.forward_publishers[controller_name].publish(Float64MultiArray(data=pos))
-                        self.logger.warning(f'publish {controller_name} {pos}')
+
                     self.requested_goal_positions.clear()
 
             with self.requested_gripper_goal_lock:
