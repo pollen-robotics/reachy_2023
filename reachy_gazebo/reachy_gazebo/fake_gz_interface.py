@@ -13,11 +13,12 @@
 #  Notes:	notes
 #
 
-
+from functools import partial
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy
 
+from rcl_interfaces.msg import ParameterDescriptor
 
 from control_msgs.msg import DynamicJointState, InterfaceValue
 from sensor_msgs.msg import JointState
@@ -27,11 +28,10 @@ from reachy_msgs.srv import GetCameraZoomLevel, GetCameraZoomSpeed
 from reachy_msgs.srv import SetCameraZoomLevel, SetCameraZoomSpeed
 from reachy_msgs.srv import GetCameraZoomFocus, SetCameraZoomFocus
 from reachy_msgs.srv import SetFocusState
-
-
+import time
 
 DUMMY_JOINT_INTERFACE_NAMES = [
-    'torque', 
+    'torque',
     'p_gain', 'i_gain', 'd_gain',
     'temperature',
     'max_speed',
@@ -39,16 +39,31 @@ DUMMY_JOINT_INTERFACE_NAMES = [
 ]
 
 DUMMY_SPECIAL_INTERFACES = {
-    'l_shoulder_fan': 'state',
-    'l_elbow_fan': 'state',
-    'l_wrist_fan': 'state',
-    'l_antenna_fan': 'state', 
-    'l_force_gripper': 'force',
-    'r_shoulder_fan': 'state',
-    'r_elbow_fan': 'state', 
-    'r_wrist_fan': 'state', 
-    'r_antenna_fan': 'state',
-    'r_force_gripper': 'force',
+    'full_kit': {
+        'l_shoulder_fan': 'state',
+        'l_elbow_fan': 'state',
+        'l_wrist_fan': 'state',
+        'l_antenna_fan': 'state',
+        'l_force_gripper': 'force',
+        'r_shoulder_fan': 'state',
+        'r_elbow_fan': 'state',
+        'r_wrist_fan': 'state',
+        'r_antenna_fan': 'state',
+        'r_force_gripper': 'force'},
+    'starter_kit_right': {
+        'l_antenna_fan': 'state',
+        'r_elbow_fan': 'state',
+        'r_wrist_fan': 'state',
+        'r_antenna_fan': 'state',
+        'r_force_gripper': 'force'},
+    'starter_kit_left': {
+        'l_shoulder_fan': 'state',
+        'l_elbow_fan': 'state',
+        'l_wrist_fan': 'state',
+        'l_antenna_fan': 'state',
+        'l_force_gripper': 'force',
+        'r_antenna_fan': 'state', }
+
 }
 
 
@@ -61,9 +76,16 @@ class FakeGzInterface(Node):
 
         self.js_publisher = self.create_publisher(
             JointState, '/joint_states', qos_profile=latching_qos)
+        param_descriptor = ParameterDescriptor(
+            description='The robot configuration.')
+
+        self.declare_parameter('robot_config', 'full_kit', param_descriptor)
 
         self.logger = self.get_logger()
-        self.joints_list=[]
+        self.robot_config = self.get_parameter('robot_config').value
+        self.logger.warning(f'Robot config: {self.robot_config}')
+
+        self.joints_list = []
         self.dyn_subscription = self.create_subscription(
             DynamicJointState,
             '/joint_state_broadcaster/dynamic_joint_states',
@@ -76,21 +98,20 @@ class FakeGzInterface(Node):
             self.joint_state_callback,
             10)
 
-        self.l_gripper_force_sub= self.create_subscription(
-            WrenchStamped,
-            '/l_force_sensor/l_gripper_ft_sensor',
-            self.l_force_cb,
-            10)
+        if self.robot_config in ['full_kit', 'starter_kit_left']:
+            self.l_gripper_force_sub = self.create_subscription(
+                msg_type=WrenchStamped,
+                topic='/l_force_sensor/l_gripper_ft_sensor',
+                qos_profile=5,
+                callback=partial(self.force_cb, side='l'))
+        if self.robot_config in ['full_kit', 'starter_kit_right']:
+            self.r_gripper_force_sub = self.create_subscription(
+                msg_type=WrenchStamped,
+                topic='/r_force_sensor/r_gripper_ft_sensor',
+                qos_profile=5,
+                callback=partial(self.force_cb, side='r'))
 
-
-        self.r_gripper_force_sub= self.create_subscription(
-            WrenchStamped,
-            '/r_force_sensor/r_gripper_ft_sensor',
-            self.r_force_cb,
-            10)
-
-
-        #Dummy camera service
+        # Dummy camera service
         self.get_zoom_level_service = self.create_service(GetCameraZoomLevel, 'get_camera_zoom_level', self.dummy_service_cb)
         self.get_zoom_speed_service = self.create_service(GetCameraZoomSpeed, 'get_camera_zoom_speed', self.dummy_service_cb)
         self.set_zoom_level_service = self.create_service(SetCameraZoomLevel, 'set_camera_zoom_level', self.dummy_service_cb)
@@ -99,51 +120,48 @@ class FakeGzInterface(Node):
         self.set_zoom_focus_service = self.create_service(SetCameraZoomFocus, 'set_camera_zoom_focus', self.dummy_service_cb)
         self.set_focus_state_service = self.create_service(SetFocusState, 'set_focus_state', self.dummy_service_cb)
 
-
-        self._curr_l_force=0.0
-        self._curr_r_force=0.0
-        self.logger.info(f'Fake Gaebo interface for /dynamic_joint_states and /joint_states and camera services')
-
+        self._curr_l_force = 0.0
+        self._curr_r_force = 0.0
+        self.logger.info(f'Fake Gazebo interface for /dynamic_joint_states and /joint_states and camera services')
 
     def dummy_service_cb(self, request, response):
         # Juste make the camera services exist, used for Reachy camera server
         return response
 
-    def l_force_cb(self,msg):
+    def force_cb(self, msg, side):
         # We simulate the gripper force sensor using the Gazebo plugin ft_sensor (force sensor plugin seems broken...)
-        self._curr_l_force=msg.wrench.force.z
+        if side == 'l':
+            self._curr_l_force = msg.wrench.force.z
+        elif side == 'r':
+            self._curr_r_force = msg.wrench.force.z
 
-    def r_force_cb(self,msg):
-        self._curr_r_force=msg.wrench.force.z
-
-
-    def joint_state_callback(self,msg):
+    def joint_state_callback(self, msg):
         # Nothing to do here (for now), just forward the message
         self.js_publisher.publish(msg)
 
     def dyn_state_callback(self, msg):
-        # Here we just add the extra fake joints (like fans) and interfaces not handleled by Gazebo (like pid)
-        joints=[]
-        joint_interface={}
-        dummy_joint_interface_present=False
 
-        for j,interface in zip(msg.joint_names, msg.interface_values):
+        # Here we just add the extra fake joints (like fans) and interfaces not handleled by Gazebo (like pid)
+        joints = []
+        joint_interface = {}
+        dummy_joint_interface_present = False
+
+        for j, interface in zip(msg.joint_names, msg.interface_values):
             joints.append(j)
-            interfaces={}
+            interfaces = {}
             if any(i in interface.interface_names for i in DUMMY_JOINT_INTERFACE_NAMES):
-                dummy_joint_interface_present=True #we assume that if there is one special interface, they are all present
-            for interface_name,value in zip(interface.interface_names,interface.values):
-                interfaces[interface_name]=value
-            joint_interface[j]=interfaces
-            
-        
-        fake=DynamicJointState()
-        should_publish=False
-        if not any(i in joints for i in list(DUMMY_SPECIAL_INTERFACES.keys())): #there is none of the special interface
-            #add dummy special interfaces
-            for k,v in DUMMY_SPECIAL_INTERFACES.items():
+                dummy_joint_interface_present = True  # we assume that if there is one special interface, they are all present
+            for interface_name, value in zip(interface.interface_names, interface.values):
+                interfaces[interface_name] = value
+            joint_interface[j] = interfaces
+
+        fake = DynamicJointState()
+        should_publish = False
+        if not any(i in joints for i in list(DUMMY_SPECIAL_INTERFACES[self.robot_config].keys())):  # there is none of the special interface
+            # add dummy special interfaces
+            for k, v in DUMMY_SPECIAL_INTERFACES[self.robot_config].items():
                 fake.joint_names.append(k)
-                inter= InterfaceValue()
+                inter = InterfaceValue()
                 inter.interface_names.append(v)
                 if k == 'r_force_gripper':
                     inter.values.append(self._curr_r_force)
@@ -152,32 +170,26 @@ class FakeGzInterface(Node):
                 else:
                     inter.values.append(0.0)
                 fake.interface_values.append(inter)
-            should_publish=True
-        if not dummy_joint_interface_present: #there is non of the special interface for the joint
-            #add dummy joint interfaces
+            should_publish = True
+        if not dummy_joint_interface_present:  # there is non of the special interface for the joint
+            # add dummy joint interfaces
             for j in joints:
-                fake.joint_names.append(j)                
-                inter= InterfaceValue()                
+                fake.joint_names.append(j)
+                inter = InterfaceValue()
                 for it_name in DUMMY_JOINT_INTERFACE_NAMES:
                     inter.interface_names.append(it_name)
                     inter.values.append(0.0)
-                #add standard joint interfaces
+                # add standard joint interfaces
                 for it_name in joint_interface[j].keys():
                     inter.interface_names.append(it_name)
                     inter.values.append(joint_interface[j][it_name])
 
                 fake.interface_values.append(inter)
-            should_publish=True
+            should_publish = True
 
         if should_publish:
-            fake.header.stamp=self.get_clock().now().to_msg()
+            fake.header.stamp = self.get_clock().now().to_msg()
             self.dyn_publisher.publish(fake)
-
-
-
-
-
-
 
 
 def main(args=None):

@@ -17,6 +17,7 @@ def get_reachy_config():
         config = yaml.load(f, Loader=yaml.FullLoader)
         return config
 
+
 robot_config = get_reachy_config()["model"]
 
 
@@ -51,7 +52,6 @@ def generate_launch_description():
         'robot_description': ParameterValue(robot_description_content, value_type=str),
     }
 
-
     robot_controllers = PathJoinSubstitution(
         [
             FindPackageShare('reachy_bringup'),
@@ -64,8 +64,6 @@ def generate_launch_description():
         [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
     )
 
-
-    
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -82,8 +80,6 @@ def generate_launch_description():
         condition=IfCondition(start_rviz),
     )
 
-
-
     gazebo_state_broadcaster_params = PathJoinSubstitution(
         [FindPackageShare('reachy_gazebo'), 'config', 'gz_state_broadcaster_params.yaml']
     )
@@ -91,11 +87,8 @@ def generate_launch_description():
     joint_state_broadcaster_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_state_broadcaster', '-p',gazebo_state_broadcaster_params,'--controller-manager', '/controller_manager'],
+        arguments=['joint_state_broadcaster', '-p', gazebo_state_broadcaster_params, '--controller-manager', '/controller_manager'],
     )
-
-    
-    
 
     neck_forward_position_controller_spawner = Node(
         package='controller_manager',
@@ -176,9 +169,10 @@ def generate_launch_description():
 
     gazebo_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
-                FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py'])
+            FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py']),
+        launch_arguments={'robot_config': f'{robot_config}'}.items()
     )
-    #For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
+    # For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
 
     delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
@@ -210,7 +204,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription(arguments + [
-        SetUseSimTime(True), #does not seem to work...
+        SetUseSimTime(True),  # does not seem to work...
         robot_state_publisher_node,
         gazebo_node,
         joint_state_broadcaster_spawner,
