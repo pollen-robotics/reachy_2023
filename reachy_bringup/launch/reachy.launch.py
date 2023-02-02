@@ -1,11 +1,13 @@
-from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+from launch import LaunchDescription, LaunchContext
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription, TimerAction, \
+    OpaqueFunction
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.descriptions import ParameterValue
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetUseSimTime
 from launch_ros.substitutions import FindPackageShare
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def get_reachy_config():
@@ -16,20 +18,20 @@ def get_reachy_config():
         config = yaml.load(f, Loader=yaml.FullLoader)
         return config
 
+
 robot_config = get_reachy_config()["model"]
 
 
-def generate_launch_description():
-    start_rviz_arg = DeclareLaunchArgument(
-        'start_rviz',
-        default_value='true',
-        description='Start RViz2 automatically with this launch file.',
-    )
-    start_rviz = LaunchConfiguration('start_rviz')
-
-    arguments = [
-        start_rviz_arg,
-    ]
+def launch_setup(context, *args, **kwargs):
+    # perform(context) returns arg as a string, hence the conversion
+    start_rviz_arg = LaunchConfiguration('start_rviz')
+    start_rviz = start_rviz_arg.perform(context) == 'true'
+    fake_arg = LaunchConfiguration('fake')
+    fake = fake_arg.perform(context) == 'true'
+    gazebo_arg = LaunchConfiguration('gazebo')
+    gazebo = gazebo_arg.perform(context) == 'true'
+    start_sdk_server_arg = LaunchConfiguration('start_sdk_server')
+    start_sdk_server = start_sdk_server_arg.perform(context) == 'true'
 
     robot_description_content = Command(
         [
@@ -38,7 +40,9 @@ def generate_launch_description():
             PathJoinSubstitution(
                 [FindPackageShare('reachy_description'), 'urdf', 'reachy.urdf.xacro']
             ),
-            ' ',
+            *((' ', 'use_fake_hardware:=true', ' ') if fake else
+              (' ', 'use_fake_hardware:=true use_gazebo:=true depth_camera:=false', ' ') if gazebo else
+              (' ',)),
             f'robot_config:={robot_config}',
             ' ',
         ]
@@ -66,6 +70,13 @@ def generate_launch_description():
         output='screen',
     )
 
+    sdk_server = Node(
+        package='reachy_sdk_server',
+        executable='reachy_sdk_server',
+        output='both',
+        condition=IfCondition(start_sdk_server_arg),
+    )
+
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -79,13 +90,20 @@ def generate_launch_description():
         name='rviz2',
         output='log',
         arguments=['-d', rviz_config_file],
-        condition=IfCondition(start_rviz),
+        condition=IfCondition(start_rviz_arg),
+    )
+
+    gazebo_state_broadcaster_params = PathJoinSubstitution(
+        [FindPackageShare('reachy_gazebo'), 'config', 'gz_state_broadcaster_params.yaml']
     )
 
     joint_state_broadcaster_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_state_broadcaster', '--controller-manager', '/controller_manager'],
+        arguments=[*(('joint_state_broadcaster', '-p', gazebo_state_broadcaster_params) if gazebo else
+                     ('joint_state_broadcaster',)),
+                   '--controller-manager',
+                   '/controller_manager'],
     )
 
     neck_forward_position_controller_spawner = Node(
@@ -165,13 +183,20 @@ def generate_launch_description():
         ),
     )
 
+    gazebo_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py']),
+        launch_arguments={'robot_config': f'{robot_config}'}.items()
+    )
+    # For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
+
     delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
             on_exit=[
                 # neck_forward_position_controller_spawner,
-                r_arm_forward_position_controller_spawner,
-                l_arm_forward_position_controller_spawner,
+                # r_arm_forward_position_controller_spawner,
+                # l_arm_forward_position_controller_spawner,
                 antenna_forward_position_controller_spawner,
                 gripper_forward_position_controller_spawner,
                 forward_torque_controller_spawner,
@@ -194,12 +219,41 @@ def generate_launch_description():
         arguments=['--controllers-file', robot_controllers]
     )
 
-    return LaunchDescription(arguments + [
-        control_node,
+    return [
+        *((control_node,) if not gazebo else
+          (SetUseSimTime(True),  # does not seem to work...
+           gazebo_node)),
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         kinematics_node,
         gripper_safe_controller_node,
+        sdk_server
+    ]
+
+
+def generate_launch_description():
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            'start_rviz',
+            default_value='false',
+            description='Start RViz2 automatically with this launch file.',
+        ),
+        DeclareLaunchArgument(
+            'fake',
+            default_value='false',
+            description='Start on fake_reachy mode with this launch file.',
+        ),
+        DeclareLaunchArgument(
+            'gazebo',
+            default_value='false',
+            description='Start on fake_reachy mode with this launch file.',
+        ),
+        DeclareLaunchArgument(
+            'start_sdk_server',
+            default_value='false',
+            description='Start sdk_server alond with reachy nodes with this launch file.',
+        ),
+        OpaqueFunction(function=launch_setup)
     ])
