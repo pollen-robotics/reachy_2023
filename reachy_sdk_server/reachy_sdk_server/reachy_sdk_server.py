@@ -243,7 +243,7 @@ class ReachySDKServer(
         return fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck(
             left_arm_command_success=True,
             right_arm_command_success=True,
-            neck_command_success=True,
+            head_command_success=True,
         )
 
 
