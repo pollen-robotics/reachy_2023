@@ -21,7 +21,7 @@ from reachy_msgs.srv import (
 )
 
 from .kdl_kinematics import (
-    generate_solver, 
+    generate_solver,
     forward_kinematics,
     inverse_kinematics,
     ros_pose_to_matrix,
@@ -57,15 +57,15 @@ class ReachyKdlKinematics(Node):
             arm = f'{prefix}_arm'
 
             chain, fk_solver, ik_solver = generate_solver(self.urdf, 'torso', f'{prefix}_arm_tip')
-            
+
             # We automatically loads the kinematics corresponding to the config
             if chain.getNrOfJoints():
                 self.logger.info(f'Found kinematics chain for "{arm}"!')
 
                 # Create forward kinematics service
                 self.fk_srv[arm] = self.create_service(
-                    srv_type=GetForwardKinematics, 
-                    srv_name=f'/{arm}/forward_kinematics', 
+                    srv_type=GetForwardKinematics,
+                    srv_name=f'/{arm}/forward_kinematics',
                     callback=partial(self.forward_kinematics_srv, name=arm),
                 )
                 self.logger.info(f'Adding service "{self.fk_srv[arm].srv_name}"...')
@@ -78,7 +78,7 @@ class ReachyKdlKinematics(Node):
                 )
                 self.logger.info(f'Adding service "{self.ik_srv[arm].srv_name}"...')
 
-                # Create cartesian control subscription
+                # Create cartesian control pub/subscription
                 forward_position_pub = self.create_publisher(
                     msg_type=Float64MultiArray,
                     topic=f'/{arm}_forward_position_controller/commands',
@@ -90,7 +90,7 @@ class ReachyKdlKinematics(Node):
                     topic=f'/{arm}/target_pose',
                     qos_profile=5,
                     callback=partial(
-                        self.on_target_pose, 
+                        self.on_target_pose,
                         name=arm,
                         # arm straight, with elbow at -90 (facing forward)
                         q0=[0, 0, 0, -np.pi / 2, 0, 0, 0],
@@ -104,7 +104,7 @@ class ReachyKdlKinematics(Node):
                     topic=f'/{arm}/averaged_target_pose',
                     qos_profile=5,
                     callback=partial(
-                        self.on_averaged_target_pose, 
+                        self.on_averaged_target_pose,
                         name=arm,
                         # arm straight, with elbow at -90 (facing forward)
                         q0=[0, 0, 0, -np.pi / 2, 0, 0, 0],
@@ -119,11 +119,76 @@ class ReachyKdlKinematics(Node):
                 self.fk_solver[arm] = fk_solver
                 self.ik_solver[arm] = ik_solver
 
+        # Kinematics for the head
+        chain, fk_solver, ik_solver = generate_solver(self.urdf, 'torso', 'head_tip', L=np.array([1e-6, 1e-6, 1e-6, 1.0, 1.0, 1.0]))  # L weight matrix to considere only the orientation
+
+        # We automatically loads the kinematics corresponding to the config
+        if chain.getNrOfJoints():
+            self.logger.info(f'Found kinematics chain for head!')
+
+            # Create forward kinematics service
+            self.fk_srv['head'] = self.create_service(
+                srv_type=GetForwardKinematics,
+                srv_name='/head/forward_kinematics',
+                callback=partial(self.forward_kinematics_srv, name='head'),
+            )
+            self.logger.info('Adding service "{self.fk_srv[head].srv_name}"...')
+
+            # Create inverse kinematics service
+            self.ik_srv['head'] = self.create_service(
+                srv_type=GetInverseKinematics,
+                srv_name='/head/inverse_kinematics',
+                callback=partial(self.inverse_kinematics_srv, name='head'),
+            )
+            self.logger.info('Adding service "{self.ik_srv[head].srv_name}"...')
+
+            # Create cartesian control subscription
+            head_forward_position_pub = self.create_publisher(
+                msg_type=Float64MultiArray,
+                topic='/neck_forward_position_controller/commands',  # need
+                qos_profile=5,
+            )
+
+            self.target_sub['head'] = self.create_subscription(
+                msg_type=PoseStamped,
+                topic='/head/target_pose',
+                qos_profile=5,
+                callback=partial(
+                    self.on_target_pose,
+                    name='head',
+                    # head straight
+                    q0=[0, 0, 0],
+                    forward_publisher=head_forward_position_pub,
+                ),
+            )
+            self.logger.info('Adding subscription on "{self.target_sub[head].topic}"...')
+
+            self.averaged_target_sub['head'] = self.create_subscription(
+                msg_type=PoseStamped,
+                topic='/head/averaged_target_pose',
+                qos_profile=5,
+                callback=partial(
+                    self.on_averaged_target_pose,
+                    name='head',
+                    # head straight
+                    q0=[0, 0, 0],
+                    forward_publisher=head_forward_position_pub,
+                ),
+            )
+            self.averaged_pose['head'] = PoseAverager(window_length=10)
+
+            self.max_joint_vel['head'] = np.array([0.1, 0.1, 0.1])
+            self.logger.info('Adding subscription on "{self.target_sub[head].topic}"...')
+
+            self.chain['head'] = chain
+            self.fk_solver['head'] = fk_solver
+            self.ik_solver['head'] = ik_solver
+
         self.logger.info(f'Kinematics node ready!')
 
     def forward_kinematics_srv(
-        self, 
-        request: GetForwardKinematics.Request, 
+        self,
+        request: GetForwardKinematics.Request,
         response: GetForwardKinematics.Response,
         name,
     ) -> GetForwardKinematics.Response:
@@ -134,8 +199,8 @@ class ReachyKdlKinematics(Node):
             return response
 
         error, sol = forward_kinematics(
-            self.fk_solver[name], 
-            joint_position, 
+            self.fk_solver[name],
+            joint_position,
             self.chain[name].getNrOfJoints(),
         )
 
@@ -161,7 +226,7 @@ class ReachyKdlKinematics(Node):
         request: GetInverseKinematics.Request,
         response: GetInverseKinematics.Response,
         name,
-    ) -> GetInverseKinematics.Response: 
+    ) -> GetInverseKinematics.Response:
 
         M = ros_pose_to_matrix(request.pose)
         q0 = request.q0.position
@@ -276,6 +341,7 @@ class ReachyKdlKinematics(Node):
 
     def get_chain_joints_name(self, chain):
         return [chain.getSegment(i).getJoint().getName() for i in range(chain.getNrOfJoints())]
+
 
 def main():
     rclpy.init()
