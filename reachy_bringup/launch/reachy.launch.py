@@ -9,21 +9,28 @@ from launch_ros.actions import Node, SetUseSimTime
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
+FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT = 'full_kit', 'starter_kit_right', 'starter_kit_left'
+
 
 def get_reachy_config():
     import yaml
     import os
     config_file = os.path.expanduser('~/.reachy.yaml')
-    with open(config_file) as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-        return config
+    try:
+        with open(config_file) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+            return config["model"] if config["model"] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT] else False
+    except:
+        return False
 
 
-robot_config = get_reachy_config()["model"]
+robot_model_file = get_reachy_config()
 
 
 def launch_setup(context, *args, **kwargs):
     # perform(context) returns arg as a string, hence the conversion
+    # var_rg is a ROS launch type object
+    # var is a converted version, python friendly
     start_rviz_arg = LaunchConfiguration('start_rviz')
     start_rviz = start_rviz_arg.perform(context) == 'true'
     fake_arg = LaunchConfiguration('fake')
@@ -32,6 +39,15 @@ def launch_setup(context, *args, **kwargs):
     gazebo = gazebo_arg.perform(context) == 'true'
     start_sdk_server_arg = LaunchConfiguration('start_sdk_server')
     start_sdk_server = start_sdk_server_arg.perform(context) == 'true'
+
+    # Robot model
+    robot_model_arg = LaunchConfiguration('robot_model')
+    robot_model = robot_model_arg.perform(context)
+    if robot_model_file:
+        # TODO find a ROS way to log (without rebuilding a whole node ?
+        print("Using robot_model described in ~/.reachy.yaml ...")
+        robot_model = robot_model_file
+    print("Robot Model :: {}".format(robot_model))
 
     robot_description_content = Command(
         [
@@ -43,7 +59,7 @@ def launch_setup(context, *args, **kwargs):
             *((' ', 'use_fake_hardware:=true', ' ') if fake else
               (' ', 'use_fake_hardware:=true use_gazebo:=true depth_camera:=false', ' ') if gazebo else
               (' ',)),
-            f'robot_config:={robot_config}',
+            f'robot_config:={robot_model}',
             ' ',
         ]
     )
@@ -55,7 +71,7 @@ def launch_setup(context, *args, **kwargs):
         [
             FindPackageShare('reachy_bringup'),
             'config',
-            f'reachy_{robot_config}_controllers.yaml',
+            f'reachy_{robot_model}_controllers.yaml',
         ]
     )
 
@@ -117,10 +133,8 @@ def launch_setup(context, *args, **kwargs):
         executable='spawner',
         arguments=['r_arm_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
-            PythonExpression(
-                ["'", f'{robot_config}', "' == 'full_kit' or '", f'{robot_config}', "' == 'starter_kit_right'"]
-            )
-        ),
+            PythonExpression(f"'{robot_model}' == '{FULL_KIT}' or '{robot_model}' == '{STARTER_KIT_RIGHT}'")
+        )
     )
 
     l_arm_forward_position_controller_spawner = Node(
@@ -128,9 +142,7 @@ def launch_setup(context, *args, **kwargs):
         executable='spawner',
         arguments=['l_arm_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
-            PythonExpression(
-                ["'", f'{robot_config}', "' == 'full_kit' or '", f'{robot_config}', "' == 'starter_kit_left'"]
-            )
+            PythonExpression(f"'{robot_model}' == '{FULL_KIT}' or '{robot_model}' == '{STARTER_KIT_LEFT}'")
         ),
     )
 
@@ -186,7 +198,7 @@ def launch_setup(context, *args, **kwargs):
     gazebo_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py']),
-        launch_arguments={'robot_config': f'{robot_config}'}.items()
+        launch_arguments={'robot_config': f'{robot_model}'}.items()
     )
     # For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
 
@@ -195,8 +207,8 @@ def launch_setup(context, *args, **kwargs):
             target_action=joint_state_broadcaster_spawner,
             on_exit=[
                 # neck_forward_position_controller_spawner,
-                # r_arm_forward_position_controller_spawner,
-                # l_arm_forward_position_controller_spawner,
+                r_arm_forward_position_controller_spawner,
+                l_arm_forward_position_controller_spawner,
                 antenna_forward_position_controller_spawner,
                 gripper_forward_position_controller_spawner,
                 forward_torque_controller_spawner,
@@ -239,21 +251,32 @@ def generate_launch_description():
             'start_rviz',
             default_value='false',
             description='Start RViz2 automatically with this launch file.',
+            choices=['true', 'false']
         ),
         DeclareLaunchArgument(
             'fake',
             default_value='false',
             description='Start on fake_reachy mode with this launch file.',
+            choices=['true', 'false']
         ),
         DeclareLaunchArgument(
             'gazebo',
             default_value='false',
             description='Start on fake_reachy mode with this launch file.',
+            choices=['true', 'false']
         ),
         DeclareLaunchArgument(
             'start_sdk_server',
             default_value='false',
-            description='Start sdk_server alond with reachy nodes with this launch file.',
+            description='Start sdk_server along with reachy nodes with this launch file.',
+            choices=['true', 'false']
+        ),
+        DeclareLaunchArgument(
+            'robot_model',
+            default_value='full_kit',
+            description='Choose robot_model between full_kit, starter_kit_right, starter_kit_left. '
+                        'If a robot_configuration is defined in ~/.reachy.yaml : it WILL BE CHOSEN over any given arg',
+            choices=[FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT]
         ),
         OpaqueFunction(function=launch_setup)
     ])
