@@ -244,11 +244,20 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(fake_arg),
     )
 
+    fake_zoom_node = Node(
+        package='reachy_fake',
+        executable='fake_zoom',
+        condition=IfCondition(
+            PythonExpression(f"{fake} or {gazebo}"),
+        ),
+    )
+
     return [
         *((control_node,) if not gazebo else
           (SetUseSimTime(True),  # does not seem to work...
            gazebo_node)),
-        fake_camera_node,
+        fake_camera_node, 
+        fake_zoom_node,
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
