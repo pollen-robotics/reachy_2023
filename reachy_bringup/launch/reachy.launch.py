@@ -90,6 +90,7 @@ def launch_setup(context, *args, **kwargs):
         package='reachy_sdk_server',
         executable='reachy_sdk_server',
         output='both',
+        arguments=[robot_model],
         condition=IfCondition(start_sdk_server_arg),
     )
 
