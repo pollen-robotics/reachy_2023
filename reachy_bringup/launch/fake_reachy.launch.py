@@ -16,6 +16,7 @@ def get_reachy_config():
         config = yaml.load(f, Loader=yaml.FullLoader)
         return config
 
+
 robot_config = get_reachy_config()["model"]
 
 
@@ -196,6 +197,12 @@ def generate_launch_description():
         arguments=['--controllers-file', robot_controllers]
     )
 
+    fake_camera_node = Node(
+        package='reachy_fake',
+        executable='fake_camera',
+        output='screen',
+    )
+
     return LaunchDescription(arguments + [
         control_node,
         robot_state_publisher_node,
@@ -204,4 +211,5 @@ def generate_launch_description():
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         kinematics_node,
         gripper_safe_controller_node,
+        fake_camera_node,
     ])

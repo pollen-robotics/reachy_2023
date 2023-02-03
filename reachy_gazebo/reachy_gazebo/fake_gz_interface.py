@@ -29,9 +29,8 @@ from reachy_msgs.srv import GetCameraZoomFocus, SetCameraZoomFocus
 from reachy_msgs.srv import SetFocusState
 
 
-
 DUMMY_JOINT_INTERFACE_NAMES = [
-    'torque', 
+    'torque',
     'p_gain', 'i_gain', 'd_gain',
     'temperature',
     'max_speed',
@@ -42,11 +41,11 @@ DUMMY_SPECIAL_INTERFACES = {
     'l_shoulder_fan': 'state',
     'l_elbow_fan': 'state',
     'l_wrist_fan': 'state',
-    'l_antenna_fan': 'state', 
+    'l_antenna_fan': 'state',
     'l_force_gripper': 'force',
     'r_shoulder_fan': 'state',
-    'r_elbow_fan': 'state', 
-    'r_wrist_fan': 'state', 
+    'r_elbow_fan': 'state',
+    'r_wrist_fan': 'state',
     'r_antenna_fan': 'state',
     'r_force_gripper': 'force',
 }
@@ -63,7 +62,7 @@ class FakeGzInterface(Node):
             JointState, '/joint_states', qos_profile=latching_qos)
 
         self.logger = self.get_logger()
-        self.joints_list=[]
+        self.joints_list = []
         self.dyn_subscription = self.create_subscription(
             DynamicJointState,
             '/joint_state_broadcaster/dynamic_joint_states',
@@ -76,21 +75,19 @@ class FakeGzInterface(Node):
             self.joint_state_callback,
             10)
 
-        self.l_gripper_force_sub= self.create_subscription(
+        self.l_gripper_force_sub = self.create_subscription(
             WrenchStamped,
             '/l_force_sensor/l_gripper_ft_sensor',
             self.l_force_cb,
             10)
 
-
-        self.r_gripper_force_sub= self.create_subscription(
+        self.r_gripper_force_sub = self.create_subscription(
             WrenchStamped,
             '/r_force_sensor/r_gripper_ft_sensor',
             self.r_force_cb,
             10)
 
-
-        #Dummy camera service
+        # Dummy camera service
         self.get_zoom_level_service = self.create_service(GetCameraZoomLevel, 'get_camera_zoom_level', self.dummy_service_cb)
         self.get_zoom_speed_service = self.create_service(GetCameraZoomSpeed, 'get_camera_zoom_speed', self.dummy_service_cb)
         self.set_zoom_level_service = self.create_service(SetCameraZoomLevel, 'set_camera_zoom_level', self.dummy_service_cb)
@@ -99,23 +96,20 @@ class FakeGzInterface(Node):
         self.set_zoom_focus_service = self.create_service(SetCameraZoomFocus, 'set_camera_zoom_focus', self.dummy_service_cb)
         self.set_focus_state_service = self.create_service(SetFocusState, 'set_focus_state', self.dummy_service_cb)
 
-
-        self._curr_l_force=0.0
-        self._curr_r_force=0.0
-        self.logger.info(f'Fake Gaebo interface for /dynamic_joint_states and /joint_states and camera services')
-
+        self._curr_l_force = 0.0
+        self._curr_r_force = 0.0
+        self.logger.info(f'Fake Gazebo interface for /dynamic_joint_states and /joint_states and camera services')
 
     def dummy_service_cb(self, request, response):
         # Juste make the camera services exist, used for Reachy camera server
         return response
 
-    def l_force_cb(self,msg):
+    def l_force_cb(self, msg):
         # We simulate the gripper force sensor using the Gazebo plugin ft_sensor (force sensor plugin seems broken...)
-        self._curr_l_force=msg.wrench.force.z
+        self._curr_l_force = msg.wrench.force.z
 
-    def r_force_cb(self,msg):
-        self._curr_r_force=msg.wrench.force.z
-
+    def r_force_cb(self, msg):
+        self._curr_r_force = msg.wrench.force.z
 
     def joint_state_callback(self,msg):
         # Nothing to do here (for now), just forward the message
