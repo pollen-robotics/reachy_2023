@@ -182,10 +182,16 @@ class BodyControlNode(Node):
 
     def get_dyn_state_cb(self, request, response):
         """ Conveniant service to get interface values of a single joint """
-        response.name = ""
+        possible_interfaces = set(self.joints[request.name].keys())
+        possible_interfaces.remove('pid')
+        possible_interfaces = possible_interfaces.union(('p', 'i', 'd'))
+
         if request.name in self.joints.keys():
             response.name = request.name
             for interface in request.interfaces:
+                if interface not in possible_interfaces:
+                    self.logger.warning(f"Interface should be one of {possible_interfaces} (got '{interface}' instead)")
+                    continue
 
                 if interface in self.joints[request.name].keys():
                     response.interfaces.append(interface)
