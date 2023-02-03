@@ -76,19 +76,6 @@ class BodyControlNode(Node):
             qos_profile=5,
             callback=self._on_joint_state,
         )
-        # We both listen and publish to the forward position
-        # Indeed, as the joints can be controlled either directly or via the kinematics
-        # We need to detect both modifications
-        self.target_pos_sub = {
-            c: self.create_subscription(
-                msg_type=Float64MultiArray,
-                topic=f'/{c}/commands',
-                qos_profile=5,
-                callback=partial(self._on_target_position_update, controller_name=c),
-            )
-            for c in self.forward_controllers
-            if c.endswith('forward_position_controller')
-        }
 
         # Publish to each controllers
         self.forward_publishers = {
@@ -145,6 +132,20 @@ class BodyControlNode(Node):
         self.requested_goal_positions = defaultdict(dict)
         self.requested_goal_lock = Lock()
         self.wait_for_setup()
+
+        # We both listen and publish to the forward position
+        # Indeed, as the joints can be controlled either directly or via the kinematics
+        # We need to detect both modifications
+        self.target_pos_sub = {
+            c: self.create_subscription(
+                msg_type=Float64MultiArray,
+                topic=f'/{c}/commands',
+                qos_profile=5,
+                callback=partial(self._on_target_position_update, controller_name=c),
+            )
+            for c in self.forward_controllers
+            if c.endswith('forward_position_controller')
+        }
 
         t = Thread(target=self._publish_joint_command)
         t.daemon = True
