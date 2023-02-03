@@ -20,7 +20,7 @@ def get_reachy_config():
         with open(config_file) as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
             return config["model"] if config["model"] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT] else False
-    except:
+    except (FileNotFoundError, TypeError):
         return False
 
 
