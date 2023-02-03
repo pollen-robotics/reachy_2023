@@ -29,10 +29,6 @@ from reachy_msgs.srv import GetCameraZoomLevel, GetCameraZoomSpeed
 from reachy_msgs.srv import SetCameraZoomLevel, SetCameraZoomSpeed
 from reachy_msgs.srv import GetCameraZoomFocus, SetCameraZoomFocus
 from reachy_msgs.srv import SetFocusState
-<< << << < HEAD
-== == == =
-
->>>>>> > test_fake_cam
 
 DUMMY_JOINT_INTERFACE_NAMES = [
     'torque',
@@ -43,7 +39,6 @@ DUMMY_JOINT_INTERFACE_NAMES = [
 ]
 
 DUMMY_SPECIAL_INTERFACES = {
-    << << << < HEAD
     'full_kit': {
         'l_shoulder_fan': 'state',
         'l_elbow_fan': 'state',
@@ -67,20 +62,8 @@ DUMMY_SPECIAL_INTERFACES = {
         'l_wrist_fan': 'state',
         'l_antenna_fan': 'state',
         'l_force_gripper': 'force',
-        'r_antenna_fan': 'state', }
-
-    == == == =
-    'l_shoulder_fan': 'state',
-    'l_elbow_fan': 'state',
-    'l_wrist_fan': 'state',
-    'l_antenna_fan': 'state',
-    'l_force_gripper': 'force',
-    'r_shoulder_fan': 'state',
-    'r_elbow_fan': 'state',
-    'r_wrist_fan': 'state',
-    'r_antenna_fan': 'state',
-    'r_force_gripper': 'force',
-    >>>>>> > test_fake_cam
+        'r_antenna_fan': 'state',
+    }
 }
 
 
