@@ -21,6 +21,7 @@ from std_msgs.msg import Float64MultiArray
 
 from reachy_msgs.msg import Gripper
 from reachy_msgs.srv import GetForwardKinematics, GetInverseKinematics
+from reachy_msgs.srv import GetDynamicState, SetDynamicState
 
 from reachy_sdk_api.arm_kinematics_pb2 import (
     ArmEndEffector, ArmSide, ArmJointPosition,
@@ -32,7 +33,7 @@ from reachy_sdk_api.head_kinematics_pb2 import HeadIKRequest, HeadFKRequest, Hea
 
 from reachy_sdk_api.fan_pb2 import FanId, FanState, FansCommand
 from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand, FullBodyCartesianCommandAck
-from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState, JointField, PIDValue, PIDGains
+from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState, JointField, PIDValue, PIDGains, JointCommand
 from reachy_sdk_api.kinematics_pb2 import JointPosition
 from reachy_sdk_api.orbita_kinematics_pb2 import OrbitaIKRequest
 from reachy_sdk_api.sensor_pb2 import SensorId, SensorState, ForceSensorState
@@ -147,6 +148,9 @@ class BodyControlNode(Node):
             if c.endswith('forward_position_controller')
         }
 
+        self.get_dyn_state_service = self.create_service(GetDynamicState, 'get_dynamic_state', self.get_dyn_state_cb)
+        self.set_dyn_state_service = self.create_service(SetDynamicState, 'set_dynamic_state', self.set_dyn_state_cb)
+
         t = Thread(target=self._publish_joint_command)
         t.daemon = True
         t.start()
@@ -175,6 +179,47 @@ class BodyControlNode(Node):
         while not self.joint_state_ready.is_set():
             self.logger.info('Waiting for /dynamic_joint_states...')
             rclpy.spin_once(self)
+
+    def get_dyn_state_cb(self, request, response):
+        """ Conveniant service to get interface values of a single joint """
+        response.name = ""
+        if request.name in self.joints.keys():
+            response.name = request.name
+            for interface in request.interfaces:
+
+                if interface in self.joints[request.name].keys():
+                    response.interfaces.append(interface)
+                    response.values.append(self.joints[request.name][interface])
+                elif interface in self.joints[request.name]['pid'].keys():
+                    response.interfaces.append(interface)
+                    response.values.append(self.joints[request.name]['pid'][interface])
+
+        return response
+
+    def set_dyn_state_cb(self, request, response):
+        """ Conveniant service to set interface values of a single joint """
+        need_update = False
+        cmds = JointsCommand()
+        if request.name in self.joints.keys():
+            need_update = True
+
+            for i, interface in enumerate(request.interfaces):
+
+                if interface in ['p', 'i', 'd']:
+                    pidg = PIDGains()
+                    setattr(pidg, interface, request.values[i])
+                    pidv = PIDValue(pid=pidg)
+                    cmd = JointCommand(id=JointId(uid=self.joints[request.name]['uid']), pid=pidv)
+                    cmds.commands.append(cmd)
+                else:
+                    cmd = JointCommand(id=JointId(uid=self.joints[request.name]['uid']))
+                    setattr(getattr(cmd, interface), 'value', request.values[i])
+                    cmds.commands.append(cmd)
+
+        if need_update:
+            self.handle_joint_msg(cmds)
+
+        return response
 
     def get_joint_state(self, uid: JointId, joint_fields: JointField) -> JointsState:
         """ Get update info for requested joint.

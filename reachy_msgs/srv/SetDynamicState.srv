@@ -1,0 +1,5 @@
+# Service to set the dynamic state of some interfaces of a single joint
+string name
+string[] interfaces
+float32[] values
+---
