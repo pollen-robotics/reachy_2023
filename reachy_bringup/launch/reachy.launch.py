@@ -93,6 +93,13 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(start_sdk_server_arg),
     )
 
+    sdk_camera_server = Node(
+        package='reachy_sdk_server',
+        executable='camera_server',
+        output='both',
+        condition=IfCondition(start_sdk_server_arg), 
+    )
+
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -248,7 +255,8 @@ def launch_setup(context, *args, **kwargs):
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         kinematics_node,
         gripper_safe_controller_node,
-        sdk_server
+        sdk_server,
+        sdk_camera_server,
     ]
 
 
