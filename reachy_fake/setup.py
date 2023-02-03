@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'fake_camera = reachy_fake.fake_camera:main'
+            'fake_camera = reachy_fake.fake_camera:main',
+            'fake_zoom = reachy_fake.fake_zoom:main',
         ],
     },
 )
