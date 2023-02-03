@@ -1,0 +1,6 @@
+# Mode among : CMD_VEL, BRAKE, FREE_WHEEL, SPEED, GOTO, EMERGENCY_STOP
+string mode
+
+---
+# True if the mode was successfully changed
+bool success

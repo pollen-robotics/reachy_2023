@@ -1,0 +1,3 @@
+---
+# Mode among : CMD_VEL, BRAKE, FREE_WHEEL, SPEED, GOTO, EMERGENCY_STOP
+string mode

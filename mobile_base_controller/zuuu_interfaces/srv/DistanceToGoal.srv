@@ -1,0 +1,6 @@
+---
+# Distances between the GoTo goal and the current position in the odometry frame.
+float64 delta_x
+float64 delta_y
+float64 delta_theta
+float64 distance

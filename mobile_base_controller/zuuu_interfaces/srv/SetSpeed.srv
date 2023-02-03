@@ -1,0 +1,12 @@
+# Speed along x axis in m/s
+float64 x_vel
+# Speed along y axis in m/s
+float64 y_vel
+# Rotational speed in rad/s
+float64 rot_vel
+# Duration of the speed command in s
+float64 duration
+
+---
+# True if the command is applied
+bool success

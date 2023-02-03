@@ -1,0 +1,10 @@
+# x goal in odom frame
+float64 x_goal
+# y goal in odom frame
+float64 y_goal
+# theta goal in odom frame
+float64 theta_goal
+
+---
+# True if the command is applied
+bool success
