@@ -127,20 +127,22 @@ class ReachyKdlKinematics(Node):
             self.logger.info(f'Found kinematics chain for head!')
 
             # Create forward kinematics service
-            self.fk_srv['head'] = self.create_service(
+            srv = self.create_service(
                 srv_type=GetForwardKinematics,
                 srv_name='/head/forward_kinematics',
                 callback=partial(self.forward_kinematics_srv, name='head'),
             )
-            self.logger.info('Adding service "{self.fk_srv[head].srv_name}"...')
+            self.fk_srv['head'] = srv
+            self.logger.info(f'Adding service "{srv.srv_name}"...')
 
             # Create inverse kinematics service
-            self.ik_srv['head'] = self.create_service(
+            srv = self.create_service(
                 srv_type=GetInverseKinematics,
                 srv_name='/head/inverse_kinematics',
                 callback=partial(self.inverse_kinematics_srv, name='head'),
             )
-            self.logger.info('Adding service "{self.ik_srv[head].srv_name}"...')
+            self.ik_srv['head'] = srv
+            self.logger.info(f'Adding service "{srv.srv_name}"...')
 
             # Create cartesian control subscription
             head_forward_position_pub = self.create_publisher(
@@ -149,7 +151,7 @@ class ReachyKdlKinematics(Node):
                 qos_profile=5,
             )
 
-            self.target_sub['head'] = self.create_subscription(
+            sub = self.create_subscription(
                 msg_type=PoseStamped,
                 topic='/head/target_pose',
                 qos_profile=5,
@@ -161,9 +163,10 @@ class ReachyKdlKinematics(Node):
                     forward_publisher=head_forward_position_pub,
                 ),
             )
-            self.logger.info('Adding subscription on "{self.target_sub[head].topic}"...')
+            self.target_sub['head'] = sub
+            self.logger.info(f'Adding subscription on "{sub.topic}"...')
 
-            self.averaged_target_sub['head'] = self.create_subscription(
+            sub = self.create_subscription(
                 msg_type=PoseStamped,
                 topic='/head/averaged_target_pose',
                 qos_profile=5,
@@ -175,10 +178,11 @@ class ReachyKdlKinematics(Node):
                     forward_publisher=head_forward_position_pub,
                 ),
             )
+            self.averaged_target_sub['head'] = sub
             self.averaged_pose['head'] = PoseAverager(window_length=10)
 
             self.max_joint_vel['head'] = np.array([0.1, 0.1, 0.1])
-            self.logger.info('Adding subscription on "{self.target_sub[head].topic}"...')
+            self.logger.info(f'Adding subscription on "{sub.topic}"...')
 
             self.chain['head'] = chain
             self.fk_solver['head'] = fk_solver

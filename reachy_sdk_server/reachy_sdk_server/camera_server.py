@@ -26,9 +26,9 @@ from reachy_sdk_api import camera_reachy_pb2, camera_reachy_pb2_grpc
 
 
 class CameraServer(
-                Node,
-                camera_reachy_pb2_grpc.CameraServiceServicer,
-                ):
+    Node,
+    camera_reachy_pb2_grpc.CameraServiceServicer,
+):
     """Camera server node."""
 
     def __init__(self, node_name: str) -> None:

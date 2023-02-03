@@ -93,6 +93,13 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(start_sdk_server_arg),
     )
 
+    sdk_camera_server = Node(
+        package='reachy_sdk_server',
+        executable='camera_server',
+        output='both',
+        condition=IfCondition(start_sdk_server_arg), 
+    )
+
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -206,7 +213,7 @@ def launch_setup(context, *args, **kwargs):
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
             on_exit=[
-                # neck_forward_position_controller_spawner,
+                neck_forward_position_controller_spawner,
                 r_arm_forward_position_controller_spawner,
                 l_arm_forward_position_controller_spawner,
                 antenna_forward_position_controller_spawner,
@@ -231,17 +238,34 @@ def launch_setup(context, *args, **kwargs):
         arguments=['--controllers-file', robot_controllers]
     )
 
+    fake_camera_node = Node(
+        package='reachy_fake',
+        executable='fake_camera',
+        condition=IfCondition(fake_arg),
+    )
+
+    fake_zoom_node = Node(
+        package='reachy_fake',
+        executable='fake_zoom',
+        condition=IfCondition(
+            PythonExpression(f"{fake} or {gazebo}"),
+        ),
+    )
+
     return [
         *((control_node,) if not gazebo else
           (SetUseSimTime(True),  # does not seem to work...
            gazebo_node)),
+        fake_camera_node, 
+        fake_zoom_node,
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         kinematics_node,
         gripper_safe_controller_node,
-        sdk_server
+        sdk_server,
+        sdk_camera_server,
     ]
 
 

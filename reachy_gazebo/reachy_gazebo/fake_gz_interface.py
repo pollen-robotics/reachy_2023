@@ -13,6 +13,7 @@
 #  Notes:	notes
 #
 
+import time
 from functools import partial
 import rclpy
 from rclpy.node import Node
@@ -28,7 +29,6 @@ from reachy_msgs.srv import GetCameraZoomLevel, GetCameraZoomSpeed
 from reachy_msgs.srv import SetCameraZoomLevel, SetCameraZoomSpeed
 from reachy_msgs.srv import GetCameraZoomFocus, SetCameraZoomFocus
 from reachy_msgs.srv import SetFocusState
-import time
 
 DUMMY_JOINT_INTERFACE_NAMES = [
     'torque',
@@ -49,21 +49,23 @@ DUMMY_SPECIAL_INTERFACES = {
         'r_elbow_fan': 'state',
         'r_wrist_fan': 'state',
         'r_antenna_fan': 'state',
-        'r_force_gripper': 'force'},
+        'r_force_gripper': 'force',
+    },
     'starter_kit_right': {
         'l_antenna_fan': 'state',
         'r_elbow_fan': 'state',
         'r_wrist_fan': 'state',
         'r_antenna_fan': 'state',
-        'r_force_gripper': 'force'},
+        'r_force_gripper': 'force',
+    },
     'starter_kit_left': {
         'l_shoulder_fan': 'state',
         'l_elbow_fan': 'state',
         'l_wrist_fan': 'state',
         'l_antenna_fan': 'state',
         'l_force_gripper': 'force',
-        'r_antenna_fan': 'state', }
-
+        'r_antenna_fan': 'state',
+    }
 }
 
 
@@ -111,22 +113,9 @@ class FakeGzInterface(Node):
                 qos_profile=5,
                 callback=partial(self.force_cb, side='r'))
 
-        # Dummy camera service
-        self.get_zoom_level_service = self.create_service(GetCameraZoomLevel, 'get_camera_zoom_level', self.dummy_service_cb)
-        self.get_zoom_speed_service = self.create_service(GetCameraZoomSpeed, 'get_camera_zoom_speed', self.dummy_service_cb)
-        self.set_zoom_level_service = self.create_service(SetCameraZoomLevel, 'set_camera_zoom_level', self.dummy_service_cb)
-        self.set_zoom_speed_service = self.create_service(SetCameraZoomSpeed, 'set_camera_zoom_speed', self.dummy_service_cb)
-        self.get_zoom_focus_service = self.create_service(GetCameraZoomFocus, 'get_camera_zoom_focus', self.dummy_service_cb)
-        self.set_zoom_focus_service = self.create_service(SetCameraZoomFocus, 'set_camera_zoom_focus', self.dummy_service_cb)
-        self.set_focus_state_service = self.create_service(SetFocusState, 'set_focus_state', self.dummy_service_cb)
-
         self._curr_l_force = 0.0
         self._curr_r_force = 0.0
         self.logger.info(f'Fake Gazebo interface for /dynamic_joint_states and /joint_states and camera services')
-
-    def dummy_service_cb(self, request, response):
-        # Juste make the camera services exist, used for Reachy camera server
-        return response
 
     def force_cb(self, msg, side):
         # We simulate the gripper force sensor using the Gazebo plugin ft_sensor (force sensor plugin seems broken...)
