@@ -231,10 +231,17 @@ def launch_setup(context, *args, **kwargs):
         arguments=['--controllers-file', robot_controllers]
     )
 
+    fake_camera_node = Node(
+        package='reachy_fake',
+        executable='fake_camera',
+        condition=IfCondition(fake_arg),
+    )
+
     return [
         *((control_node,) if not gazebo else
           (SetUseSimTime(True),  # does not seem to work...
            gazebo_node)),
+        fake_camera_node,
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
