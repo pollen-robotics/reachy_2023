@@ -62,7 +62,7 @@ forward_speed_limit_controller:
     joints:
       - l_antenna
       - r_antenna
-    interface_name: max_speed
+    interface_name: speed_limit
     use_sim_time: false
 
 forward_fan_controller:

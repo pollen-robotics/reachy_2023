@@ -127,7 +127,7 @@ forward_speed_limit_controller:
       - r_gripper
       - l_antenna
       - r_antenna
-    interface_name: max_speed
+    interface_name: speed_limit
     use_sim_time: false
 
 pid_controller:

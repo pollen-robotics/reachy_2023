@@ -115,5 +115,5 @@ forward_speed_limit_controller:
       - r_wrist_pitch
       - r_wrist_roll
       - r_gripper
-    interface_name: max_speed
+    interface_name: speed_limit
     use_sim_time: false
