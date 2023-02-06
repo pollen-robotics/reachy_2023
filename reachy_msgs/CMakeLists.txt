@@ -29,7 +29,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetCameraZoomSpeed.srv"
   "srv/SetFocusState.srv"
   "srv/GetDynamicState.srv"
-  "srv/SetDynamicState.srv"
 
   DEPENDENCIES geometry_msgs sensor_msgs std_msgs
 )
