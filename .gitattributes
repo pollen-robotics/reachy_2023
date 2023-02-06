@@ -40,3 +40,7 @@
 *.db lfs
 *.ply lfs
 *.dae lfs
+# Models for Gazebo
+*.obj lfs
+*.mtl lfs
+*.sdf lfs
