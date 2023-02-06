@@ -16,7 +16,7 @@ def generate_launch_description():
         default=os.path.join(
             get_package_share_directory('zuuu_description'),
             'maps',
-            MAP_NAME+'.yaml'))
+            MAP_NAME + '.yaml'))
 
     param_file_name = 'nav2_params.yaml'
     param_path = LaunchConfiguration(
@@ -63,6 +63,9 @@ def generate_launch_description():
             launch_arguments={
                 'map': map_path,
                 'use_sim_time': use_sim_time,
-                'params_file': param_path}.items(),
-        )
+                'params_file': os.path.join(
+                    get_package_share_directory('zuuu_description'),
+                    'config/',
+                    param_file_name)}.items(),
+        ) # TODO force argument to bypass current issue, investigation needed here
     ])
