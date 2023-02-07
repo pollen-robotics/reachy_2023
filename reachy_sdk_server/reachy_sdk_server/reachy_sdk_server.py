@@ -1,36 +1,22 @@
 """Expose main Reachy ROS services/topics through gRPC allowing remote client SDK."""
 
-from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 import threading
 import time
-from subprocess import check_output
-
-from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Iterator, List
-
-import numpy as np
-
-from scipy.spatial.transform import Rotation
+from typing import Iterator
 
 from google.protobuf.empty_pb2 import Empty
 from google.protobuf.timestamp_pb2 import Timestamp
-from google.protobuf.wrappers_pb2 import BoolValue, FloatValue
-
 import grpc
 
 import rclpy
-from rclpy.node import Node
 
 from reachy_sdk_api import joint_pb2, joint_pb2_grpc
 from reachy_sdk_api import sensor_pb2, sensor_pb2_grpc
-from reachy_sdk_api import kinematics_pb2
 from reachy_sdk_api import arm_kinematics_pb2, arm_kinematics_pb2_grpc
-from reachy_sdk_api import orbita_kinematics_pb2, orbita_kinematics_pb2_grpc
 from reachy_sdk_api import head_kinematics_pb2, head_kinematics_pb2_grpc
 from reachy_sdk_api import fullbody_cartesian_command_pb2, fullbody_cartesian_command_pb2_grpc
 from reachy_sdk_api import fan_pb2, fan_pb2_grpc
-from reachy_sdk_api import mobile_platform_reachy_pb2, mobile_platform_reachy_pb2_grpc
 
 from reachy_sdk_server.body_control_ros_node import BodyControlNode
 
