@@ -22,7 +22,7 @@ controller_manager:
     forward_fan_controller:
       type: forward_command_controller/ForwardCommandController
 
-    pid_controller:
+    forward_pid_controller:
       type: pid_command_controller/PIDCommandController
 
 
@@ -74,7 +74,7 @@ forward_fan_controller:
     use_sim_time: false
 
 
-pid_controller:
+forward_pid_controller:
   ros__parameters:
     joints:
 
