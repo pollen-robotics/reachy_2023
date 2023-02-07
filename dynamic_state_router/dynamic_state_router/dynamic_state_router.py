@@ -131,8 +131,15 @@ class DynamicStateRouterNode(Node):
         """ Retreive the joint commands from /dynamic_joint_commands."""
         with self.pub_lock:
             for name, iv in zip(command.joint_names, command.interface_values):
+                if name not in self.joint_state:
+                    self.logger.warning(f'Unknown joint "{name}" ({list(self.joint_state.keys())})')
+                    continue
+
                 for k, v in zip(iv.interface_names, iv.values):
-                    # TODO: Check that this is a possible command/joint combo? (and log warn otherwise)
+                    if k not in self.joint_state[name]:
+                        self.logger.warning(f'Unknown interface for joint "{k}" ({list(self.joint_state[name].keys())})')
+                        continue
+
                     self.requested_commands[name][k] = v
 
         self.joint_command_request_pub.set()
