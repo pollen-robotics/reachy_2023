@@ -51,6 +51,9 @@ class ForwardControllersPool:
         ]   
 
     def get_corresponding_controller(self, joint, interface):
+        if interface in ('p_gain', 'i_gain', 'd_gain'):
+            interface = 'pid'
+
         return self.corresponding[interface][joint]
 
     def all(self):
@@ -71,7 +74,7 @@ class ForwardControllersPool:
             forward_controllers = []
             for k, v in controller_config.items():
                 try:
-                    if v['type'].endswith('ForwardCommandController'):
+                    if v['type'].endswith('ForwardCommandController') or v['type'].endswith('PIDCommandController'):
                         forward_controllers.append(k)
                 except (KeyError, TypeError):
                     pass

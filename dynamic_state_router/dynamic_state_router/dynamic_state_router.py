@@ -33,9 +33,6 @@ from reachy_msgs.srv import GetDynamicState
 
 from .forward_controller import ForwardControllersPool
 
-# TODO: 
-# - PID
-
 
 class DynamicStateRouterNode(Node):
     def __init__(self, node_name, controllers_file):
@@ -154,15 +151,19 @@ class DynamicStateRouterNode(Node):
     def handle_commands(self, commands):
         gripper_commands = defaultdict(dict)
         regular_commands = defaultdict(dict)
+        pid_commands = defaultdict(dict)
 
         for joint, iv in commands.items():
             for interface, value in iv.items():
                 if joint.endswith('gripper') and interface == 'position':
                     gripper_commands[joint].update({interface: value})
+                elif interface in ('p_gain', 'i_gain', 'd_gain'):
+                    pid_commands[joint].update({interface: value})
                 else:
                     regular_commands[joint].update({interface: value})
 
         self.handle_gripper_commands(gripper_commands)
+        self.handle_pid_commands(pid_commands)
         self.handle_regular_commands(regular_commands)
 
     def handle_gripper_commands(self, commands):
@@ -174,7 +175,20 @@ class DynamicStateRouterNode(Node):
                     msg.name.append(joint)
                     msg.opening.append(value)
 
-        self.gripper_pub.publish(msg)            
+        self.gripper_pub.publish(msg)  
+
+    def handle_pid_commands(self, commands):
+        pid_fc = self.forward_controllers['forward_pid_controller']
+        msg = Float64MultiArray()
+
+        for j in pid_fc.joints:
+            for gain in ('p_gain', 'i_gain', 'd_gain'):
+                if j in commands and gain in commands[j]:
+                    msg.data.append(commands[j][gain])
+                else:
+                    msg.data.append(self.joint_state[j][gain])
+
+        self.fc_publisher['forward_pid_controller'].publish(msg)
 
     def handle_regular_commands(self, commands): 
         # Group commands by forward controller
