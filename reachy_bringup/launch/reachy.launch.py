@@ -203,6 +203,12 @@ def launch_setup(context, *args, **kwargs):
         ),
     )
 
+    dynamic_state_router_node = Node(
+        package='dynamic_state_router',
+        executable='dynamic_state_router',
+        arguments=[robot_controllers],
+    )
+
     gazebo_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py']),
@@ -267,6 +273,7 @@ def launch_setup(context, *args, **kwargs):
         gripper_safe_controller_node,
         sdk_server,
         sdk_camera_server,
+        dynamic_state_router_node,
     ]
 
 
