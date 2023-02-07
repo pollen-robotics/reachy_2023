@@ -287,7 +287,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'gazebo',
             default_value='false',
-            description='Start on fake_reachy mode with this launch file.',
+            description='Start a fake_hardware with gazebo as simulation tool.',
             choices=['true', 'false']
         ),
         DeclareLaunchArgument(
@@ -298,8 +298,8 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'robot_model',
-            default_value='full_kit',
-            description='Choose robot_model between full_kit, starter_kit_right, starter_kit_left. '
+            default_value=FULL_KIT,
+            description='Choose robot_model configuration. '
                         'If a robot_configuration is defined in ~/.reachy.yaml : it WILL BE CHOSEN over any given arg',
             choices=[FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT]
         ),
