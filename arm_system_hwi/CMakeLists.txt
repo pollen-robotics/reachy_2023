@@ -26,10 +26,7 @@ target_include_directories(
   include
 )
 
-target_link_libraries(
-  ${PROJECT_NAME}
-  arm_hwi
- )
+target_link_libraries(${PROJECT_NAME} $ENV{PWD}/../../install/arm_hwi/lib/arm_hwi/libarm_hwi.a)
 
  ament_target_dependencies(
   ${PROJECT_NAME}

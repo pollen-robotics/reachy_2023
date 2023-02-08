@@ -26,10 +26,7 @@ target_include_directories(
   include
 )
 
-target_link_libraries(
-  ${PROJECT_NAME}
-  head_hwi
- )
+target_link_libraries(${PROJECT_NAME} $ENV{PWD}/../../install/head_hwi/lib/head_hwi/libhead_hwi.a)
 
  ament_target_dependencies(
   ${PROJECT_NAME}
