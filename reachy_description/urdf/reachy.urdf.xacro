@@ -3,6 +3,7 @@
 
   <xacro:arg name="use_fake_hardware" default="false"/>
   <xacro:arg name="use_gazebo" default="false"/>
+  <xacro:arg name="use_moveit" default="false"/>
 
   <xacro:arg name="robot_config" default="full_kit"/>
 
@@ -94,7 +95,7 @@
       fan_id="51"
     />
   </xacro:if>
-  
+
   <xacro:if value="${use_head}">
     <!-- HEAD-->
     <xacro:head

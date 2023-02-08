@@ -3,6 +3,9 @@
 
     <xacro:macro name="head_control">
 
+    <xacro:unless value="$(arg use_moveit)">
+
+
         <xacro:include filename="$(find reachy_description)/ros2_control/joint.ros2_control.xacro"/>
 
         <ros2_control name="head" type="system">
@@ -73,5 +76,6 @@
                 <command_interface name="state"/>
             </joint>
         </ros2_control>
+    </xacro:unless>
     </xacro:macro>
 </robot>
