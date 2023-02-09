@@ -6,6 +6,9 @@ It lets you easily set a command interfaces for a single joint of a forward cont
 Service:
 - /get_dynamic_state (GetDynamicState) - retrieve any state(s) interface(s) for a specific joint/sensor/gpio
 
+Publication:
+- /joint_commands (JointState) for each joints (100Hz)
+
 Subscription:
 - /dynamic_joint_commands (DynamicJointCommand) - set any command(s) interface(s) for one or many joint/sensor/gpio
 
@@ -25,6 +28,7 @@ import rclpy
 from rclpy.node import Node
 
 from control_msgs.msg import DynamicJointState
+from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
 
 from reachy_msgs.msg import Gripper
@@ -65,13 +69,24 @@ class DynamicStateRouterNode(Node):
             for fc in self.forward_controllers.get_controllers_for_interface('position') 
         }
 
-        # Now we start our own service and subscription
+        # Now we start our own service, publication and subscription
 
         # SERVICE: /get_dynamic_state (GetDynamicState)
         self.get_dyn_state_service = self.create_service(
             srv_type=GetDynamicState, 
             srv_name='/get_dynamic_state',
             callback=self.get_dyn_state_cb,
+        )
+
+        # PUBLICATION: /joint_commands (JointState)
+        self.joint_commands_pub = self.create_publisher(
+            msg_type=JointState,
+            topic='/joint_commands',
+            qos_profile=5,
+        )
+        self.joint_commands_timer = self.create_timer(
+            timer_period_sec=0.01, 
+            callback=self.publish_joint_commands,
         )
 
         # SUBSCRIPTION: /dynamic_joint_commands (DynamicJointState)
@@ -154,6 +169,16 @@ class DynamicStateRouterNode(Node):
                 self.joint_command_request_pub.clear()
 
             time.sleep(0.01)
+
+    def publish_joint_commands(self):
+        msg = JointState()
+
+        for j in self.joint_state.values():
+            if 'target_position' in j:
+                msg.name.append(j['name'])
+                msg.position.append(j['target_position'])
+
+        self.joint_commands_pub.publish(msg)
 
     def handle_commands(self, commands):
         gripper_commands = defaultdict(dict)
