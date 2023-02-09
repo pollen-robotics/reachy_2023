@@ -8,19 +8,4 @@ moveit_setup_assistant_config:
   package_settings:
     author_name: Steve Nguyen
     author_email: steve.nguyen@pollen-robotics.com
-    generated_timestamp: 1675790592
-  control_xacro:
-    command:
-      - position
-    state:
-      - position
-      - velocity
-  modified_urdf:
-    xacros:
-      - control_xacro
-  control_xacro:
-    command:
-      - position
-    state:
-      - position
-      - velocity
+    generated_timestamp: 1675876817

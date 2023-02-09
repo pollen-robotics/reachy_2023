@@ -69,7 +69,8 @@ head_controller:
       - velocity
 left_gripper_controller:
   ros__parameters:
-    joint: l_gripper
+    joints:
+      - l_gripper
     command_interfaces:
       - position
     state_interfaces:
@@ -77,7 +78,8 @@ left_gripper_controller:
       - velocity
 right_gripper_controller:
   ros__parameters:
-    joint: r_gripper
+    joints:
+      - r_gripper
     command_interfaces:
       - position
     state_interfaces:

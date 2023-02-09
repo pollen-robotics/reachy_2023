@@ -40,11 +40,11 @@
         <joint name="head_tip_fixed"/>
     </group>
     <group name="left_gripper">
-        <link name="l_gripper_thumb"/>
+        <!-- <link name="l_gripper_thumb"/> -->
         <link name="l_gripper_finger"/>
     </group>
     <group name="right_gripper">
-        <link name="r_gripper_thumb"/>
+        <!-- <link name="r_gripper_thumb"/> -->
         <link name="r_gripper_finger"/>
     </group>
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
@@ -91,15 +91,25 @@
     </group_state>
     <group_state name="left_gripper_open" group="left_gripper">
         <joint name="l_gripper" value="1.2"/>
-        <joint name="l_wrist_roll" value="0"/>
     </group_state>
     <group_state name="right_gripper_open" group="right_gripper">
         <joint name="r_gripper" value="-1.2"/>
-        <joint name="r_wrist_roll" value="0"/>
     </group_state>
+
+    <group_state name="left_gripper_closed" group="left_gripper">
+        <joint name="l_gripper" value="-0.35"/>
+    </group_state>
+    <group_state name="right_gripper_closed" group="right_gripper">
+        <joint name="r_gripper" value="0.35"/>
+    </group_state>
+
+
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="left_tip" parent_link="l_gripper_thumb" group="left_arm"/>
-    <end_effector name="right_tip" parent_link="r_gripper_thumb" group="right_arm"/>
+    <end_effector name="l_arm_tip" parent_link="l_gripper_thumb" group="left_arm"/>
+    <end_effector name="r_arm_tip" parent_link="r_gripper_thumb" group="right_arm"/>
+
+    <end_effector name="l_gripper_tip" parent_link="l_gripper_finger" group="left_gripper"/>
+    <end_effector name="r_gripper_tip" parent_link="r_gripper_finger" group="right_gripper"/>
     <end_effector name="head_tip" parent_link="head" group="head"/>
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="virtual_joint" type="fixed" parent_frame="world" child_link="torso"/>
