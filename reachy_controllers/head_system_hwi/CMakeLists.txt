@@ -20,23 +20,29 @@ add_library(
   SHARED
   src/head_system_hwi.cpp
 )
+
 target_include_directories(
   ${PROJECT_NAME}
   PRIVATE
   include
+ ${CMAKE_SOURCE_DIR}/../reachy_2023_controllers_rs/head_hwi/
 )
 
-target_include_directories(
-    ${PROJECT_NAME}
-    PRIVATE
-    ${CMAKE_SOURCE_DIR}/../reachy_2023_controllers_rs/head_hwi/
-)
-
+add_library(head_hwi STATIC IMPORTED)
+set_property(TARGET head_hwi PROPERTY IMPORTED_LOCATION $ENV{PWD}/../../install/head_hwi/lib/head_hwi/libhead_hwi.a )
 
 target_link_libraries(
     ${PROJECT_NAME}
-    $ENV{PWD}/../../install/head_hwi/lib/head_hwi/libhead_hwi.a
-    )
+    head_hwi
+    udev
+    gcc_s
+    util
+    rt
+    pthread
+    m
+    dl
+    c
+   )
 
  ament_target_dependencies(
   ${PROJECT_NAME}

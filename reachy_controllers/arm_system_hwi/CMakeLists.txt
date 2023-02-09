@@ -20,23 +20,29 @@ add_library(
   SHARED
   src/arm_system_hwi.cpp
 )
+
 target_include_directories(
   ${PROJECT_NAME}
   PRIVATE
   include
+ ${CMAKE_SOURCE_DIR}/../reachy_2023_controllers_rs/arm_hwi/
 )
 
-target_include_directories(
-    ${PROJECT_NAME}
-    PRIVATE
-    ${CMAKE_SOURCE_DIR}/../reachy_2023_controllers_rs/arm_hwi/
-)
-
+add_library(arm_hwi STATIC IMPORTED)
+set_property(TARGET arm_hwi PROPERTY IMPORTED_LOCATION $ENV{PWD}/../../install/arm_hwi/lib/arm_hwi/libarm_hwi.a )
 
 target_link_libraries(
     ${PROJECT_NAME}
-    $ENV{PWD}/../../install/arm_hwi/lib/arm_hwi/libarm_hwi.a
-    )
+    arm_hwi
+    udev
+    gcc_s
+    util
+    rt
+    pthread
+    m
+    dl
+    c
+   )
 
  ament_target_dependencies(
   ${PROJECT_NAME}
