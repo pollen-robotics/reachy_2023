@@ -44,7 +44,7 @@ def launch_setup(context, *args, **kwargs):
     robot_model_arg = LaunchConfiguration('robot_model')
     robot_model = robot_model_arg.perform(context)
     if robot_model_file:
-        # TODO find a ROS way to log (without rebuilding a whole node ?
+        # TODO find a ROS way to log (without rebuilding a whole node ?)
         print("Using robot_model described in ~/.reachy.yaml ...")
         robot_model = robot_model_file
     print("Robot Model :: {}".format(robot_model))
@@ -79,14 +79,14 @@ def launch_setup(context, *args, **kwargs):
         [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
     )
 
-    control_node = Node(
+    control_spawner = Node(
         package='controller_manager',
         executable='ros2_control_node',
         parameters=[robot_description, robot_controllers],
         output='screen',
     )
 
-    sdk_server = Node(
+    sdk_server_spawner = Node(
         package='reachy_sdk_server',
         executable='reachy_sdk_server',
         output='both',
@@ -94,21 +94,21 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(start_sdk_server_arg),
     )
 
-    sdk_camera_server = Node(
+    sdk_camera_server_spawner = Node(
         package='reachy_sdk_server',
         executable='camera_server',
         output='both',
         condition=IfCondition(start_sdk_server_arg), 
     )
 
-    robot_state_publisher_node = Node(
+    robot_state_publisher_spawner = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='both',
         parameters=[robot_description],
     )
 
-    rviz_node = Node(
+    rviz_spawner = Node(
         package='rviz2',
         executable='rviz2',
         name='rviz2',
@@ -199,11 +199,11 @@ def launch_setup(context, *args, **kwargs):
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
-            on_exit=[rviz_node],
+            on_exit=[rviz_spawner],
         ),
     )
 
-    gazebo_node = IncludeLaunchDescription(
+    gazebo_spawner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py']),
         launch_arguments={'robot_config': f'{robot_model}'}.items()
@@ -228,24 +228,24 @@ def launch_setup(context, *args, **kwargs):
         ),
     )
 
-    kinematics_node = Node(
+    kinematics_spawner = Node(
         package='reachy_kdl_kinematics',
         executable='reachy_kdl_kinematics',
     )
 
-    gripper_safe_controller_node = Node(
+    gripper_safe_controller_spawner = Node(
         package='gripper_safe_controller',
         executable='gripper_safe_controller',
         arguments=['--controllers-file', robot_controllers]
     )
 
-    fake_camera_node = Node(
+    fake_camera_spawner = Node(
         package='reachy_fake',
         executable='fake_camera',
         condition=IfCondition(fake_arg),
     )
 
-    fake_zoom_node = Node(
+    fake_zoom_spawner = Node(
         package='reachy_fake',
         executable='fake_zoom',
         condition=IfCondition(
@@ -254,19 +254,19 @@ def launch_setup(context, *args, **kwargs):
     )
 
     return [
-        *((control_node,) if not gazebo else
+        *((control_spawner,) if not gazebo else
           (SetUseSimTime(True),  # does not seem to work...
-           gazebo_node)),
-        fake_camera_node, 
-        fake_zoom_node,
-        robot_state_publisher_node,
+           gazebo_spawner)),
+        fake_camera_spawner,
+        fake_zoom_spawner,
+        robot_state_publisher_spawner,
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
-        kinematics_node,
-        gripper_safe_controller_node,
-        sdk_server,
-        sdk_camera_server,
+        kinematics_spawner,
+        gripper_safe_controller_spawner,
+        sdk_server_spawner,
+        sdk_camera_server_spawner,
     ]
 
 
