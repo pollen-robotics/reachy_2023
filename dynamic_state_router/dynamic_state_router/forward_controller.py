@@ -7,6 +7,9 @@ class ForwardController:
         self.name = name
         self.interface = self._extract_interface(name)
 
+        if self.interface == 'fan':
+            self.interface = 'state'
+
         self.joints = joints
         self.joint2id = {j: i for i, j in enumerate(joints)}
         self.id2joint = {i: j for i, j in enumerate(joints)}
