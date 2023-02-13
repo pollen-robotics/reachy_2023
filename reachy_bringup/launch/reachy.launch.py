@@ -1,6 +1,6 @@
 from launch import LaunchDescription, LaunchContext
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription, TimerAction, \
-    OpaqueFunction
+    OpaqueFunction, LogInfo
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
@@ -29,7 +29,7 @@ robot_model_file = get_reachy_config()
 
 def launch_setup(context, *args, **kwargs):
     # perform(context) returns arg as a string, hence the conversion
-    # var_rg is a ROS launch type object
+    # var_arg is a ROS launch type object
     # var is a converted version, python friendly
     start_rviz_arg = LaunchConfiguration('start_rviz')
     start_rviz = start_rviz_arg.perform(context) == 'true'
@@ -44,10 +44,9 @@ def launch_setup(context, *args, **kwargs):
     robot_model_arg = LaunchConfiguration('robot_model')
     robot_model = robot_model_arg.perform(context)
     if robot_model_file:
-        # TODO find a ROS way to log (without rebuilding a whole node ?)
-        print("Using robot_model described in ~/.reachy.yaml ...")
+        LogInfo(msg="Using robot_model described in ~/.reachy.yaml ...").execute(context=context)
         robot_model = robot_model_file
-    print("Robot Model :: {}".format(robot_model))
+    LogInfo(msg="Robot Model :: {}".format(robot_model)).execute(context=context)
 
     robot_description_content = Command(
         [
@@ -245,7 +244,7 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(fake_arg),
     )
 
-    fake_zoom_spawner = Node(
+    fake_zoom_node = Node(
         package='reachy_fake',
         executable='fake_zoom',
         condition=IfCondition(
