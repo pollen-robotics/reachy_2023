@@ -428,38 +428,38 @@ class BodyControlNode(Node):
 
         return resp
 
-    # def handle_fullbody_cartesian_command(self, cmd: FullBodyCartesianCommand):
-    #     ack = FullBodyCartesianCommandAck()
+    def handle_fullbody_cartesian_command(self, cmd: fullbody_cartesian_command_pb2.FullBodyCartesianCommand):
+        ack = fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck()
 
-    #     if cmd.HasField('left_arm'):
-    #         ack.left_arm_command_success = self.handle_arm_cartesian_request(cmd.left_arm, 'l_arm')
-    #     if cmd.HasField('right_arm'):
-    #         ack.right_arm_command_success = self.handle_arm_cartesian_request(cmd.right_arm, 'r_arm')
-    #     if cmd.HasField('head'):
-    #         ack.head_command_success = self.handle_head_cartesian_request(cmd.head, 'head')
+        if cmd.HasField('left_arm'):
+            ack.left_arm_command_success = self.handle_arm_cartesian_request(cmd.left_arm, 'l_arm')
+        if cmd.HasField('right_arm'):
+            ack.right_arm_command_success = self.handle_arm_cartesian_request(cmd.right_arm, 'r_arm')
+        if cmd.HasField('head'):
+            ack.head_command_success = self.handle_head_cartesian_request(cmd.head, 'head')
 
-    #     return ack
+        return ack
 
-    # def handle_arm_cartesian_request(self, request: ArmIKRequest, name) -> bool:
-    #     if name not in self.target_pose_publisher:
-    #         return False
+    def handle_arm_cartesian_request(self, request: ArmIKRequest, name) -> bool:
+        if name not in self.target_pose_publisher:
+            return False
 
-    #     pose = PoseStamped()
-    #     pose.header.stamp = self.get_clock().now().to_msg()
-    #     pose.pose = ros_pose_from_pb_matrix(request.target.pose)
+        pose = PoseStamped()
+        pose.header.stamp = self.get_clock().now().to_msg()
+        pose.pose = ros_pose_from_pb_matrix(request.target.pose)
 
-    #     self.target_pose_publisher[name].publish(pose)
+        self.target_pose_publisher[name].publish(pose)
 
-    #     return True
+        return True
 
-    # def handle_head_cartesian_request(self, request: HeadIKRequest, name) -> bool:
-    #     if name not in self.target_pose_publisher:
-    #         return False
+    def handle_head_cartesian_request(self, request: HeadIKRequest, name) -> bool:
+        if name not in self.target_pose_publisher:
+            return False
 
-    #     pose = PoseStamped()
-    #     pose.header.stamp = self.get_clock().now().to_msg()
-    #     pose.pose = ros_pose_from_pb_quaternion(request.q)
+        pose = PoseStamped()
+        pose.header.stamp = self.get_clock().now().to_msg()
+        pose.pose = ros_pose_from_pb_quaternion(request.q)
 
-    #     self.target_pose_publisher[name].publish(pose)
+        self.target_pose_publisher[name].publish(pose)
 
-    #     return True
+        return True
