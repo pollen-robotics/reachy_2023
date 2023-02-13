@@ -2,10 +2,11 @@ from launch import LaunchDescription, LaunchContext
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription, TimerAction, \
     OpaqueFunction, LogInfo
 from launch.conditions import IfCondition
-from launch.event_handlers import OnProcessExit, OnProcessStart
+from launch.event_handlers import OnProcessExit, OnProcessStart, OnExecutionComplete
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.descriptions import ParameterValue
-from launch_ros.actions import Node, SetUseSimTime
+from launch_ros.actions import Node, SetUseSimTime, LifecycleNode
+from launch_ros.event_handlers import OnStateTransition
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
@@ -202,7 +203,9 @@ def launch_setup(context, *args, **kwargs):
         ),
     )
 
-    kinematics_node = Node(
+    kinematics_node = LifecycleNode(
+        name='kinematics',
+        namespace='',
         package='reachy_kdl_kinematics',
         executable='reachy_kdl_kinematics',
     )
@@ -233,15 +236,12 @@ def launch_setup(context, *args, **kwargs):
         ),
     )
 
-
-
     delay_sdk_server_after_kinematics = RegisterEventHandler(
-        event_handler=OnProcessStart(
-            target_action=kinematics_node,
-            on_start=[sdk_server_node],
-        ),
+        event_handler=OnStateTransition(
+            target_lifecycle_node=kinematics_node, goal_state='inactive',
+            entities=[sdk_server_node],
+        )
     )
-
 
     gripper_safe_controller_node = Node(
         package='gripper_safe_controller',
@@ -267,7 +267,7 @@ def launch_setup(context, *args, **kwargs):
         *((control_node,) if not gazebo_py else
           (SetUseSimTime(True),  # does not seem to work...
            gazebo_node)),
-        fake_camera_node, 
+        fake_camera_node,
         fake_zoom_node,
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
@@ -275,7 +275,7 @@ def launch_setup(context, *args, **kwargs):
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         gripper_safe_controller_node,
         delay_sdk_server_after_kinematics,
-        sdk_camera_server_node,
+        sdk_camera_server_node
     ]
 
 
@@ -314,3 +314,5 @@ def generate_launch_description():
         ),
         OpaqueFunction(function=launch_setup)
     ])
+
+# TODO use a OnProcessIO to check whether every node has sent its 'OK' message and log accordingly ?
