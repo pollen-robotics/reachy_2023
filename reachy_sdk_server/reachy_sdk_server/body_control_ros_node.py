@@ -77,7 +77,8 @@ class BodyControlNode(Node):
                 srv_type=GetForwardKinematics,
                 srv_name=f'/{chain}/forward_kinematics',
             )
-            forward_srv.wait_for_service()
+            if not forward_srv.service_is_ready():
+                continue
 
             self.forward_kin_client[chain] = forward_srv
 
@@ -85,7 +86,6 @@ class BodyControlNode(Node):
                 srv_type=GetInverseKinematics,
                 srv_name=f'/{chain}/inverse_kinematics',
             )
-            inverse_srv.wait_for_service()
 
             self.inverse_kin_client[chain] = inverse_srv
 
