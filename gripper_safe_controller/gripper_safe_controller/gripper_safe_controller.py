@@ -19,7 +19,6 @@ from .gripper_state import GripperState, DT
 
 # Gripper OPEN/CLOSE position (in rads)
 # Defined for the direct orientation
-# TODO: use correct limits
 POSITION_LIMIT = (-0.87, 0.35)
 
 
@@ -68,7 +67,8 @@ class GripperSafeController(Node):
         self.gripper_states = {
             name: GripperState(
                 name, is_direct=name.startswith('r'),
-                present_position=value['present_position'], user_requested_goal_position=value['user_requested_goal_position'],
+                present_position=value['present_position'], 
+                user_requested_goal_position=value['user_requested_goal_position'],
             )
             for name, value in self.grippers.items()
         }
