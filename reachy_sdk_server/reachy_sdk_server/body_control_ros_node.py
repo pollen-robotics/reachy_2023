@@ -3,7 +3,7 @@ from functools import partial
 import os
 import time
 from threading import Event, Lock, Thread
-from typing import List
+from typing import List, Optional
 
 import yaml
 import numpy as np
@@ -16,7 +16,7 @@ import rclpy
 from rclpy.node import Node
 
 from control_msgs.msg import DynamicJointState, InterfaceValue
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
 
@@ -79,40 +79,40 @@ class BodyControlNode(Node):
             qos_profile=5,
         )
 
-        # # Create clients for kinematics services/pub
-        # self.forward_kin_client = {}
-        # self.inverse_kin_client = {}
-        # self.target_pose_publisher = {}
+        # Create clients for kinematics services/pub
+        self.forward_kin_client = {}
+        self.inverse_kin_client = {}
+        self.target_pose_publisher = {}
 
         # TODO: Fixme!
         # 1) make sure the kinematics service are launched first?
         # 2) listen for model and wait for the one that should be here
-        # for chain in ('l_arm', 'r_arm', 'head'):
-        #     forward_srv = self.create_client(
-        #         srv_type=GetForwardKinematics,
-        #         srv_name=f'/{chain}/forward_kinematics',
-        #     )
+        for chain in ('l_arm', 'r_arm', 'head'):
+            forward_srv = self.create_client(
+                srv_type=GetForwardKinematics,
+                srv_name=f'/{chain}/forward_kinematics',
+            )
 
-        #     if not forward_srv.service_is_ready():
-        #         continue
+            if not forward_srv.service_is_ready():
+                continue
 
-        #     self.forward_kin_client[chain] = forward_srv
+            self.forward_kin_client[chain] = forward_srv
 
-        #     inverse_srv = self.create_client(
-        #         srv_type=GetInverseKinematics,
-        #         srv_name=f'/{chain}/inverse_kinematics',
-        #     )
+            inverse_srv = self.create_client(
+                srv_type=GetInverseKinematics,
+                srv_name=f'/{chain}/inverse_kinematics',
+            )
 
-        #     self.inverse_kin_client[chain] = inverse_srv
+            self.inverse_kin_client[chain] = inverse_srv
 
-        #     self.target_pose_publisher[chain] = self.create_publisher(
-        #         msg_type=PoseStamped,
-        #         topic=f'/{chain}/averaged_target_pose',
-        #         qos_profile=5,
-        #     )
+            self.target_pose_publisher[chain] = self.create_publisher(
+                msg_type=PoseStamped,
+                topic=f'/{chain}/averaged_target_pose',
+                qos_profile=5,
+            )
 
-        # self.requested_goal_positions = defaultdict(dict)
-        # self.requested_goal_lock = Lock()
+            self.logger.info(f'Load kinematics (forward/inverse) for "{chain}"')
+
         self.wait_for_setup()
 
         self.logger.info(f'Joints found: {list(self.joints.keys())}')
@@ -360,9 +360,46 @@ class BodyControlNode(Node):
 
         return sol
 
-    def _forward_kin(self, name, joint_positions):
+    def arm_inverse_kinematics(self, request: ArmIKRequest) -> ArmIKSolution:
+        arm = 'l_arm' if request.target.side == ArmSide.LEFT else 'r_arm'
+
+        resp = self._inverse_kin(arm, ros_pose_from_pb_matrix(request.target.pose), request.q0)
+
+        if resp is None:
+            return ArmFKSolution(success=False)
+
+        sol = ArmIKSolution(
+            success=resp.success,
+            arm_position=ArmJointPosition(
+                side=request.target.side,
+                positions=kinematics_pb2.JointPosition(
+                    ids=[joint_pb2.JointId(uid=self.joints[name]['uid']) for name in resp.joint_position.name],
+                    positions=resp.joint_position.position,
+                ),
+            ),
+        )
+
+        return sol
+
+    def head_inverse_kinematics(self, request: HeadIKRequest) -> HeadIKSolution:
+        resp = self._inverse_kin('head', ros_pose_from_pb_quaternion(request.q), request.q0)
+
+        if resp is None:
+            return HeadFKSolution(success=False)
+
+        sol = HeadIKSolution(
+            success=resp.success,
+            neck_position=kinematics_pb2.JointPosition(
+                ids=[joint_pb2.JointId(uid=self.joints[name]['uid']) for name in resp.joint_position.name],
+                positions=resp.joint_position.position,
+            ),
+        )
+
+        return sol
+
+    def _forward_kin(self, name: str, joint_positions: kinematics_pb2.JointPosition) -> Optional[GetForwardKinematics.Response]:
         if name not in self.forward_kin_client:
-            self.logger.warning(f'Could not find FK service for {name}')
+            self.logger.warning(f'Could not find FK service for "{name}"!')
             return
 
         fk_cli = self.forward_kin_client[name]
@@ -375,61 +412,21 @@ class BodyControlNode(Node):
 
         return resp
 
-    # def arm_inverse_kinematics(self, request: ArmIKRequest) -> ArmIKSolution:
-    #     arm = 'l_arm' if request.target.side == ArmSide.LEFT else 'r_arm'
+    def _inverse_kin(self, name: str, ros_pose: Pose, q0: kinematics_pb2.JointPosition) -> Optional[GetInverseKinematics.Response]:
+        if name not in self.inverse_kin_client:
+            self.logger.warning(f'Could not find IK service for "{name}"!')
+            return
 
-    #     if arm not in self.inverse_kin_client:
-    #         self.logger.warning(f'Could not find IK service for {arm}')
-    #         return ArmFKSolution(success=False)
+        ik_cli = self.inverse_kin_client[name]
 
-    #     ik_cli = self.inverse_kin_client[arm]
+        ros_req = GetInverseKinematics.Request()
+        ros_req.pose = ros_pose
+        ros_req.q0.name = [self._get_joint_name(id) for id in q0.ids]
+        ros_req.q0.position = q0.positions
 
-    #     ros_req = GetInverseKinematics.Request()
-    #     ros_req.pose = ros_pose_from_pb_matrix(request.target.pose)
-    #     ros_req.q0.name = [self._get_joint_name(id) for id in request.q0.ids]
-    #     ros_req.q0.position = request.q0.positions
+        resp = ik_cli.call(ros_req)
 
-    #     resp = ik_cli.call(ros_req)
-
-    #     sol = ArmIKSolution(
-    #         success=resp.success,
-    #         arm_position=ArmJointPosition(
-    #             side=request.target.side,
-    #             positions=JointPosition(
-    #                 ids=[JointId(uid=self.joints[name]['uid']) for name in resp.joint_position.name],
-    #                 positions=resp.joint_position.position,
-    #             ),
-    #         ),
-    #     )
-
-    #     return sol
-
-
-
-    # def head_inverse_kinematics(self, request: HeadIKRequest) -> HeadIKSolution:
-
-    #     if 'head' not in self.inverse_kin_client:
-    #         self.logger.warning(f'Could not find IK service for head')
-    #         return HeadFKSolution(success=False)
-
-    #     ik_cli = self.inverse_kin_client['head']
-
-    #     ros_req = GetInverseKinematics.Request()
-    #     ros_req.pose = ros_pose_from_pb_quaternion(request.q)
-    #     ros_req.q0.name = [self._get_joint_name(id) for id in request.q0.ids]
-    #     ros_req.q0.position = request.q0.positions
-
-    #     resp = ik_cli.call(ros_req)
-
-    #     sol = HeadIKSolution(
-    #         success=resp.success,
-    #         neck_position=JointPosition(
-    #             ids=[JointId(uid=self.joints[name]['uid']) for name in resp.joint_position.name],
-    #             positions=resp.joint_position.position,
-    #         ),
-    #     )
-
-    #     return sol
+        return resp
 
     # def handle_fullbody_cartesian_command(self, cmd: FullBodyCartesianCommand):
     #     ack = FullBodyCartesianCommandAck()
