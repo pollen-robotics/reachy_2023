@@ -9,6 +9,7 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 
+from control_msgs.msg import DynamicJointState, InterfaceValue
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
 
@@ -35,7 +36,6 @@ class GripperSafeController(Node):
         Publish to topics:
         - "/gripper_forward_position_controller/commands"
 
-        + TODO: PID
         """
         super().__init__('grippers_controller')
         self.logger = self.get_logger()
@@ -81,7 +81,7 @@ class GripperSafeController(Node):
         self.logger.info(f'Setup done, basic state: {self.gripper_states} with limits {self.limits}')
 
         self.last_grippers_pid = {
-            name: state.pid
+            name: (np.nan, np.nan, np.nan)
             for name, state in self.gripper_states.items()
         }
 
@@ -92,6 +92,13 @@ class GripperSafeController(Node):
             qos_profile=5,
         )
         self.logger.info(f'Publish to "{self.gripper_forward_publisher.topic_name}".')
+
+        # PID command publisher
+        self.pid_publisher = self.create_publisher(
+            msg_type=DynamicJointState,
+            topic='/dynamic_joint_commands',
+            qos_profile=5,
+        )
 
         # Update thread loop
         def gripper_state_update_thread():
@@ -169,10 +176,22 @@ class GripperSafeController(Node):
 
     def publish_pids(self):
         """Publish new PID requests for grippers."""
+        msg = DynamicJointState()
+
         for name, gripper_state in self.gripper_states.items():
             if gripper_state.pid != self.last_grippers_pid[name]:
-                # TODO: actually send pid command
+                msg.joint_names.append(name)
+
+                iv = InterfaceValue()
+                iv.interface_names = ['p_gain', 'i_gain', 'd_gain']
+                iv.values = list(gripper_state.pid)
+
+                msg.interface_values.append(iv)
+
                 self.last_grippers_pid[name] = gripper_state.pid
+
+        if msg.joint_names:
+            self.pid_publisher.publish(msg)
 
     def wait_for_setup(self):
         while True:
