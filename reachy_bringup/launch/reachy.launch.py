@@ -184,10 +184,10 @@ def launch_setup(context, *args, **kwargs):
         arguments=['forward_speed_limit_controller', '-c', '/controller_manager'],
     )
 
-    pid_controller_spawner = Node(
+    forward_pid_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['pid_controller', '-c', '/controller_manager'],
+        arguments=['forward_pid_controller', '-c', '/controller_manager'],
     )
 
     forward_fan_controller_spawner = Node(
@@ -201,6 +201,12 @@ def launch_setup(context, *args, **kwargs):
             target_action=joint_state_broadcaster_spawner,
             on_exit=[rviz_node],
         ),
+    )
+
+    dynamic_state_router_node = Node(
+        package='dynamic_state_router',
+        executable='dynamic_state_router',
+        arguments=[robot_controllers],
     )
 
     gazebo_node = IncludeLaunchDescription(
@@ -222,7 +228,7 @@ def launch_setup(context, *args, **kwargs):
                 forward_torque_controller_spawner,
                 forward_torque_limit_controller_spawner,
                 forward_speed_limit_controller_spawner,
-                pid_controller_spawner,
+                forward_pid_controller_spawner,
                 forward_fan_controller_spawner,
             ],
         ),
@@ -267,6 +273,7 @@ def launch_setup(context, *args, **kwargs):
         gripper_safe_controller_node,
         sdk_server,
         sdk_camera_server,
+        dynamic_state_router_node,
     ]
 
 
