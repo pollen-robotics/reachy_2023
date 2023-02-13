@@ -29,18 +29,13 @@ class ReachySDKServer(
     sensor_pb2_grpc.SensorServiceServicer,
     fan_pb2_grpc.FanControllerServiceServicer,
 ):
-    """Reachy SDK server node."""
+    """Reachy SDK server node.
+    
+    Converts gRPC requests to commands sent to the dynamic_state_router node.
+    """
 
-    def __init__(self, node_name: str, timeout_sec: float = 5, pub_frequency: float = 100) -> None:
-        """Set up the node.
-
-        Subscribe to /joint_states, /joint_temperatures, /force_sensors.
-        Publish new command on /joint_goals or concerned services.
-
-        """
-        self.timeout_sec = timeout_sec
-        self.pub_period = 1 / pub_frequency
-
+    def __init__(self, node_name: str) -> None:
+        """Set up the node."""
         rclpy.init()
         self.body_control_node = BodyControlNode(
             node_name=node_name,

@@ -1,16 +1,7 @@
-from collections import defaultdict
-from functools import partial
-import os
-import time
-from threading import Event, Lock, Thread
-from typing import List, Optional
-
-import yaml
-import numpy as np
+from threading import Event, Lock
+from typing import Optional
 
 from google.protobuf.wrappers_pb2 import FloatValue, UInt32Value, BoolValue
-
-from ament_index_python.packages import get_package_share_directory
 
 import rclpy
 from rclpy.node import Node
@@ -18,9 +9,7 @@ from rclpy.node import Node
 from control_msgs.msg import DynamicJointState, InterfaceValue
 from geometry_msgs.msg import Pose, PoseStamped
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float64MultiArray
 
-from reachy_msgs.msg import Gripper
 from reachy_msgs.srv import GetForwardKinematics, GetInverseKinematics
 
 from reachy_sdk_api.arm_kinematics_pb2 import (
@@ -36,7 +25,6 @@ from reachy_sdk_api import (
     fullbody_cartesian_command_pb2,
     joint_pb2,
     kinematics_pb2,
-    orbita_kinematics_pb2,
     sensor_pb2,
 )
 
@@ -84,17 +72,12 @@ class BodyControlNode(Node):
         self.inverse_kin_client = {}
         self.target_pose_publisher = {}
 
-        # TODO: Fixme!
-        # 1) make sure the kinematics service are launched first?
-        # 2) listen for model and wait for the one that should be here
         for chain in ('l_arm', 'r_arm', 'head'):
             forward_srv = self.create_client(
                 srv_type=GetForwardKinematics,
                 srv_name=f'/{chain}/forward_kinematics',
             )
-
-            if not forward_srv.service_is_ready():
-                continue
+            forward_srv.wait_for_service()
 
             self.forward_kin_client[chain] = forward_srv
 
@@ -102,6 +85,7 @@ class BodyControlNode(Node):
                 srv_type=GetInverseKinematics,
                 srv_name=f'/{chain}/inverse_kinematics',
             )
+            inverse_srv.wait_for_service()
 
             self.inverse_kin_client[chain] = inverse_srv
 
@@ -428,6 +412,7 @@ class BodyControlNode(Node):
 
         return resp
 
+    # FullBodyCartesian related methods
     def handle_fullbody_cartesian_command(self, cmd: fullbody_cartesian_command_pb2.FullBodyCartesianCommand):
         ack = fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck()
 
