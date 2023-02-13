@@ -10,7 +10,7 @@ Publication:
 - /joint_commands (JointState) for each joints (100Hz)
 
 Subscription:
-- /dynamic_joint_commands (DynamicJointCommand) - set any command(s) interface(s) for one or many joint/sensor/gpio
+- /dynamic_joint_commands (DynamicJointState) - set any command(s) interface(s) for one or many joint/sensor/gpio
 
 
 In more details, it:
