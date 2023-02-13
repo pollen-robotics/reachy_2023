@@ -41,7 +41,7 @@
                     <param name="offsets">0.0, 0.0</param>
                     <param name="is_direct">0.0, 0.0</param>
                     <param name="reductions">1.0, 1.0</param>
-                    <param name="fan_id">40</param>
+                    <param name="fan_id">60</param>
                     <!--          <plugin>fake_components/GenericSystem</plugin>-->
                 </xacro:unless>
 
