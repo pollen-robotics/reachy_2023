@@ -16,8 +16,24 @@ int32_t neck_hwi_get_present_rpy_position(uint32_t uid, double *position);
 
 int32_t neck_hwi_get_target_rpy_position(uint32_t uid, double *target_position);
 
+int32_t neck_hwi_get_present_rpy_velocity(uint32_t uid, double *velocity);
+
+int32_t neck_hwi_get_present_rpy_effort(uint32_t uid, double *effort);
+
 int32_t neck_hwi_set_target_rpy_position(uint32_t uid, double *target_position);
 
 int32_t neck_hwi_get_temperature(uint32_t uid, double *temperature);
+
+int32_t neck_hwi_get_speed_limit(uint32_t uid, double *speed_limit);
+
+int32_t neck_hwi_set_speed_limit(uint32_t uid, double *speed_limit);
+
+int32_t neck_hwi_get_torque_limit(uint32_t uid, double *torque_limit);
+
+int32_t neck_hwi_set_torque_limit(uint32_t uid, double *torque_limit);
+
+int32_t neck_hwi_get_pid(uint32_t uid, double *p, double *i, double *d);
+
+int32_t neck_hwi_set_pid(uint32_t uid, double *p, double *i, double *d);
 
 } // extern "C"
