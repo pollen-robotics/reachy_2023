@@ -29,7 +29,7 @@
 
           <!-- Use fake components. -->
           <xacro:unless value="$(arg use_gazebo)">
-            <plugin>fake_components/GenericSystem</plugin>
+            <plugin>mock_components/GenericSystem</plugin>
           </xacro:unless>
         </xacro:if>
       </hardware>

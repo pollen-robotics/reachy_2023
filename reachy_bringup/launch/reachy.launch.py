@@ -36,6 +36,8 @@ def launch_setup(context, *args, **kwargs):
     fake_arg = LaunchConfiguration('fake')
     fake = fake_arg.perform(context) == 'true'
     gazebo_arg = LaunchConfiguration('gazebo')
+    depth_camera_arg = LaunchConfiguration('depth_camera')
+    depth_camera = depth_camera_arg.perform(context) == 'true'
     gazebo = gazebo_arg.perform(context) == 'true'
     start_sdk_server_arg = LaunchConfiguration('start_sdk_server')
     start_sdk_server = start_sdk_server_arg.perform(context) == 'true'
@@ -57,7 +59,7 @@ def launch_setup(context, *args, **kwargs):
                 [FindPackageShare('reachy_description'), 'urdf', 'reachy.urdf.xacro']
             ),
             *((' ', 'use_fake_hardware:=true', ' ') if fake else
-              (' ', 'use_fake_hardware:=true use_gazebo:=true depth_camera:=false', ' ') if gazebo else
+              (' ', f'use_fake_hardware:=true use_gazebo:=true depth_camera:={depth_camera}', ' ') if gazebo else
               (' ',)),
             f'robot_config:={robot_model}',
             ' ',
@@ -98,7 +100,7 @@ def launch_setup(context, *args, **kwargs):
         package='reachy_sdk_server',
         executable='camera_server',
         output='both',
-        condition=IfCondition(start_sdk_server_arg), 
+        condition=IfCondition(start_sdk_server_arg),
     )
 
     robot_state_publisher_node = Node(
@@ -257,7 +259,7 @@ def launch_setup(context, *args, **kwargs):
         *((control_node,) if not gazebo else
           (SetUseSimTime(True),  # does not seem to work...
            gazebo_node)),
-        fake_camera_node, 
+        fake_camera_node,
         fake_zoom_node,
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
@@ -290,6 +292,13 @@ def generate_launch_description():
             description='Start a fake_hardware with gazebo as simulation tool.',
             choices=['true', 'false']
         ),
+        DeclareLaunchArgument(
+            'depth_camera',
+            default_value='false',
+            description='Start a simulated depth camera within gazebo (requires Gazebo).',
+            choices=['true', 'false']
+        ),
+
         DeclareLaunchArgument(
             'start_sdk_server',
             default_value='false',

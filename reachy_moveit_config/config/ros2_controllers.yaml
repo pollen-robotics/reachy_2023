@@ -41,6 +41,8 @@ left_arm_controller:
     state_interfaces:
       - position
       - velocity
+    use_sim_time: true
+
 right_arm_controller:
   ros__parameters:
     joints:
@@ -56,6 +58,8 @@ right_arm_controller:
     state_interfaces:
       - position
       - velocity
+    use_sim_time: true
+
 head_controller:
   ros__parameters:
     joints:
@@ -67,6 +71,8 @@ head_controller:
     state_interfaces:
       - position
       - velocity
+    use_sim_time: true
+
 left_gripper_controller:
   ros__parameters:
     joints:
@@ -76,6 +82,8 @@ left_gripper_controller:
     state_interfaces:
       - position
       - velocity
+    use_sim_time: true
+
 right_gripper_controller:
   ros__parameters:
     joints:
@@ -85,3 +93,4 @@ right_gripper_controller:
     state_interfaces:
       - position
       - velocity
+    use_sim_time: true

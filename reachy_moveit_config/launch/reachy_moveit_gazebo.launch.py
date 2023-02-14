@@ -8,9 +8,9 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetUseSimTime
 from launch_ros.parameter_descriptions import ParameterValue
-
+from launch_ros.substitutions import FindPackageShare
 from srdfdom.srdf import SRDF
 
 
@@ -21,6 +21,23 @@ from moveit_configs_utils.launch_utils import (
 
 from moveit_configs_utils import MoveItConfigsBuilder
 from moveit_configs_utils.launches import generate_demo_launch
+
+FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT = 'full_kit', 'starter_kit_right', 'starter_kit_left'
+
+
+def get_reachy_config():
+    import yaml
+    import os
+    config_file = os.path.expanduser('~/.reachy.yaml')
+    try:
+        with open(config_file) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+            return config["model"] if config["model"] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT] else False
+    except (FileNotFoundError, TypeError):
+        return False
+
+
+robot_model_file = get_reachy_config()
 
 
 def generate_demo_launch(moveit_config):
@@ -35,7 +52,26 @@ def generate_demo_launch(moveit_config):
      * warehouse_db (optional)
      * ros2_control_node + controller spawners
     """
+    SetUseSimTime(True)
+    robot_model = "full_kit"
+    if robot_model_file:
+        # TODO find a ROS way to log (without rebuilding a whole node ?
+        print("Using robot_model described in ~/.reachy.yaml ...")
+        robot_model = robot_model_file
+    print("Robot Model :: {}".format(robot_model))
+
     ld = LaunchDescription()
+
+    ld.add_action(
+        DeclareLaunchArgument(
+            "use_sim_time",
+            default_value="true",
+            description="If true, use simulated clock.",
+        ),
+    )
+
+    use_sim_time = LaunchConfiguration("use_sim_time")
+
     ld.add_action(
         DeclareBooleanLaunchArg(
             "db",
@@ -63,12 +99,21 @@ def generate_demo_launch(moveit_config):
             )
         )
 
+    ld.add_action(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py']),
+            launch_arguments={'robot_config': f'{robot_model}', 'use_sim_time': f'{use_sim_time}'}.items()
+        )
+    )
+
     # Given the published joint states, publish tf for the robot links
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 str(moveit_config.package_path / "launch/rsp.launch.py")
             ),
+            launch_arguments={'use_sim_time': f'{use_sim_time}'}.items()
         )
     )
 
@@ -77,6 +122,7 @@ def generate_demo_launch(moveit_config):
             PythonLaunchDescriptionSource(
                 str(moveit_config.package_path / "launch/move_group.launch.py")
             ),
+            launch_arguments={'use_sim_time': f'{use_sim_time}'}.items()
         )
     )
 
@@ -87,6 +133,7 @@ def generate_demo_launch(moveit_config):
                 str(moveit_config.package_path / "launch/moveit_rviz.launch.py")
             ),
             condition=IfCondition(LaunchConfiguration("use_rviz")),
+            launch_arguments={'use_sim_time': f'{use_sim_time}'}.items()
         )
     )
 
@@ -97,39 +144,41 @@ def generate_demo_launch(moveit_config):
                 str(moveit_config.package_path / "launch/warehouse_db.launch.py")
             ),
             condition=IfCondition(LaunchConfiguration("db")),
+            launch_arguments={'use_sim_time': f'{use_sim_time}'}.items()
         )
     )
 
     # Fake joint driver
+    # ld.add_action(
+
+    #     TimerAction(
+    #         period=1.0,
+    #         actions=[
+    #             Node(
+    #                 package="controller_manager",
+    #                 executable="ros2_control_node",
+    #                 parameters=[
+    #                     moveit_config.robot_description,
+    #                     str(moveit_config.package_path / "config/ros2_controllers.yaml"),
+    #                 ],
+    #                 output='both',
+    #                 # arguments=['--ros-args', '--log-level', 'debug']
+    #             )
+    #         ],
+    #     )
+    # )
+
     ld.add_action(
 
         TimerAction(
-            period=1.0,
-            actions=[
-                Node(
-                    package="controller_manager",
-                    executable="ros2_control_node",
-                    parameters=[
-                        moveit_config.robot_description,
-                        str(moveit_config.package_path / "config/ros2_controllers.yaml"),
-                    ],
-                    output='both',
-                    # arguments=['--ros-args', '--log-level', 'debug']
-                )
-            ],
-        )
-    )
-
-    ld.add_action(
-
-        TimerAction(
-            period=3.0,
+            period=5.0,
             actions=[
 
                 IncludeLaunchDescription(
                     PythonLaunchDescriptionSource(
                         str(moveit_config.package_path / "launch/spawn_controllers.launch.py")
                     ),
+                    launch_arguments={'use_sim_time': f'{use_sim_time}'}.items()
                 )
             ],
         )
