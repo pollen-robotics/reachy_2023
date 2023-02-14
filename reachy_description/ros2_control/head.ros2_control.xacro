@@ -21,10 +21,7 @@
 
                     <!-- Use fake components. -->
                     <xacro:unless value="$(arg use_gazebo)">
-                        <!-- <plugin>fake_components/GenericSystem</plugin> -->
-                        <plugin>neck_system_hwi/NeckSystem</plugin>
-                        <param name="serial_port">/dev/neck</param>
-                        <param name="offsets">0.0, 0.0, 0.0</param>
+                        <plugin>fake_components/GenericSystem</plugin>
                     </xacro:unless>
                 </xacro:if>
             </hardware>
