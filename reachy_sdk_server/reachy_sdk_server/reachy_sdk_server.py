@@ -1,47 +1,24 @@
 """Expose main Reachy ROS services/topics through gRPC allowing remote client SDK."""
 
-from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 import threading
 import time
-from subprocess import check_output
-
-from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Iterator, List
-
-import numpy as np
-
-from scipy.spatial.transform import Rotation
+from typing import Iterator
 
 from google.protobuf.empty_pb2 import Empty
 from google.protobuf.timestamp_pb2 import Timestamp
-from google.protobuf.wrappers_pb2 import BoolValue, FloatValue
-
 import grpc
 
 import rclpy
-from rclpy.node import Node
 
 from reachy_sdk_api import joint_pb2, joint_pb2_grpc
 from reachy_sdk_api import sensor_pb2, sensor_pb2_grpc
-from reachy_sdk_api import kinematics_pb2
 from reachy_sdk_api import arm_kinematics_pb2, arm_kinematics_pb2_grpc
-from reachy_sdk_api import orbita_kinematics_pb2, orbita_kinematics_pb2_grpc
 from reachy_sdk_api import head_kinematics_pb2, head_kinematics_pb2_grpc
 from reachy_sdk_api import fullbody_cartesian_command_pb2, fullbody_cartesian_command_pb2_grpc
 from reachy_sdk_api import fan_pb2, fan_pb2_grpc
-from reachy_sdk_api import mobile_platform_reachy_pb2, mobile_platform_reachy_pb2_grpc
 
 from reachy_sdk_server.body_control_ros_node import BodyControlNode
-
-
-def get_reachy_config():
-    import yaml
-    import os
-    config_file = os.path.expanduser('~/.reachy.yaml')
-    with open(config_file) as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-        return config
 
 
 class ReachySDKServer(
@@ -52,22 +29,16 @@ class ReachySDKServer(
     sensor_pb2_grpc.SensorServiceServicer,
     fan_pb2_grpc.FanControllerServiceServicer,
 ):
-    """Reachy SDK server node."""
+    """Reachy SDK server node.
+    
+    Converts gRPC requests to commands sent to the dynamic_state_router node.
+    """
 
-    def __init__(self, node_name: str, reachy_model: str, timeout_sec: float = 5, pub_frequency: float = 100) -> None:
-        """Set up the node.
-
-        Subscribe to /joint_states, /joint_temperatures, /force_sensors.
-        Publish new command on /joint_goals or concerned services.
-
-        """
-        self.timeout_sec = timeout_sec
-        self.pub_period = 1 / pub_frequency
-
+    def __init__(self, node_name: str) -> None:
+        """Set up the node."""
         rclpy.init()
         self.body_control_node = BodyControlNode(
             node_name=node_name,
-            reachy_model=reachy_model,
         )
         threading.Thread(target=lambda: rclpy.spin(self.body_control_node)).start()
 
@@ -76,20 +47,28 @@ class ReachySDKServer(
 
         self.logger.info('SDK ready to be served! (port 50055)')
 
+    # Joints gRPCs
+    def GetAllJointsId(self, request: Empty, context) -> joint_pb2.JointsId:
+        names, uids = zip(*[
+            (joint['name'], joint['uid'])
+            for joint in self.body_control_node.joints.values()
+        ])
+        return joint_pb2.JointsId(names=names, uids=uids)
+
     def GetJointsState(self, request: joint_pb2.JointsStateRequest, context) -> joint_pb2.JointsState:
         """Get the requested joints id."""
         params = {}
+        params['ids'] = []
+        params['states'] = []
 
         for id in request.ids:
-            if not self.body_control_node._check_valid_request(id):
-                self.logger.error(f'Got invalid joint request for GetJointsState, received {id}')
-                return joint_pb2.JointsState(**params)
+            if not self.body_control_node._check_joint_exist(id):
+                self.logger.warning(f'Got invalid joint request for GetJointsState, received {id}')
+                continue
 
-        params['ids'] = request.ids
-        params['states'] = [
-            self.body_control_node.get_joint_state(uid=id, joint_fields=request.requested_fields)
-            for id in request.ids
-        ]
+            params['ids'].append(id)
+            params['states'].append(self.body_control_node.get_joint_state(uid=id, joint_fields=request.requested_fields))
+
         params['timestamp'] = Timestamp()
         params['timestamp'].GetCurrentTime()
 
@@ -101,7 +80,7 @@ class ReachySDKServer(
         last_pub = 0.0
 
         for id in request.request.ids:
-            if not self.body_control_node._check_valid_request(id):
+            if not self.body_control_node._check_joint_exist(id):
                 self.logger.error(f'Got invalid joint request for StreamJointsState, received {id}')
                 return joint_pb2.JointsState()
 
@@ -110,9 +89,6 @@ class ReachySDKServer(
             if elapsed_time < dt:
                 time.sleep(dt - elapsed_time)
 
-            self.body_control_node.joint_state_pub_event.wait()
-            self.body_control_node.joint_state_pub_event.clear()
-
             joints_state = self.GetJointsState(request.request, context)
             joints_state.timestamp.GetCurrentTime()
 
@@ -120,43 +96,16 @@ class ReachySDKServer(
             last_pub = time.time()
 
     def SendJointsCommands(self, request: joint_pb2.JointsCommand, context) -> joint_pb2.JointsCommandAck:
-        for cmd in request.commands:
-            if not self.body_control_node._check_valid_request(cmd.id):
-                self.logger.error(f'Got invalid joint request for SendJointsCommand, received {cmd.id}')
-                return joint_pb2.JointsCommandAck(success=False)
-        
         self.body_control_node.handle_joint_msg(grpc_req=request)
         return joint_pb2.JointsCommandAck(success=True)
 
-    def SendFansCommands(self, request: fan_pb2.FansCommand, context) -> fan_pb2.FansCommandAck:
-        self.body_control_node.handle_fan_msg(grpc_req=request)
-        return fan_pb2.FansCommandAck(success=True)
-
     def StreamJointsCommands(self, request_iterator: Iterator[joint_pb2.JointsCommand], context) -> joint_pb2.JointsCommandAck:
         for request in request_iterator:
-            for cmd in request.commands:
-                if not self.body_control_node._check_valid_request(cmd.id):
-                    self.logger.error(f'Got invalid joint request for StreamJointsCommand, received {cmd.id}')
-                    return joint_pb2.JointsCommandAck(success=False)
-
             self.body_control_node.handle_joint_msg(grpc_req=request)
 
         return joint_pb2.JointsCommandAck(success=True)
 
-    def GetAllJointsId(self, request: Empty, context) -> joint_pb2.JointsId:
-        names, uids = zip(*[
-            (joint['name'], joint['uid'])
-            for joint in self.body_control_node.joints.values()
-        ])
-        return joint_pb2.JointsId(names=names, uids=uids)
-
-    def GetAllForceSensorsId(self, request: Empty, context) -> sensor_pb2.SensorsId:
-        names, uids = zip(*[
-            (sensor['name'], sensor['uid'])
-            for sensor in self.body_control_node.sensors.values()
-        ])
-        return sensor_pb2.SensorsId(names=names, uids=uids)
-
+    # Fans gRPCs
     def GetAllFansId(self, request: Empty, context) -> fan_pb2.FansId:
         names, uids = zip(*[
             (fan['name'], fan['uid'])
@@ -164,27 +113,53 @@ class ReachySDKServer(
         ])
         return fan_pb2.FansId(names=names, uids=uids)
 
-    def GetSensorsState(self, request: sensor_pb2.SensorsStateRequest, context) -> sensor_pb2.SensorsState:
-        params = {}
-
-        params['ids'] = request.ids
-        params['states'] = [
-            self.body_control_node.get_sensor_state(uid=id) for id in request.ids
-        ]
-        params['timestamp'] = Timestamp()
-        params['timestamp'].GetCurrentTime()
-        return sensor_pb2.SensorsState(**params)
-
     def GetFansState(self, request: fan_pb2.FansStateRequest, context) -> fan_pb2.FansState:
         params = {}
+        params['ids'] = []
+        params['states'] = []
 
-        params['ids'] = request.ids
-        params['states'] = [
-            self.body_control_node.get_fan_state(uid=id) for id in request.ids
-        ]
+        for id in request.ids:
+            if not self.body_control_node._check_fan_exist(id):
+                self.logger.warning(f'Got invalid fan request for GetFansState, received {id}')
+                continue
+            
+            params['ids'].append(id)
+            params['states'].append(self.body_control_node.get_fan_state(uid=id))
+        
         params['timestamp'] = Timestamp()
         params['timestamp'].GetCurrentTime()
+
         return fan_pb2.FansState(**params)
+
+    def SendFansCommands(self, request: fan_pb2.FansCommand, context) -> fan_pb2.FansCommandAck:
+        self.body_control_node.handle_fan_msg(grpc_req=request)
+        return fan_pb2.FansCommandAck(success=True)
+    
+    # Force Sensors gRPCs
+    def GetAllForceSensorsId(self, request: Empty, context) -> sensor_pb2.SensorsId:
+        names, uids = zip(*[
+            (sensor['name'], sensor['uid'])
+            for sensor in self.body_control_node.sensors.values()
+        ])
+        return sensor_pb2.SensorsId(names=names, uids=uids)
+
+    def GetSensorsState(self, request: sensor_pb2.SensorsStateRequest, context) -> sensor_pb2.SensorsState:
+        params = {}
+        params['ids'] = []
+        params['states'] = []
+
+        for id in request.ids:
+            if not self.body_control_node._check_sensor_exist(id):
+                self.logger.warning(f'Got invalid sensor request for GetSensorsState, received {id}')
+                continue
+            
+            params['ids'].append(id)
+            params['states'].append(self.body_control_node.get_sensor_state(uid=id))
+        
+        params['timestamp'] = Timestamp()
+        params['timestamp'].GetCurrentTime()
+
+        return sensor_pb2.SensorsState(**params)
 
     def StreamSensorStates(self, request: Iterator[sensor_pb2.SensorsStateRequest], context) -> Iterator[sensor_pb2.SensorsState]:
         dt = 1.0 / request.publish_frequency if request.publish_frequency > 0 else -1.0
@@ -195,16 +170,13 @@ class ReachySDKServer(
             if elapsed_time < dt:
                 time.sleep(dt - elapsed_time)
 
-            self.body_control_node.sensor_state_pub_event.wait()
-            self.body_control_node.sensor_state_pub_event.clear()
-
             sensors_state = self.GetSensorsState(request.request, context)
             sensors_state.timestamp.GetCurrentTime()
 
             yield sensors_state
             last_pub = time.time()
 
-    # Arm kinematics servicer
+    # Arm kinematics gRPCs
     def ComputeArmFK(self, request: arm_kinematics_pb2.ArmFKRequest, context) -> arm_kinematics_pb2.ArmFKSolution:
         """Compute forward kinematics for requested arm."""
         return self.body_control_node.arm_forward_kinematics(request)
@@ -213,8 +185,7 @@ class ReachySDKServer(
         """Compute inverse kinematics for requested arm."""
         return self.body_control_node.arm_inverse_kinematics(request)
 
-    # Head kinematics servicer
-
+    # Head kinematics gRPCs
     def ComputeHeadFK(self, request: head_kinematics_pb2.HeadFKRequest, context) -> head_kinematics_pb2.HeadFKSolution:
         """Compute forward kinematics for the head."""
         return self.body_control_node.head_forward_kinematics(request)
@@ -223,6 +194,7 @@ class ReachySDKServer(
         """Compute inverse kinematics for the head."""
         return self.body_control_node.head_inverse_kinematics(request)
 
+    # Full Body Cartesian gRPCs
     def SendFullBodyCartesianCommands(
         self,
         request: fullbody_cartesian_command_pb2.FullBodyCartesianCommand,
@@ -250,16 +222,8 @@ class ReachySDKServer(
 def main():
     """Run the Node and the gRPC server."""
 
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--ros-args', action='store_true')
-    parser.add_argument('model')
-    args = parser.parse_args()
-
     sdk_server = ReachySDKServer(
         node_name='reachy_sdk_server',
-        reachy_model=args.model,
     )
 
     server = grpc.server(thread_pool=ThreadPoolExecutor(max_workers=10))

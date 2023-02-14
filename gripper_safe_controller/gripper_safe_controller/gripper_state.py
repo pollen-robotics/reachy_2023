@@ -138,8 +138,6 @@ class GripperState:
                 else (self.present_position[0] - self.present_position[-1]) > MIN_MOVING_DIST)
         )
 
-        # print(f'user: {user_request_to_release}, moving_again: {moving_again}, evol: {abs(self.present_position[0] - self.present_position[-1])}')
-
         return user_request_to_release or moving_again
 
     def has_changed_direction(self, new_goal_pos: float) -> bool:

@@ -23,7 +23,7 @@ controller_manager:
     forward_fan_controller:
       type: forward_command_controller/ForwardCommandController
 
-    pid_controller:
+    forward_pid_controller:
       type: pid_command_controller/PIDCommandController
 
 joint_state_broadcaster:
@@ -66,7 +66,7 @@ forward_torque_controller:
     use_sim_time: false
 
 
-pid_controller:
+forward_pid_controller:
   ros__parameters:
     joints:
       - r_shoulder_pitch
@@ -115,5 +115,5 @@ forward_speed_limit_controller:
       - r_wrist_pitch
       - r_wrist_roll
       - r_gripper
-    interface_name: max_speed
+    interface_name: speed_limit
     use_sim_time: false

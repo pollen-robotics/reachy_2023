@@ -21,8 +21,8 @@
 
       <command_interface name="position"/>
       <command_interface name="torque"/>
-      <command_interface name="max_speed"/>
-      <state_interface name="max_speed"/>
+      <command_interface name="speed_limit"/>
+      <state_interface name="speed_limit"/>
       <command_interface name="torque_limit"/>
       <state_interface name="torque_limit"/>
 

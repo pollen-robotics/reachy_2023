@@ -10,7 +10,7 @@ from .pose_averager import PoseAverager
 
 import rclpy
 from geometry_msgs.msg import PoseStamped
-from rclpy.node import Node
+from rclpy.lifecycle import LifecycleNode, State, TransitionCallbackReturn
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray, String
@@ -28,7 +28,7 @@ from .kdl_kinematics import (
 )
 
 
-class ReachyKdlKinematics(Node):
+class ReachyKdlKinematics(LifecycleNode):
     def __init__(self):
         super().__init__('reachy_kdl_kinematics_node')
         self.logger = self.get_logger()
@@ -189,6 +189,12 @@ class ReachyKdlKinematics(Node):
             self.ik_solver['head'] = ik_solver
 
         self.logger.info(f'Kinematics node ready!')
+        self.trigger_configure()
+
+    def on_configure(self, state: State) -> TransitionCallbackReturn:
+        # Dummy state to minimize impact on current behavior
+        self.logger.info("Configuring state has been called, going into inactive to release event trigger")
+        return TransitionCallbackReturn.SUCCESS
 
     def forward_kinematics_srv(
         self,

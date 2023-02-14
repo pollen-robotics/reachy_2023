@@ -1,25 +1,15 @@
-from collections import defaultdict
-from functools import partial
-import os
-import time
-from threading import Event, Lock, Thread
-from typing import List
-
-import yaml
-import numpy as np
+from threading import Event, Lock
+from typing import Optional
 
 from google.protobuf.wrappers_pb2 import FloatValue, UInt32Value, BoolValue
-
-from ament_index_python.packages import get_package_share_directory
 
 import rclpy
 from rclpy.node import Node
 
-from control_msgs.msg import DynamicJointState
-from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Float64MultiArray
+from control_msgs.msg import DynamicJointState, InterfaceValue
+from geometry_msgs.msg import Pose, PoseStamped
+from sensor_msgs.msg import JointState
 
-from reachy_msgs.msg import Gripper
 from reachy_msgs.srv import GetForwardKinematics, GetInverseKinematics
 
 from reachy_sdk_api.arm_kinematics_pb2 import (
@@ -30,45 +20,29 @@ from reachy_sdk_api.arm_kinematics_pb2 import (
 
 from reachy_sdk_api.head_kinematics_pb2 import HeadIKRequest, HeadFKRequest, HeadIKSolution, HeadFKSolution
 
-from reachy_sdk_api.fan_pb2 import FanId, FanState, FansCommand
-from reachy_sdk_api.fullbody_cartesian_command_pb2 import FullBodyCartesianCommand, FullBodyCartesianCommandAck
-from reachy_sdk_api.joint_pb2 import JointId, JointsCommand, JointState, JointsState, JointField, PIDValue, PIDGains
-from reachy_sdk_api.kinematics_pb2 import JointPosition
-from reachy_sdk_api.orbita_kinematics_pb2 import OrbitaIKRequest
-from reachy_sdk_api.sensor_pb2 import SensorId, SensorState, ForceSensorState
+from reachy_sdk_api import (
+    fan_pb2,
+    fullbody_cartesian_command_pb2,
+    joint_pb2,
+    kinematics_pb2,
+    sensor_pb2,
+)
 
 from .type_conversion import pb_matrix_from_ros_pose, ros_pose_from_pb_matrix, ros_pose_from_pb_quaternion, pb_quaternion_from_ros_pose
 
 
 class BodyControlNode(Node):
-    def __init__(self, node_name, reachy_model):
+    def __init__(self, node_name):
         super().__init__(node_name=node_name)
         self.logger = self.get_logger()
-        self.forward_controllers = self._parse_controller(reachy_model)
-        self.joint_to_position_controller = {}
-        for c, joints in self.forward_controllers.items():
-            if c.endswith('forward_position_controller'):
-                for j in joints:
-                    self.joint_to_position_controller[j] = c
 
         self.joints = {}
-        self.joint_uids = {}
-
-        self.requested_torques = {}
-        self.requested_torque_limit = {}
-        self.requested_speed_limit = {}
-        self.requested_pid = {}
-        self.requested_fans = {}
-
         self.sensors = {}
-        self.sensors_uids = {}
-
         self.fans = {}
-        self.fans_uids = {}
 
         # Subscribe to:
-        #  - /dynamic_joint_states (for present_position, torque and temperature)
-        #  - /*_forward_position_controller/commands for target_position
+        #  - /dynamic_joint_states (for present_position, torque and temperature, etc.)
+        #  - /joint_commands for target position
         self.joint_state_ready = Event()
         self.joint_state_sub = self.create_subscription(
             msg_type=DynamicJointState,
@@ -76,25 +50,22 @@ class BodyControlNode(Node):
             qos_profile=5,
             callback=self._on_joint_state,
         )
+        self.joint_commands_ready = Event()
+        self.joint_commands_sub = self.create_subscription(
+            msg_type=JointState,
+            topic='/joint_commands',
+            qos_profile=5,
+            callback=self._on_joint_command,
+        )      
 
-        # Publish to each controllers
-        self.forward_publishers = {
-            c: self.create_publisher(
-                msg_type=Float64MultiArray,
-                topic=f'/{c}/commands',
-                qos_profile=5,
-            )
-            for c in self.forward_controllers
-        }
-
-        # Safe gripper pub
-        self.safe_gripper_publisher = self.create_publisher(
-            msg_type=Gripper,
-            topic='/grippers/commands',
+        # Publish to:
+        #  - /dynamic_joint_commands
+        self.command_pub_lock = Lock()
+        self.joint_command_pub = self.create_publisher(
+            msg_type=DynamicJointState,
+            topic='/dynamic_joint_commands',
             qos_profile=5,
         )
-        self.requested_gripper_goal_positions = {}
-        self.requested_gripper_goal_lock = Lock()
 
         # Create clients for kinematics services/pub
         self.forward_kin_client = {}
@@ -106,7 +77,6 @@ class BodyControlNode(Node):
                 srv_type=GetForwardKinematics,
                 srv_name=f'/{chain}/forward_kinematics',
             )
-
             if not forward_srv.service_is_ready():
                 continue
 
@@ -125,63 +95,31 @@ class BodyControlNode(Node):
                 qos_profile=5,
             )
 
-        self.joint_state_pub_event = Event()
-        self.sensor_state_pub_event = Event()
-        self.fan_state_pub_event = Event()
+            self.logger.info(f'Load kinematics (forward/inverse) for "{chain}"')
 
-        self.requested_goal_positions = defaultdict(dict)
-        self.requested_goal_lock = Lock()
         self.wait_for_setup()
 
-        # We both listen and publish to the forward position
-        # Indeed, as the joints can be controlled either directly or via the kinematics
-        # We need to detect both modifications
-        self.target_pos_sub = {
-            c: self.create_subscription(
-                msg_type=Float64MultiArray,
-                topic=f'/{c}/commands',
-                qos_profile=5,
-                callback=partial(self._on_target_position_update, controller_name=c),
-            )
-            for c in self.forward_controllers
-            if c.endswith('forward_position_controller')
-        }
+        self.logger.info(f'Joints found: {list(self.joints.keys())}')
+        self.joint_uids = {j['uid']: name for name, j in self.joints.items()}
 
-        t = Thread(target=self._publish_joint_command)
-        t.daemon = True
-        t.start()
+        self.logger.info(f'Sensors found: {list(self.sensors.keys())}')
+        self.sensor_uids = {s['uid']: name for name, s in self.sensors.items()}
 
-        self.torque_need_update = Event()
-        self._torque_pub_t = Thread(target=self._publish_torque_update)
-        self._torque_pub_t.start()
-
-        self.torque_limit_need_update = Event()
-        self._torque_limit_pub_t = Thread(target=self._publish_torque_limit_update)
-        self._torque_limit_pub_t.start()
-
-        self.speed_limit_need_update = Event()
-        self._speed_limit_pub_t = Thread(target=self._publish_speed_limit_update)
-        self._speed_limit_pub_t.start()
-
-        self.pid_need_update = Event()
-        self._pid_pub_t = Thread(target=self._publish_pid_update)
-        self._pid_pub_t.start()
-
-        self.fan_need_update = Event()
-        self._fan_pub_t = Thread(target=self._publish_fan_update)
-        self._fan_pub_t.start()
+        self.logger.info(f'Fans found: {list(self.fans.keys())}')
+        self.fan_uids = {f['uid']: name for name, f in self.fans.items()}
 
     def wait_for_setup(self):
         while not self.joint_state_ready.is_set():
             self.logger.info('Waiting for /dynamic_joint_states...')
             rclpy.spin_once(self)
 
-    def get_joint_state(self, uid: JointId, joint_fields: JointField) -> JointsState:
-        """ Get update info for requested joint.
+        while not self.joint_commands_ready.is_set():
+            self.logger.info('Waiting for /joint_commands...')
+            rclpy.spin_once(self)
 
-         - present_position
-         - target_position
-         - temperature
+    # Get Joint/Sensor/Fan state
+    def get_joint_state(self, uid: joint_pb2.JointId, joint_fields: joint_pb2.JointField) -> joint_pb2.JointsState:
+        """ Get update info for requested joint.
 
         And forge a JointsState message with it.
         """
@@ -191,466 +129,196 @@ class BodyControlNode(Node):
         kwargs = {}
 
         for field in joint_fields:
-            if field == JointField.ALL:
-                kwargs = {
-                    'name': name,
-                    'uid': UInt32Value(value=values['uid']),
-                    'present_position': FloatValue(value=values['present_position']),
-                    'present_speed': FloatValue(value=values['present_speed']),
-                    'present_load': FloatValue(value=values['present_load']),
-                    'temperature': FloatValue(value=values['present_temperature']),
-                    'goal_position': FloatValue(value=values['target_position']),
-                    'pid': PIDValue(pid=PIDGains(p=values['pid']['p'], i=values['pid']['i'], d=values['pid']['d'])),
-                    'compliant': BoolValue(value=values['compliant']),
-                    'torque_limit': FloatValue(value=values['torque_limit']),
-                    'speed_limit': FloatValue(value=values['speed_limit']),
-                }
-                break
-
-            elif field == JointField.NAME:
+            if field in (joint_pb2.JointField.NAME, joint_pb2.JointField.ALL):
                 kwargs['name'] = name
 
-            elif field == JointField.PID:
-                kwargs['pid'] = PIDValue(pid=PIDGains(p=values['pid']['p'], i=values['pid']['i'], d=values['pid']['d']))
+            if field in (joint_pb2.JointField.PID, joint_pb2.JointField.ALL):
+                kwargs['pid'] = joint_pb2.PIDValue(pid=joint_pb2.PIDGains(p=values['p_gain'], i=values['i_gain'], d=values['d_gain']))
 
-            elif field == JointField.UID:
+            if field in (joint_pb2.JointField.UID, joint_pb2.JointField.ALL):
                 kwargs['uid'] = UInt32Value(value=values['uid'])
 
-            elif field == JointField.COMPLIANT:
-                kwargs['compliant'] = BoolValue(value=values['compliant'])
+            if field in (joint_pb2.JointField.COMPLIANT, joint_pb2.JointField.ALL):
+                kwargs['compliant'] = BoolValue(value=not values['torque'])
 
-            elif field == JointField.TEMPERATURE:
-                kwargs['temperature'] = FloatValue(value=values['present_temperature'])
+            if field in (joint_pb2.JointField.TEMPERATURE, joint_pb2.JointField.ALL):
+                kwargs['temperature'] = FloatValue(value=values['temperature'])
 
-            elif field == JointField.GOAL_POSITION:
+            if field in (joint_pb2.JointField.GOAL_POSITION, joint_pb2.JointField.ALL):
                 kwargs['goal_position'] = FloatValue(value=values['target_position'])
 
-            elif field == JointField.PRESENT_POSITION:
-                kwargs['present_position'] = FloatValue(value=values['present_position'])
+            if field in (joint_pb2.JointField.PRESENT_POSITION, joint_pb2.JointField.ALL):
+                kwargs['present_position'] = FloatValue(value=values['position'])
 
-            elif field == JointField.PRESENT_SPEED:
-                kwargs['present_speed'] = FloatValue(value=values['present_speed'])
+            if field in (joint_pb2.JointField.PRESENT_SPEED, joint_pb2.JointField.ALL):
+                kwargs['present_speed'] = FloatValue(value=values['velocity'])
 
-            elif field == JointField.PRESENT_LOAD:
-                kwargs['present_load'] = FloatValue(value=values['present_load'])
+            if field in (joint_pb2.JointField.PRESENT_LOAD, joint_pb2.JointField.ALL):
+                kwargs['present_load'] = FloatValue(value=values['effort'])
 
-            elif field == JointField.TORQUE_LIMIT:
+            if field in (joint_pb2.JointField.TORQUE_LIMIT, joint_pb2.JointField.ALL):
                 kwargs['torque_limit'] = FloatValue(value=values['torque_limit'])
 
-            elif field == JointField.SPEED_LIMIT:
+            if field in (joint_pb2.JointField.SPEED_LIMIT, joint_pb2.JointField.ALL):
                 kwargs['speed_limit'] = FloatValue(value=values['speed_limit'])
 
-        return JointState(**kwargs)
+        return joint_pb2.JointState(**kwargs)
 
-    def get_sensor_state(self, uid: SensorId) -> SensorState:
+    def get_sensor_state(self, uid: sensor_pb2.SensorId) -> sensor_pb2.SensorState:
         name = self._get_sensor_name(uid)
-        return SensorState(force_sensor_state=ForceSensorState(force=self.sensors[name]['force']))
+        return sensor_pb2.SensorState(
+            force_sensor_state=sensor_pb2.ForceSensorState(force=self.sensors[name]['force']),
+        )
 
-    def get_fan_state(self, uid: FanId) -> FanState:
+    def get_fan_state(self, uid: fan_pb2.FanId) -> fan_pb2.FanState:
         name = self._get_fan_name(uid)
-        return FanState(on=bool(self.fans[name]['state']))
+        return fan_pb2.FanState(on=bool(self.fans[name]['state']))
 
     def _on_joint_state(self, state: DynamicJointState):
         """ Retreive the joint state from /dynamic_joint_states.
 
             Update present_position and temperature.
         """
-        # The first time we got the cb
-        # There is some specific preparation we need to do
-        #   - we create the dict entry
-        #   - we set the target_position to the current_position
-        if not self.joints:
+        if not self.joint_state_ready.is_set():
+            self._device_type = {}
+
             for uid, (name, kv) in enumerate(zip(state.joint_names, state.interface_values)):
                 if 'position' in kv.interface_names:
-                    self.joints[name] = {}
-                    self.joints[name]['name'] = name
-                    self.joints[name]['uid'] = uid
-                    self.joints[name]['pid'] = {}
-                    self.joint_uids[uid] = name
-
-                    for k, v in zip(kv.interface_names, kv.values):
-                        if k == 'position':
-                            self.joints[name]['present_position'] = v
-                            self.joints[name]['target_position'] = v
-                        elif k == 'velocity':
-                            self.joints[name]['present_speed'] = v
-                        elif k == 'effort':
-                            self.joints[name]['present_load'] = v
-                        elif k == 'temperature':
-                            self.joints[name]['present_temperature'] = v
-                        elif k == 'p_gain':
-                            self.joints[name]['pid']['p'] = v
-                        elif k == 'i_gain':
-                            self.joints[name]['pid']['i'] = v
-                        elif k == 'd_gain':
-                            self.joints[name]['pid']['d'] = v
-                        elif k == 'torque':
-                            self.joints[name]['compliant'] = (v == 0.0)
-                        elif k == 'torque_limit':
-                            self.joints[name]['torque_limit'] = v
-                        elif k == 'max_speed':
-                            self.joints[name]['speed_limit'] = v
-
+                    self._device_type[name] = 'joints'
                 elif 'force' in kv.interface_names:
-                    self.sensors[name] = {}
-                    self.sensors[name]['name'] = name
-                    self.sensors[name]['uid'] = uid
-                    self.sensors[name]['force'] = kv.values[0]
-                    self.sensors_uids[uid] = name
-
+                    self._device_type[name] = 'sensors'
                 elif 'state' in kv.interface_names:
-                    self.fans[name] = {}
-                    self.fans[name]['name'] = name
-                    self.fans[name]['uid'] = uid
-                    self.fans[name]['state'] = kv.values[0]
-                    self.fans_uids[uid] = name
+                    self._device_type[name] = 'fans'
+                else:
+                    self.logger.warning(f'Unkwnon device {name} with interfaces ({kv.interface_names})')
 
-            self.joint_state_ready.set()
+                d = getattr(self, self._device_type[name])
 
-        # Normal use case
-        for name, kv in zip(state.joint_names, state.interface_values):
-            if 'position' in kv.interface_names:
-                for k, v in zip(kv.interface_names, kv.values):
-                    if k == 'position':
-                        self.joints[name]['present_position'] = v
-                    elif k == 'velocity':
-                        self.joints[name]['present_speed'] = v
-                    elif k == 'effort':
-                        self.joints[name]['present_load'] = v
-                    elif k == 'temperature':
-                        self.joints[name]['present_temperature'] = v
-                    elif k == 'torque':
-                        self.joints[name]['compliant'] = (v == 0.0)
-                    elif k == 'p_gain':
-                        self.joints[name]['pid']['p'] = v
-                    elif k == 'i_gain':
-                        self.joints[name]['pid']['i'] = v
-                    elif k == 'd_gain':
-                        self.joints[name]['pid']['d'] = v
-                    elif k == 'torque_limit':
-                        self.joints[name]['torque_limit'] = v
-                    elif k == 'max_speed':
-                        self.joints[name]['speed_limit'] = v
+                d[name] = {}
+                d[name]['name'] = name
+                d[name]['uid'] = uid
 
-            elif 'force' in kv.interface_names:
-                self.sensors[name]['force'] = kv.values[0]
 
-            elif 'state' in kv.interface_names:
-                self.fans[name]['state'] = kv.values[0]
+        for uid, (name, kv) in enumerate(zip(state.joint_names, state.interface_values)):
+            for k, v in zip(kv.interface_names, kv.values):
+                d = getattr(self, self._device_type[name])
+                d[name][k] = v
 
-        self.joint_state_pub_event.set()
-        self.sensor_state_pub_event.set()
-        self.fan_state_pub_event.set()
+        self.joint_state_ready.set()
 
-    def _check_valid_request(self, joint_id: JointId) -> bool:
+    def _on_joint_command(self, command: JointState):
+        """Retrieve the up-to-date target poisiotn from /joint_commands. """
+        
+        # Make sure we already have the other info.
+        self.joint_state_ready.wait()
+
+        for name, target_pos in zip(command.name, command.position):
+            self.joints[name]['target_position'] = target_pos
+
+        self.joint_commands_ready.set()
+
+    # Handle Joint/Fan commands
+    def handle_joint_msg(self, grpc_req: joint_pb2.JointsCommand):
+        msg = DynamicJointState()
+
+        for cmd in grpc_req.commands:
+            if not self._check_joint_exist(cmd.id):
+                self.logger.warning(f'Unkown joint id {cmd.id} for JointsCommands')
+                continue 
+            
+            iv = InterfaceValue()
+
+            if cmd.HasField('goal_position'):
+                iv.interface_names.append('position')
+                iv.values.append(cmd.goal_position.value)
+
+            if cmd.HasField('compliant'):
+                iv.interface_names.append('torque')
+                iv.values.append(float(not cmd.compliant.value))
+
+            if cmd.HasField('torque_limit'):
+                iv.interface_names.append('torque_limit')
+                iv.values.append(cmd.torque_limit.value)
+
+            if cmd.HasField('speed_limit'):
+                iv.interface_names.append('speed_limit')
+                iv.values.append(cmd.speed_limit.value)
+
+            if cmd.HasField('pid'):
+                iv.interface_names.extend(['p_gain', 'i_gain', 'd_gain'])
+                iv.values.extend([cmd.pid.pid.p, cmd.pid.pid.i, cmd.pid.pid.d])
+
+            if iv.interface_names:
+                msg.joint_names.append(self._get_joint_name(cmd.id))
+                msg.interface_values.append(iv)
+
+        if msg.joint_names:
+            with self.command_pub_lock:
+                self.joint_command_pub.publish(msg)
+    
+    def handle_fan_msg(self, grpc_req: fan_pb2.FansCommand):
+        msg = DynamicJointState()
+
+        for cmd in grpc_req.commands:
+            if not self._check_fan_exist(cmd.id):
+                self.logger.warning(f'Unkown fan id {cmd.id} for FansCommand')
+                continue
+
+            msg.joint_names.append(self._get_fan_name(cmd.id))
+            iv = InterfaceValue()
+            iv.interface_names = ['state']
+            iv.values = [float(cmd.on)]
+            msg.interface_values.append(iv)          
+
+        if msg.joint_names:
+            with self.command_pub_lock:
+                self.joint_command_pub.publish(msg)
+
+    # UID/Name sanity checks
+    def _check_joint_exist(self, joint_id: joint_pb2.JointId) -> bool:
         if joint_id.HasField('uid'):
-            if joint_id.uid not in self.joint_uids.keys():
-                return False
+            return joint_id.uid in self.joint_uids.keys()
         else:
-            if joint_id.name not in self.joints.keys():
-                return False
-        return True
+            return joint_id.name in self.joints.keys()
 
-    def _get_joint_name(self, joint_id: JointId) -> str:
+    def _get_joint_name(self, joint_id: joint_pb2.JointId) -> str:
         if joint_id.HasField('uid'):
             return self.joint_uids[joint_id.uid]
         else:
             return joint_id.name
 
-    def _get_sensor_name(self, sensor_id: SensorId) -> str:
+    def _check_fan_exist(self, fan_id: fan_pb2.FanId) -> bool:
+        if fan_id.HasField('uid'):
+            return fan_id.uid in self.fan_uids.keys()
+        else:
+            return fan_id.name in self.fans.keys()
+
+    def _get_sensor_name(self, sensor_id: sensor_pb2.SensorId) -> str:
         if sensor_id.HasField('uid'):
-            return self.sensors_uids[sensor_id.uid]
+            return self.sensor_uids[sensor_id.uid]
         else:
             return sensor_id.name
 
-    def _get_fan_name(self, fan_id: FanId) -> str:
+    def _check_sensor_exist(self, sensor_id: sensor_pb2.SensorId) -> bool:
+        if sensor_id.HasField('uid'):
+            return sensor_id.uid in self.sensor_uids.keys()
+        else:
+            return sensor_id.name in self.sensors.keys()
+
+    def _get_fan_name(self, fan_id: fan_pb2.FanId) -> str:
         if fan_id.HasField('uid'):
-            return self.fans_uids[fan_id.uid]
+            return self.fan_uids[fan_id.uid]
         else:
             return fan_id.name
-
-    def _get_joint_uid(self, joint_id: JointId) -> int:
-        if joint_id.HasField('uid'):
-            return joint_id.uid
-        else:
-            return self.joints[joint_id.name]['uid']
-
-    def _parse_controller(self, reachy_model):
-        d = {}
-
-        try:
-            controllers_file = os.path.join(
-                get_package_share_directory('reachy_bringup'),
-                'config',
-                f'reachy_{reachy_model}_controllers.yaml',
-            )
-
-            with open(controllers_file, 'r') as f:
-                self.logger.info(f'Using {controllers_file} controllers file.')
-                config = yaml.safe_load(f)
-
-                controller_config = config['controller_manager']['ros__parameters']
-                forward_controllers = []
-                for k, v in controller_config.items():
-                    try:
-                        if v['type'] == 'forward_command_controller/ForwardCommandController':
-                            forward_controllers.append(k)
-                        elif v['type'] == 'pid_command_controller/PIDCommandController':
-                            forward_controllers.append(k)
-                    except (KeyError, TypeError):
-                        pass
-
-                for c in forward_controllers:
-                    joints = config[c]['ros__parameters']['joints']
-                    d[c] = {
-                        j: i for i, j in enumerate(joints)
-                    }
-
-            return d
-        except FileNotFoundError:
-            self.logger.error(f'Controller file {controllers_file} does not exist.')
-            import sys
-            sys.exit()
-
-    def _update_joint_target_pos(self, req: JointsCommand):
-        for cmd in req.commands:
-            if cmd.HasField('goal_position'):
-                joint = self._get_joint_name(cmd.id)
-
-                if joint.endswith('gripper'):
-                    with self.requested_gripper_goal_lock:
-                        self.requested_gripper_goal_positions[joint] = cmd.goal_position.value
-                else:
-                    controller = self.joint_to_position_controller[joint]
-                    with self.requested_goal_lock:
-                        self.requested_goal_positions[controller][joint] = cmd.goal_position.value
-
-    def _on_target_position_update(self, data: Float64MultiArray, controller_name):
-        # Callback of the /*_forward_position_controller subscription
-        joints = self.forward_controllers[controller_name]
-        for j, pos in zip(joints, data.data):
-            self.joints[j]['target_position'] = pos
-
-    def _update_torque(self, req: JointsCommand):
-        need_update = False
-
-        for cmd in req.commands:
-            if cmd.HasField('compliant'):
-                need_update = True
-                name = self._get_joint_name(cmd.id)
-                comp = cmd.compliant.value
-                self.requested_torques[name] = comp
-
-        if need_update:
-            self.torque_need_update.set()
-
-    def _update_torque_limit(self, req: JointsCommand):
-        need_update = False
-
-        for cmd in req.commands:
-            if cmd.HasField('torque_limit'):
-                need_update = True
-                name = self._get_joint_name(cmd.id)
-                comp = cmd.torque_limit.value
-                self.requested_torque_limit[name] = comp
-
-        if need_update:
-            self.torque_limit_need_update.set()
-
-    def _update_speed_limit(self, req: JointsCommand):
-        need_update = False
-
-        for cmd in req.commands:
-            if cmd.HasField('speed_limit'):
-                need_update = True
-                name = self._get_joint_name(cmd.id)
-                comp = cmd.speed_limit.value
-                self.requested_speed_limit[name] = comp
-
-        if need_update:
-            self.speed_limit_need_update.set()
-
-    def _update_pid(self, req: JointsCommand):
-        need_update = False
-
-        for cmd in req.commands:
-            if cmd.HasField('pid'):
-                need_update = True
-                name = self._get_joint_name(cmd.id)
-                self.requested_pid[name] = {
-                    'p': cmd.pid.pid.p,
-                    'i': cmd.pid.pid.i,
-                    'd': cmd.pid.pid.d,
-                }
-
-        if need_update:
-            self.pid_need_update.set()
-
-    def handle_fan_msg(self, grpc_req: FansCommand):
-        need_update = False
-
-        for cmd in grpc_req.commands:
-            need_update = True
-            name = self._get_fan_name(cmd.id)
-            self.requested_fans[name] = float(cmd.on)
-
-        if need_update:
-            self.fan_need_update.set()
-
-    def handle_joint_msg(self, grpc_req: JointsCommand):
-        self._update_joint_target_pos(grpc_req)
-        self._update_torque(grpc_req)
-        self._update_torque_limit(grpc_req)
-        self._update_speed_limit(grpc_req)
-        self._update_pid(grpc_req)
-
-    def _publish_joint_command(self):
-        while rclpy.ok():
-            with self.requested_goal_lock:
-                if self.requested_goal_positions:
-                    for controller_name, joints_to_update in self.requested_goal_positions.items():
-                        controller_joints = self.forward_controllers[controller_name]
-
-                        target_pos = {j: self.joints[j]['target_position'] for j in controller_joints}
-                        target_pos.update(joints_to_update)
-
-                        pos = [target_pos[j] for j in controller_joints]
-                        self.forward_publishers[controller_name].publish(Float64MultiArray(data=pos))
-
-                    self.requested_goal_positions.clear()
-
-            with self.requested_gripper_goal_lock:
-                if self.requested_gripper_goal_positions:
-                    msg = Gripper()
-                    for name, pos in self.requested_gripper_goal_positions.items():
-                        msg.name.append(name)
-                        msg.opening.append(pos)
-
-                    self.safe_gripper_publisher.publish(msg)
-
-                    self.requested_gripper_goal_positions.clear()
-
-            time.sleep(0.01)
-
-    def _publish_torque_update(self):
-        while rclpy.ok():
-            self.torque_need_update.wait()
-            self.torque_need_update.clear()
-
-            for joint, torque in self.requested_torques.items():
-                self.joints[joint]['compliant'] = torque
-
-            self.requested_torques.clear()
-
-            joint_dic = self.forward_controllers['forward_torque_controller']
-            torque_data = [float(not self.joints[joint]['compliant']) for joint in joint_dic.keys()]
-
-            self.forward_publishers['forward_torque_controller'].publish(
-                Float64MultiArray(
-                    data=torque_data
-                )
-            )
-
-    def _publish_torque_limit_update(self):
-        while rclpy.ok():
-            self.torque_limit_need_update.wait()
-            self.torque_limit_need_update.clear()
-
-            for joint, torque_limit in self.requested_torque_limit.items():
-                self.joints[joint]['torque_limit'] = torque_limit
-
-            self.requested_torque_limit.clear()
-
-            joint_dic = self.forward_controllers['forward_torque_limit_controller']
-            torque_limit_data = [self.joints[joint]['torque_limit'] for joint in joint_dic.keys()]
-
-            self.forward_publishers['forward_torque_limit_controller'].publish(
-                Float64MultiArray(
-                    data=torque_limit_data
-                )
-            )
-
-    def _publish_speed_limit_update(self):
-
-        while rclpy.ok():
-            self.speed_limit_need_update.wait()
-            self.speed_limit_need_update.clear()
-
-            for joint, speed_limit in self.requested_speed_limit.items():
-                self.joints[joint]['speed_limit'] = speed_limit
-            self.requested_speed_limit.clear()
-
-            joint_dic = self.forward_controllers['forward_speed_limit_controller']
-            speed_limit_data = [self.joints[joint]['speed_limit'] for joint in joint_dic.keys()]
-
-            self.forward_publishers['forward_speed_limit_controller'].publish(
-                Float64MultiArray(
-                    data=speed_limit_data
-                )
-            )
-
-    def _publish_pid_update(self):
-        while rclpy.ok():
-            self.pid_need_update.wait()
-            self.pid_need_update.clear()
-
-            for joint, pid in self.requested_pid.items():
-                self.joints[joint]['pid'] = pid
-
-            self.requested_pid.clear()
-
-            joint_dic = self.forward_controllers['pid_controller']
-            pid_data = [
-                [
-                    self.joints[joint]['pid']['p'],
-                    self.joints[joint]['pid']['i'],
-                    self.joints[joint]['pid']['d'],
-                ]
-                for joint in joint_dic.keys()
-            ]
-
-            self.forward_publishers['pid_controller'].publish(
-                Float64MultiArray(
-                    data=list(np.array(pid_data).ravel())
-                )
-            )
-
-    def _publish_fan_update(self):
-        while rclpy.ok():
-            self.fan_need_update.wait()
-            self.fan_need_update.clear()
-
-            for fan, state in self.requested_fans.items():
-                self.fans[fan]['state'] = state
-
-            self.requested_fans.clear()
-
-            fan_dic = self.forward_controllers['forward_fan_controller']
-            fan_data = [self.fans[fan]['state'] for fan in fan_dic.keys()]
-
-            self.forward_publishers['forward_fan_controller'].publish(
-                Float64MultiArray(
-                    data=fan_data
-                )
-            )
 
     # Kinematics related methods
     def arm_forward_kinematics(self, request: ArmFKRequest) -> ArmFKSolution:
         arm = 'l_arm' if request.arm_position.side == ArmSide.LEFT else 'r_arm'
 
-        if arm not in self.forward_kin_client:
-            self.logger.warning(f'Could not find FK service for {arm}')
+        resp = self._forward_kin(arm, request.arm_position.positions)
+        
+        if resp is None:
             return ArmFKSolution(success=False)
-
-        fk_cli = self.forward_kin_client[arm]
-
-        joint_positions = request.arm_position.positions
-
-        ros_req = GetForwardKinematics.Request()
-        ros_req.joint_position.name = [self._get_joint_name(id) for id in joint_positions.ids]
-        ros_req.joint_position.position = joint_positions.positions
-
-        resp = fk_cli.call(ros_req)
 
         sol = ArmFKSolution(
             success=resp.success,
@@ -662,50 +330,11 @@ class BodyControlNode(Node):
 
         return sol
 
-    def arm_inverse_kinematics(self, request: ArmIKRequest) -> ArmIKSolution:
-        arm = 'l_arm' if request.target.side == ArmSide.LEFT else 'r_arm'
-
-        if arm not in self.inverse_kin_client:
-            self.logger.warning(f'Could not find IK service for {arm}')
-            return ArmFKSolution(success=False)
-
-        ik_cli = self.inverse_kin_client[arm]
-
-        ros_req = GetInverseKinematics.Request()
-        ros_req.pose = ros_pose_from_pb_matrix(request.target.pose)
-        ros_req.q0.name = [self._get_joint_name(id) for id in request.q0.ids]
-        ros_req.q0.position = request.q0.positions
-
-        resp = ik_cli.call(ros_req)
-
-        sol = ArmIKSolution(
-            success=resp.success,
-            arm_position=ArmJointPosition(
-                side=request.target.side,
-                positions=JointPosition(
-                    ids=[JointId(uid=self.joints[name]['uid']) for name in resp.joint_position.name],
-                    positions=resp.joint_position.position,
-                ),
-            ),
-        )
-
-        return sol
-
     def head_forward_kinematics(self, request: HeadFKRequest) -> HeadFKSolution:
+        resp = self._forward_kin('head', request.neck_position)
 
-        if 'head' not in self.forward_kin_client:
-            self.logger.warning(f'Could not find FK service for head')
+        if resp is None:
             return HeadFKSolution(success=False)
-
-        fk_cli = self.forward_kin_client['head']
-
-        joint_positions = request.neck_position
-
-        ros_req = GetForwardKinematics.Request()
-        ros_req.joint_position.name = [self._get_joint_name(id) for id in joint_positions.ids]
-        ros_req.joint_position.position = joint_positions.positions
-
-        resp = fk_cli.call(ros_req)
 
         sol = HeadFKSolution(
             success=resp.success,
@@ -715,33 +344,77 @@ class BodyControlNode(Node):
 
         return sol
 
+    def arm_inverse_kinematics(self, request: ArmIKRequest) -> ArmIKSolution:
+        arm = 'l_arm' if request.target.side == ArmSide.LEFT else 'r_arm'
+
+        resp = self._inverse_kin(arm, ros_pose_from_pb_matrix(request.target.pose), request.q0)
+
+        if resp is None:
+            return ArmFKSolution(success=False)
+
+        sol = ArmIKSolution(
+            success=resp.success,
+            arm_position=ArmJointPosition(
+                side=request.target.side,
+                positions=kinematics_pb2.JointPosition(
+                    ids=[joint_pb2.JointId(uid=self.joints[name]['uid']) for name in resp.joint_position.name],
+                    positions=resp.joint_position.position,
+                ),
+            ),
+        )
+
+        return sol
+
     def head_inverse_kinematics(self, request: HeadIKRequest) -> HeadIKSolution:
+        resp = self._inverse_kin('head', ros_pose_from_pb_quaternion(request.q), request.q0)
 
-        if 'head' not in self.inverse_kin_client:
-            self.logger.warning(f'Could not find IK service for head')
+        if resp is None:
             return HeadFKSolution(success=False)
-
-        ik_cli = self.inverse_kin_client['head']
-
-        ros_req = GetInverseKinematics.Request()
-        ros_req.pose = ros_pose_from_pb_quaternion(request.q)
-        ros_req.q0.name = [self._get_joint_name(id) for id in request.q0.ids]
-        ros_req.q0.position = request.q0.positions
-
-        resp = ik_cli.call(ros_req)
 
         sol = HeadIKSolution(
             success=resp.success,
-            neck_position=JointPosition(
-                ids=[JointId(uid=self.joints[name]['uid']) for name in resp.joint_position.name],
+            neck_position=kinematics_pb2.JointPosition(
+                ids=[joint_pb2.JointId(uid=self.joints[name]['uid']) for name in resp.joint_position.name],
                 positions=resp.joint_position.position,
             ),
         )
 
         return sol
 
-    def handle_fullbody_cartesian_command(self, cmd: FullBodyCartesianCommand):
-        ack = FullBodyCartesianCommandAck()
+    def _forward_kin(self, name: str, joint_positions: kinematics_pb2.JointPosition) -> Optional[GetForwardKinematics.Response]:
+        if name not in self.forward_kin_client:
+            self.logger.warning(f'Could not find FK service for "{name}"!')
+            return
+
+        fk_cli = self.forward_kin_client[name]
+
+        ros_req = GetForwardKinematics.Request()
+        ros_req.joint_position.name = [self._get_joint_name(id) for id in joint_positions.ids]
+        ros_req.joint_position.position = joint_positions.positions
+
+        resp = fk_cli.call(ros_req)
+
+        return resp
+
+    def _inverse_kin(self, name: str, ros_pose: Pose, q0: kinematics_pb2.JointPosition) -> Optional[GetInverseKinematics.Response]:
+        if name not in self.inverse_kin_client:
+            self.logger.warning(f'Could not find IK service for "{name}"!')
+            return
+
+        ik_cli = self.inverse_kin_client[name]
+
+        ros_req = GetInverseKinematics.Request()
+        ros_req.pose = ros_pose
+        ros_req.q0.name = [self._get_joint_name(id) for id in q0.ids]
+        ros_req.q0.position = q0.positions
+
+        resp = ik_cli.call(ros_req)
+
+        return resp
+
+    # FullBodyCartesian related methods
+    def handle_fullbody_cartesian_command(self, cmd: fullbody_cartesian_command_pb2.FullBodyCartesianCommand):
+        ack = fullbody_cartesian_command_pb2.FullBodyCartesianCommandAck()
 
         if cmd.HasField('left_arm'):
             ack.left_arm_command_success = self.handle_arm_cartesian_request(cmd.left_arm, 'l_arm')
