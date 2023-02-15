@@ -3,7 +3,7 @@
 
   <xacro:macro name="arm_control" params="name serial_port mx_ids offsets is_direct reductions force_sensor_id fan_id">
 
-    <xacro:unless value="$(arg use_moveit)">
+
 
 
     <xacro:include filename="$(find reachy_description)/ros2_control/joint.ros2_control.xacro"/>
@@ -70,7 +70,7 @@
       </joint>
 
     </ros2_control>
-    </xacro:unless>
+
   </xacro:macro>
 
 

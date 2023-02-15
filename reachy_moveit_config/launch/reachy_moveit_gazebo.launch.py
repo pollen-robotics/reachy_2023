@@ -6,7 +6,7 @@ from launch.actions import (
 )
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression, Command, FindExecutable
 
 from launch_ros.actions import Node, SetUseSimTime
 from launch_ros.parameter_descriptions import ParameterValue
@@ -148,26 +148,6 @@ def generate_demo_launch(moveit_config):
         )
     )
 
-    # Fake joint driver
-    # ld.add_action(
-
-    #     TimerAction(
-    #         period=1.0,
-    #         actions=[
-    #             Node(
-    #                 package="controller_manager",
-    #                 executable="ros2_control_node",
-    #                 parameters=[
-    #                     moveit_config.robot_description,
-    #                     str(moveit_config.package_path / "config/ros2_controllers.yaml"),
-    #                 ],
-    #                 output='both',
-    #                 # arguments=['--ros-args', '--log-level', 'debug']
-    #             )
-    #         ],
-    #     )
-    # )
-
     ld.add_action(
 
         TimerAction(
@@ -190,5 +170,7 @@ def generate_demo_launch(moveit_config):
 def generate_launch_description():
     moveit_config = MoveItConfigsBuilder("reachy_2023", package_name="reachy_moveit_config")
     moveit_config = moveit_config.sensors_3d(None)  # be sure to disable the 3D sensor
+
+    # moveit_config = moveit_config.robot_description(mappings={'use_fake_hardware': 'true', 'use_gazebo': 'true', 'use_moveit_gazebo': 'true'})  # pass parameters to xacro (this should work be it does not...)
 
     return generate_demo_launch(moveit_config.to_moveit_configs())

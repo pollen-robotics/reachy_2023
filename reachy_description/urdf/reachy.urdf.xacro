@@ -3,7 +3,6 @@
 
   <xacro:arg name="use_fake_hardware" default="false"/>
   <xacro:arg name="use_gazebo" default="false"/>
-  <xacro:arg name="use_moveit" default="false"/>
   <xacro:arg name="depth_camera" default="false"/>
 
   <xacro:arg name="robot_config" default="full_kit"/>
