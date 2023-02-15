@@ -40,6 +40,8 @@ def launch_setup(context, *args, **kwargs):
     gazebo_py = gazebo_rl.perform(context) == 'true'
     start_sdk_server_rl = LaunchConfiguration('start_sdk_server')
     start_sdk_server_py = start_sdk_server_rl.perform(context) == 'true'
+    depth_camera_rl = LaunchConfiguration('depth_camera')
+    depth_camera = depth_camera_arg.perform(context) == 'true'
 
     # Robot model
     robot_model_rl = LaunchConfiguration('robot_model')
@@ -56,18 +58,23 @@ def launch_setup(context, *args, **kwargs):
             PathJoinSubstitution(
                 [FindPackageShare('reachy_description'), 'urdf', 'reachy.urdf.xacro']
             ),
-            *((' ', 'use_fake_hardware:=true', ' ') if fake_py else
+<< << << < HEAD
+            * ((' ', 'use_fake_hardware:=true', ' ') if fake_py else
               (' ', 'use_fake_hardware:=true use_gazebo:=true depth_camera:=false', ' ') if gazebo_py else
+== == == =
+            *((' ', 'use_fake_hardware:=true', ' ') if fake else
+              (' ', f'use_fake_hardware:=true use_gazebo:=true depth_camera:={depth_camera}', ' ') if gazebo else
+>>>>>> > moveit2
               (' ',)),
             f'robot_config:={robot_model_py}',
             ' ',
         ]
     )
-    robot_description = {
+    robot_description={
         'robot_description': ParameterValue(robot_description_content, value_type=str),
     }
 
-    robot_controllers = PathJoinSubstitution(
+    robot_controllers=PathJoinSubstitution(
         [
             FindPackageShare('reachy_bringup'),
             'config',
@@ -75,18 +82,18 @@ def launch_setup(context, *args, **kwargs):
         ]
     )
 
-    rviz_config_file = PathJoinSubstitution(
+    rviz_config_file=PathJoinSubstitution(
         [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
     )
 
-    control_node = Node(
+    control_node=Node(
         package='controller_manager',
         executable='ros2_control_node',
         parameters=[robot_description, robot_controllers],
         output='screen',
     )
 
-    sdk_server_node = Node(
+    sdk_server_node=Node(
         package='reachy_sdk_server',
         executable='reachy_sdk_server',
         output='both',
@@ -94,21 +101,25 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(start_sdk_server_rl),
     )
 
-    sdk_camera_server_node = Node(
+    sdk_camera_server_node=Node(
         package='reachy_sdk_server',
         executable='camera_server',
         output='both',
+<< << << < HEAD
         condition=IfCondition(start_sdk_server_rl),
+== == == =
+        condition=IfCondition(start_sdk_server_arg),
+>>>>>> > moveit2
     )
 
-    robot_state_publisher_node = Node(
+    robot_state_publisher_node=Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='both',
         parameters=[robot_description],
     )
 
-    rviz_node = Node(
+    rviz_node=Node(
         package='rviz2',
         executable='rviz2',
         name='rviz2',
@@ -117,11 +128,11 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(start_rviz_rl),
     )
 
-    gazebo_state_broadcaster_params = PathJoinSubstitution(
+    gazebo_state_broadcaster_params=PathJoinSubstitution(
         [FindPackageShare('reachy_gazebo'), 'config', 'gz_state_broadcaster_params.yaml']
     )
 
-    joint_state_broadcaster_spawner = Node(
+    joint_state_broadcaster_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=[*(('joint_state_broadcaster', '-p', gazebo_state_broadcaster_params) if gazebo_py else
@@ -130,13 +141,13 @@ def launch_setup(context, *args, **kwargs):
                    '/controller_manager'],
     )
 
-    neck_forward_position_controller_spawner = Node(
+    neck_forward_position_controller_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=['neck_forward_position_controller', '-c', '/controller_manager'],
     )
 
-    r_arm_forward_position_controller_spawner = Node(
+    r_arm_forward_position_controller_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=['r_arm_forward_position_controller', '-c', '/controller_manager'],
@@ -145,7 +156,7 @@ def launch_setup(context, *args, **kwargs):
         )
     )
 
-    l_arm_forward_position_controller_spawner = Node(
+    l_arm_forward_position_controller_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=['l_arm_forward_position_controller', '-c', '/controller_manager'],
@@ -154,76 +165,76 @@ def launch_setup(context, *args, **kwargs):
         ),
     )
 
-    antenna_forward_position_controller_spawner = Node(
+    antenna_forward_position_controller_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=['antenna_forward_position_controller', '-c', '/controller_manager'],
     )
 
-    gripper_forward_position_controller_spawner = Node(
+    gripper_forward_position_controller_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=['gripper_forward_position_controller', '-c', '/controller_manager'],
     )
 
-    forward_torque_controller_spawner = Node(
+    forward_torque_controller_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=['forward_torque_controller', '-c', '/controller_manager'],
     )
 
-    forward_torque_limit_controller_spawner = Node(
+    forward_torque_limit_controller_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=['forward_torque_limit_controller', '-c', '/controller_manager'],
     )
 
-    forward_speed_limit_controller_spawner = Node(
+    forward_speed_limit_controller_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=['forward_speed_limit_controller', '-c', '/controller_manager'],
     )
 
-    forward_pid_controller_spawner = Node(
+    forward_pid_controller_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=['forward_pid_controller', '-c', '/controller_manager'],
     )
 
-    forward_fan_controller_spawner = Node(
+    forward_fan_controller_spawner=Node(
         package='controller_manager',
         executable='spawner',
         arguments=['forward_fan_controller', '-c', '/controller_manager'],
     )
 
-    delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+    delay_rviz_after_joint_state_broadcaster_spawner=RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
             on_exit=[rviz_node],
         ),
     )
 
-    kinematics_node = LifecycleNode(
+    kinematics_node=LifecycleNode(
         name='kinematics',
         namespace='',
         package='reachy_kdl_kinematics',
         executable='reachy_kdl_kinematics',
     )
 
-    dynamic_state_router_node = Node(
+    dynamic_state_router_node=Node(
         package='dynamic_state_router',
         executable='dynamic_state_router',
         arguments=[robot_controllers],
     )
 
-    gazebo_node = IncludeLaunchDescription(
+    gazebo_node=IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py']),
         launch_arguments={'robot_config': f'{robot_model_py}'}.items()
     )
     # For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
 
-    delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+    delay_robot_controller_spawner_after_joint_state_broadcaster_spawner=RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
             on_exit=[
@@ -242,26 +253,26 @@ def launch_setup(context, *args, **kwargs):
         ),
     )
 
-    delay_sdk_server_after_kinematics = RegisterEventHandler(
+    delay_sdk_server_after_kinematics=RegisterEventHandler(
         event_handler=OnStateTransition(
             target_lifecycle_node=kinematics_node, goal_state='inactive',
             entities=[sdk_server_node],
         )
     )
 
-    gripper_safe_controller_node = Node(
+    gripper_safe_controller_node=Node(
         package='gripper_safe_controller',
         executable='gripper_safe_controller',
         arguments=['--controllers-file', robot_controllers]
     )
 
-    fake_camera_node = Node(
+    fake_camera_node=Node(
         package='reachy_fake',
         executable='fake_camera',
         condition=IfCondition(fake_rl),
     )
 
-    fake_zoom_node = Node(
+    fake_zoom_node=Node(
         package='reachy_fake',
         executable='fake_zoom',
         condition=IfCondition(
@@ -306,6 +317,13 @@ def generate_launch_description():
             description='Start a fake_hardware with gazebo as simulation tool.',
             choices=['true', 'false']
         ),
+        DeclareLaunchArgument(
+            'depth_camera',
+            default_value='false',
+            description='Start a simulated depth camera within gazebo (requires Gazebo).',
+            choices=['true', 'false']
+        ),
+
         DeclareLaunchArgument(
             'start_sdk_server',
             default_value='false',

@@ -1,0 +1,22 @@
+# Default initial positions for reachy_2023's ros2_control fake system
+
+initial_positions:
+  l_arm_yaw: 0
+  l_elbow_pitch: 0
+  l_forearm_yaw: 0
+  l_gripper: 0
+  l_shoulder_pitch: 0
+  l_shoulder_roll: 0
+  l_wrist_pitch: 0
+  l_wrist_roll: 0
+  neck_pitch: 0
+  neck_roll: 0
+  neck_yaw: 0
+  r_arm_yaw: 0
+  r_elbow_pitch: 0
+  r_forearm_yaw: 0
+  r_gripper: 0
+  r_shoulder_pitch: 0
+  r_shoulder_roll: 0
+  r_wrist_pitch: 0
+  r_wrist_roll: 0

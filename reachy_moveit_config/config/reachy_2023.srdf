@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--This does not replace URDF, and is not an extension of URDF.
+    This is a format for representing semantic information about the robot structure.
+    A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined
+-->
+<robot name="reachy_2023">
+    <!--GROUPS: Representation of a set of joints and links. This can be useful for specifying DOF to plan for, defining arms, end effectors, etc-->
+    <!--LINKS: When a link is specified, the parent joint of that link (if it exists) is automatically included-->
+    <!--JOINTS: When a joint is specified, the child link of that joint (which will always exist) is automatically included-->
+    <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
+    <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
+    <group name="left_arm">
+        <joint name="virtual_joint"/>
+        <joint name="l_shoulder_pitch"/>
+        <joint name="l_shoulder_roll"/>
+        <joint name="l_arm_yaw"/>
+        <joint name="l_elbow_pitch"/>
+        <joint name="l_forearm_yaw"/>
+        <joint name="l_wrist_pitch"/>
+        <joint name="l_wrist_roll"/>
+        <joint name="l_arm_tip"/>
+    </group>
+    <group name="right_arm">
+        <joint name="virtual_joint"/>
+        <joint name="r_shoulder_pitch"/>
+        <joint name="r_shoulder_roll"/>
+        <joint name="r_arm_yaw"/>
+        <joint name="r_elbow_pitch"/>
+        <joint name="r_forearm_yaw"/>
+        <joint name="r_wrist_pitch"/>
+        <joint name="r_wrist_roll"/>
+        <joint name="r_arm_tip"/>
+    </group>
+    <group name="head">
+        <joint name="virtual_joint"/>
+        <joint name="neck_roll"/>
+        <joint name="neck_pitch"/>
+        <joint name="neck_yaw"/>
+        <joint name="neck_fixed"/>
+        <joint name="head_tip_fixed"/>
+    </group>
+    <group name="left_gripper">
+        <!-- <link name="l_gripper_thumb"/> -->
+        <link name="l_gripper_finger"/>
+    </group>
+    <group name="right_gripper">
+        <!-- <link name="r_gripper_thumb"/> -->
+        <link name="r_gripper_finger"/>
+    </group>
+    <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
+    <group_state name="left_zero_pose" group="left_arm">
+        <joint name="l_arm_yaw" value="0"/>
+        <joint name="l_elbow_pitch" value="0"/>
+        <joint name="l_forearm_yaw" value="0"/>
+        <joint name="l_shoulder_pitch" value="0"/>
+        <joint name="l_shoulder_roll" value="0"/>
+        <joint name="l_wrist_pitch" value="0"/>
+        <joint name="l_wrist_roll" value="0"/>
+    </group_state>
+    <group_state name="right_zero_pose" group="right_arm">
+        <joint name="r_arm_yaw" value="0"/>
+        <joint name="r_elbow_pitch" value="0"/>
+        <joint name="r_forearm_yaw" value="0"/>
+        <joint name="r_shoulder_pitch" value="0"/>
+        <joint name="r_shoulder_roll" value="0"/>
+        <joint name="r_wrist_pitch" value="0"/>
+        <joint name="r_wrist_roll" value="0"/>
+    </group_state>
+    <group_state name="head_zero_pose" group="head">
+        <joint name="neck_pitch" value="0"/>
+        <joint name="neck_roll" value="0"/>
+        <joint name="neck_yaw" value="0"/>
+    </group_state>
+    <group_state name="left_init_pose" group="left_arm">
+        <joint name="l_arm_yaw" value="0"/>
+        <joint name="l_elbow_pitch" value="-1.57"/>
+        <joint name="l_forearm_yaw" value="0"/>
+        <joint name="l_shoulder_pitch" value="0"/>
+        <joint name="l_shoulder_roll" value="0"/>
+        <joint name="l_wrist_pitch" value="0"/>
+        <joint name="l_wrist_roll" value="0"/>
+    </group_state>
+    <group_state name="right_init" group="right_arm">
+        <joint name="r_arm_yaw" value="0"/>
+        <joint name="r_elbow_pitch" value="-1.57"/>
+        <joint name="r_forearm_yaw" value="0"/>
+        <joint name="r_shoulder_pitch" value="0"/>
+        <joint name="r_shoulder_roll" value="0"/>
+        <joint name="r_wrist_pitch" value="0"/>
+        <joint name="r_wrist_roll" value="0"/>
+    </group_state>
+    <group_state name="left_gripper_open" group="left_gripper">
+        <joint name="l_gripper" value="1.2"/>
+    </group_state>
+    <group_state name="right_gripper_open" group="right_gripper">
+        <joint name="r_gripper" value="-1.2"/>
+    </group_state>
+
+    <group_state name="left_gripper_closed" group="left_gripper">
+        <joint name="l_gripper" value="-0.35"/>
+    </group_state>
+    <group_state name="right_gripper_closed" group="right_gripper">
+        <joint name="r_gripper" value="0.35"/>
+    </group_state>
+
+
+    <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
+    <end_effector name="l_arm_tip" parent_link="l_gripper_thumb" group="left_arm"/>
+    <end_effector name="r_arm_tip" parent_link="r_gripper_thumb" group="right_arm"/>
+
+    <end_effector name="l_gripper_tip" parent_link="l_gripper_finger" group="left_gripper"/>
+    <end_effector name="r_gripper_tip" parent_link="r_gripper_finger" group="right_gripper"/>
+    <end_effector name="head_tip" parent_link="head" group="head"/>
+    <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
+    <virtual_joint name="virtual_joint" type="fixed" parent_frame="world" child_link="torso"/>
+    <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
+    <disable_collisions link1="bottom_neck_arm" link2="head" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="l_antenna_link" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="l_forearm" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="l_gripper_finger" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="l_gripper_thumb" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="l_shoulder" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="l_shoulder_x" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="l_upper_arm" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="l_wrist" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="l_wrist2hand" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="r_antenna_link" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="r_forearm" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="r_gripper_finger" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="r_gripper_thumb" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="r_upper_arm" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="r_wrist" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="r_wrist2hand" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="bottom_neck_arm" link2="torso" reason="Adjacent"/>
+    <disable_collisions link1="head" link2="l_antenna_link" reason="Adjacent"/>
+    <disable_collisions link1="head" link2="l_forearm" reason="Never"/>
+    <disable_collisions link1="head" link2="l_shoulder" reason="Never"/>
+    <disable_collisions link1="head" link2="l_shoulder_x" reason="Never"/>
+    <disable_collisions link1="head" link2="l_upper_arm" reason="Never"/>
+    <disable_collisions link1="head" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="head" link2="r_antenna_link" reason="Adjacent"/>
+    <disable_collisions link1="head" link2="r_forearm" reason="Never"/>
+    <disable_collisions link1="head" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="head" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="head" link2="r_upper_arm" reason="Never"/>
+    <disable_collisions link1="head" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="head" link2="torso" reason="Adjacent"/>
+    <disable_collisions link1="l_antenna_link" link2="l_forearm" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="l_gripper_finger" reason="Never"/>
+    <disable_collisions link1="l_antenna_link" link2="l_gripper_thumb" reason="Never"/>
+    <disable_collisions link1="l_antenna_link" link2="l_shoulder" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="l_shoulder_x" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="l_upper_arm" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="l_wrist" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="l_wrist2hand" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_antenna_link" link2="r_antenna_link" reason="Never"/>
+    <disable_collisions link1="l_antenna_link" link2="r_forearm" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="r_gripper_finger" reason="Never"/>
+    <disable_collisions link1="l_antenna_link" link2="r_gripper_thumb" reason="Never"/>
+    <disable_collisions link1="l_antenna_link" link2="r_shoulder" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="r_shoulder_x" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="r_upper_arm" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="r_wrist" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="r_wrist2hand" reason="User"/>
+    <disable_collisions link1="l_antenna_link" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_antenna_link" link2="torso" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="l_gripper_finger" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="l_gripper_thumb" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="l_shoulder" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="l_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="l_upper_arm" reason="Adjacent"/>
+    <disable_collisions link1="l_forearm" link2="l_wrist" reason="Adjacent"/>
+    <disable_collisions link1="l_forearm" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="r_antenna_link" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="r_forearm" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="r_upper_arm" reason="Never"/>
+    <disable_collisions link1="l_forearm" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_gripper_finger" link2="l_gripper_thumb" reason="User"/>
+    <disable_collisions link1="l_gripper_finger" link2="l_shoulder" reason="Never"/>
+    <disable_collisions link1="l_gripper_finger" link2="l_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_gripper_finger" link2="l_upper_arm" reason="Never"/>
+    <disable_collisions link1="l_gripper_finger" link2="l_wrist" reason="Never"/>
+    <disable_collisions link1="l_gripper_finger" link2="l_wrist2hand" reason="Never"/>
+    <disable_collisions link1="l_gripper_finger" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_gripper_finger" link2="r_antenna_link" reason="Never"/>
+    <disable_collisions link1="l_gripper_finger" link2="r_shoulder" reason="User"/>
+    <disable_collisions link1="l_gripper_finger" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_gripper_finger" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_gripper_thumb" link2="l_shoulder" reason="Never"/>
+    <disable_collisions link1="l_gripper_thumb" link2="l_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_gripper_thumb" link2="l_upper_arm" reason="Never"/>
+    <disable_collisions link1="l_gripper_thumb" link2="l_wrist" reason="User"/>
+    <disable_collisions link1="l_gripper_thumb" link2="l_wrist2hand" reason="Adjacent"/>
+    <disable_collisions link1="l_gripper_thumb" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_gripper_thumb" link2="r_antenna_link" reason="Never"/>
+    <disable_collisions link1="l_gripper_thumb" link2="r_shoulder" reason="User"/>
+    <disable_collisions link1="l_gripper_thumb" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_gripper_thumb" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="l_shoulder_x" reason="Adjacent"/>
+    <disable_collisions link1="l_shoulder" link2="l_upper_arm" reason="User"/>
+    <disable_collisions link1="l_shoulder" link2="l_wrist" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="l_wrist2hand" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="r_antenna_link" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="r_forearm" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="r_gripper_finger" reason="User"/>
+    <disable_collisions link1="l_shoulder" link2="r_gripper_thumb" reason="User"/>
+    <disable_collisions link1="l_shoulder" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="r_upper_arm" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="r_wrist" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="r_wrist2hand" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_shoulder" link2="torso" reason="Adjacent"/>
+    <disable_collisions link1="l_shoulder_x" link2="l_upper_arm" reason="Adjacent"/>
+    <disable_collisions link1="l_shoulder_x" link2="l_wrist" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="l_wrist2hand" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="r_antenna_link" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="r_forearm" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="r_gripper_finger" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="r_gripper_thumb" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="r_upper_arm" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="r_wrist" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="r_wrist2hand" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_shoulder_x" link2="torso" reason="Never"/>
+    <disable_collisions link1="l_upper_arm" link2="l_wrist" reason="Never"/>
+    <disable_collisions link1="l_upper_arm" link2="l_wrist2hand" reason="Never"/>
+    <disable_collisions link1="l_upper_arm" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_upper_arm" link2="r_antenna_link" reason="Never"/>
+    <disable_collisions link1="l_upper_arm" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="l_upper_arm" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_upper_arm" link2="r_upper_arm" reason="Never"/>
+    <disable_collisions link1="l_upper_arm" link2="r_wrist2hand" reason="User"/>
+    <disable_collisions link1="l_upper_arm" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_wrist" link2="l_wrist2hand" reason="Adjacent"/>
+    <disable_collisions link1="l_wrist" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_wrist" link2="r_antenna_link" reason="User"/>
+    <disable_collisions link1="l_wrist" link2="r_forearm" reason="Never"/>
+    <disable_collisions link1="l_wrist" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="l_wrist" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_wrist" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_wrist2hand" link2="middle_neck_arm" reason="Never"/>
+    <disable_collisions link1="l_wrist2hand" link2="r_antenna_link" reason="User"/>
+    <disable_collisions link1="l_wrist2hand" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="l_wrist2hand" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="l_wrist2hand" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="r_antenna_link" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="r_forearm" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="r_gripper_finger" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="r_gripper_thumb" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="r_upper_arm" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="r_wrist" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="r_wrist2hand" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="middle_neck_arm" link2="torso" reason="Adjacent"/>
+    <disable_collisions link1="r_antenna_link" link2="r_forearm" reason="Never"/>
+    <disable_collisions link1="r_antenna_link" link2="r_gripper_finger" reason="Never"/>
+    <disable_collisions link1="r_antenna_link" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="r_antenna_link" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="r_antenna_link" link2="r_upper_arm" reason="Never"/>
+    <disable_collisions link1="r_antenna_link" link2="r_wrist" reason="User"/>
+    <disable_collisions link1="r_antenna_link" link2="r_wrist2hand" reason="User"/>
+    <disable_collisions link1="r_antenna_link" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="r_antenna_link" link2="torso" reason="Never"/>
+    <disable_collisions link1="r_forearm" link2="r_gripper_finger" reason="Never"/>
+    <disable_collisions link1="r_forearm" link2="r_gripper_thumb" reason="Never"/>
+    <disable_collisions link1="r_forearm" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="r_forearm" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="r_forearm" link2="r_upper_arm" reason="Adjacent"/>
+    <disable_collisions link1="r_forearm" link2="r_wrist" reason="Adjacent"/>
+    <disable_collisions link1="r_forearm" link2="r_wrist2hand" reason="Never"/>
+    <disable_collisions link1="r_forearm" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="r_gripper_finger" link2="r_gripper_thumb" reason="User"/>
+    <disable_collisions link1="r_gripper_finger" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="r_gripper_finger" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="r_gripper_finger" link2="r_upper_arm" reason="Never"/>
+    <disable_collisions link1="r_gripper_finger" link2="r_wrist" reason="Never"/>
+    <disable_collisions link1="r_gripper_finger" link2="r_wrist2hand" reason="Never"/>
+    <disable_collisions link1="r_gripper_finger" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="r_gripper_thumb" link2="r_shoulder" reason="Never"/>
+    <disable_collisions link1="r_gripper_thumb" link2="r_shoulder_x" reason="Never"/>
+    <disable_collisions link1="r_gripper_thumb" link2="r_upper_arm" reason="Never"/>
+    <disable_collisions link1="r_gripper_thumb" link2="r_wrist" reason="User"/>
+    <disable_collisions link1="r_gripper_thumb" link2="r_wrist2hand" reason="Adjacent"/>
+    <disable_collisions link1="r_gripper_thumb" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="r_shoulder" link2="r_shoulder_x" reason="Adjacent"/>
+    <disable_collisions link1="r_shoulder" link2="r_upper_arm" reason="User"/>
+    <disable_collisions link1="r_shoulder" link2="r_wrist" reason="Never"/>
+    <disable_collisions link1="r_shoulder" link2="r_wrist2hand" reason="Never"/>
+    <disable_collisions link1="r_shoulder" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="r_shoulder" link2="torso" reason="Adjacent"/>
+    <disable_collisions link1="r_shoulder_x" link2="r_upper_arm" reason="Adjacent"/>
+    <disable_collisions link1="r_shoulder_x" link2="r_wrist" reason="Never"/>
+    <disable_collisions link1="r_shoulder_x" link2="r_wrist2hand" reason="Never"/>
+    <disable_collisions link1="r_shoulder_x" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="r_shoulder_x" link2="torso" reason="Never"/>
+    <disable_collisions link1="r_upper_arm" link2="r_wrist" reason="Never"/>
+    <disable_collisions link1="r_upper_arm" link2="r_wrist2hand" reason="Never"/>
+    <disable_collisions link1="r_upper_arm" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="r_wrist" link2="r_wrist2hand" reason="Adjacent"/>
+    <disable_collisions link1="r_wrist" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="r_wrist2hand" link2="top_neck_arm" reason="Never"/>
+    <disable_collisions link1="top_neck_arm" link2="torso" reason="Adjacent"/>
+</robot>

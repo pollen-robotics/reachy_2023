@@ -3,6 +3,7 @@
 
   <xacro:arg name="use_fake_hardware" default="false"/>
   <xacro:arg name="use_gazebo" default="false"/>
+  <xacro:arg name="depth_camera" default="false"/>
 
   <xacro:arg name="robot_config" default="full_kit"/>
 
@@ -94,7 +95,7 @@
       fan_id="51"
     />
   </xacro:if>
-  
+
   <xacro:if value="${use_head}">
     <!-- HEAD-->
     <xacro:head
@@ -104,11 +105,24 @@
   </xacro:if>
 
   <xacro:if value="$(arg use_gazebo)">
-  <gazebo>
-    <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
-      <parameters>$(find reachy_bringup)/config/reachy_${robot_config}_controllers.yaml</parameters>
-      <robotNamespace>/reachy</robotNamespace>
-    </plugin>
-  </gazebo>
+
+    <xacro:unless value="$(arg use_moveit_gazebo)">
+      <gazebo>
+	<plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+	  <parameters>$(find reachy_bringup)/config/reachy_${robot_config}_controllers.yaml</parameters>
+	  <robotNamespace>/reachy</robotNamespace>
+	</plugin>
+      </gazebo>
+    </xacro:unless>
+
+    <xacro:if value="$(arg use_moveit_gazebo)">
+      <gazebo>
+	<plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+	  <parameters>$(find reachy_moveit_config)/config/ros2_controllers.yaml</parameters>
+	  <robotNamespace>/reachy</robotNamespace>
+	</plugin>
+      </gazebo>
+    </xacro:if>
+
   </xacro:if>
 </robot>
