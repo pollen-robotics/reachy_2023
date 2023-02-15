@@ -37,7 +37,7 @@ private:
   double hw_mx_states_velocity_[8];
   double hw_mx_states_effort_[8];
   double hw_mx_states_temperature_[8];
-  double hw_mx_states_max_speed_[8];
+  double hw_mx_states_speed_limit_[8];
   double hw_mx_states_torque_limit_[8];
   double hw_mx_states_torque_[8];
   double hw_mx_states_p_gain_[8];
@@ -45,7 +45,7 @@ private:
   double hw_mx_states_d_gain_[8];
 
   double hw_mx_commands_position_[8];
-  double hw_mx_commands_max_speed_[8];
+  double hw_mx_commands_speed_limit_[8];
   double hw_mx_commands_torque_limit_[8];
   double hw_mx_commands_torque_[8];
   double hw_mx_commands_p_gain_[8];

@@ -128,10 +128,10 @@ def generate_launch_description():
         arguments=['forward_torque_controller', '-c', '/controller_manager'],
     )
 
-    pid_controller_spawner = Node(
+    forward_pid_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['pid_controller', '-c', '/controller_manager'],
+        arguments=['forward_pid_controller', '-c', '/controller_manager'],
     )
 
     forward_fan_controller_spawner = Node(
@@ -177,7 +177,7 @@ def generate_launch_description():
                 l_arm_forward_position_controller_spawner,
                 antenna_forward_position_controller_spawner,
                 forward_torque_controller_spawner,
-                pid_controller_spawner,
+                forward_pid_controller_spawner,
                 forward_fan_controller_spawner,
             ],
         ),

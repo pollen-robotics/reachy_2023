@@ -34,7 +34,7 @@ DUMMY_JOINT_INTERFACE_NAMES = [
     'torque',
     'p_gain', 'i_gain', 'd_gain',
     'temperature',
-    'max_speed',
+    'speed_limit',
     'torque_limit',
 ]
 
