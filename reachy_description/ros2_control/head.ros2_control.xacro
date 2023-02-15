@@ -36,7 +36,7 @@
             <hardware>
                 <xacro:unless value="$(arg use_fake_hardware)">
                     <plugin>head_system_hwi/HeadSystem</plugin>
-                    <param name="serial_port">/dev/usb2ax_head</param>
+                    <param name="serial_port">/dev/ttyACM0</param>
                     <param name="xl320_ids">30, 31</param>
                     <param name="offsets">0.0, 0.0</param>
                     <param name="is_direct">0.0, 0.0</param>

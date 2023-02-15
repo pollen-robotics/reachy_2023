@@ -45,13 +45,18 @@ pip install -r ./src/reachy_2023/requirements.txt
 colcon build --symlink-install
 ```
 
-Now you can add the following to your bashrc
+Now you can add the following lines to your bashrc
 ```commandline
 source ~/ros_ws/install/setup.bash
+source /usr/share/gazebo/setup.bash
 ```
 
-### Gazebo
+If there is multiple ROS2 environement on the same network, you should think about using adding ROS_DOMAIN_ID yo your bashrc as well.
 
+e.g.
+```commandline
+export ROS_DOMAIN_ID=42
+```
 ### Nav
 
 
@@ -75,3 +80,8 @@ ros2 launch reachy_bringup reachy.launch.py  fake:=true start_rviz:=true
 
 If you see a full_kit robot (torso, head and arms) inside rviz, then it should mean that most stuff
 went right, or at least that not everything went wrong.
+
+### Gazebo
+```commandline
+ros2 launch reachy_bringup reachy.launch.py  gazebo:=true
+```
