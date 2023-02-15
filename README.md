@@ -88,10 +88,11 @@ ros2 launch reachy_bringup reachy.launch.py  gazebo:=true
 ```
 
 ### Reachy SDK
+To test a bit further, you can start a fake instance and gazebo, with sdk_server on
 ```commandline
 ros2 launch reachy_bringup reachy.launch.py  gazebo:=true start_sdk_server:=true
 ```
-
+Then try to move the robot through the python sdk
 ```python
 import reachy_sdk
 my_awesome_reachy = reachy_sdk.ReachySDK(host="localhost")
