@@ -48,7 +48,7 @@ colcon build --symlink-install
 
 Now you can add the following lines to your bashrc
 ```commandline
-source ~/ros_ws/install/setup.bash
+source ~/reachy_ws/install/setup.bash
 source /usr/share/gazebo/setup.bash
 ```
 
