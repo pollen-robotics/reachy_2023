@@ -88,6 +88,10 @@ ros2 launch reachy_bringup reachy.launch.py  gazebo:=true
 ```
 
 ### Reachy SDK
+```commandline
+ros2 launch reachy_bringup reachy.launch.py  gazebo:=true start_sdk_server:=true
+```
+
 ```python
 import reachy_sdk
 my_awesome_reachy = reachy_sdk.ReachySDK(host="localhost")
