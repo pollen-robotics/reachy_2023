@@ -7,6 +7,7 @@ https://docs.ros.org/en/humble/Installation.html
 We use Cyclone DDS, here is a [link](https://docs.ros.org/en/humble/Installation/DDS-Implementations/Working-with-Eclipse-CycloneDDS.html) 
 for reference, but everything to install it is already included in current guide.
 
+After ROS2 Humble installation is completed, you should add the following to your bashrc.
 ```commandline
 source /opt/ros/humble/setup.bash
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -84,4 +85,16 @@ went right, or at least that not everything went wrong.
 ### Gazebo
 ```commandline
 ros2 launch reachy_bringup reachy.launch.py  gazebo:=true
+```
+
+### Reachy SDK
+```python
+import reachy_sdk
+my_awesome_reachy = reachy_sdk.ReachySDK(host="localhost")
+my_awesome_reachy.head.look_at(0.5,0,0,4)
+my_awesome_reachy.l_arm.l_elbow_pitch.goal_position = -90
+
+from reachy_sdk.trajectory import goto
+goto({my_awesome_reachy.l_arm.l_elbow_pitch : 0}, 10)
+
 ```
