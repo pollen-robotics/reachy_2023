@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(arm_system_hwi)
+project(head_system_hwi)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -18,18 +18,31 @@ find_package(rclcpp_lifecycle REQUIRED)
 add_library(
   ${PROJECT_NAME}
   SHARED
-  src/arm_system_hwi.cpp
+  src/head_system_hwi.cpp
 )
+
 target_include_directories(
   ${PROJECT_NAME}
   PRIVATE
   include
+ ${CMAKE_SOURCE_DIR}/../reachy_2023_controllers_rs/head_hwi/
 )
 
+add_library(head_hwi STATIC IMPORTED)
+set_property(TARGET head_hwi PROPERTY IMPORTED_LOCATION $ENV{PWD}/../../install/head_hwi/lib/head_hwi/libhead_hwi.a )
+
 target_link_libraries(
-  ${PROJECT_NAME}
-  arm_hwi
- )
+    ${PROJECT_NAME}
+    head_hwi
+    udev
+    gcc_s
+    util
+    rt
+    pthread
+    m
+    dl
+    c
+   )
 
  ament_target_dependencies(
   ${PROJECT_NAME}
@@ -39,7 +52,7 @@ target_link_libraries(
   rclcpp_lifecycle
 )
 
-pluginlib_export_plugin_description_file(hardware_interface arm_system_hwi.xml)
+pluginlib_export_plugin_description_file(hardware_interface head_system_hwi.xml)
 
 # INSTALL
 install(
@@ -50,6 +63,7 @@ install(
   DIRECTORY include/
   DESTINATION include
 )
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
