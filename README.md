@@ -96,7 +96,7 @@ Then try to move the robot through [Reachy's python SDK](https://github.com/poll
 ```python
 import reachy_sdk
 my_awesome_reachy = reachy_sdk.ReachySDK(host="localhost")
-my_awesome_reachy.head.look_at(0.5,0,0,4)
+my_awesome_reachy.head.look_at(0.5, 0, -0.5, 4)
 my_awesome_reachy.l_arm.l_elbow_pitch.goal_position = -90
 
 from reachy_sdk.trajectory import goto
