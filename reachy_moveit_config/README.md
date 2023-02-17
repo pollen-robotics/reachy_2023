@@ -1,7 +1,7 @@
 # Reachy Moveit2 configuration package
 
 ## System dependencies
-
+- ros-humble-moveit
 - ros-humble-moveit-msgs
 
 ## Startup
