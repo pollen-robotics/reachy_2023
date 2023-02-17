@@ -106,11 +106,11 @@ To test a bit further, you can start a fake instance and gazebo, with sdk_server
 ```commandline
 ros2 launch reachy_bringup reachy.launch.py  gazebo:=true start_sdk_server:=true
 ```
-Then try to move the robot through the python sdk
+Then try to move the robot through [Reachy's python SDK](https://github.com/pollen-robotics/reachy-sdk)
 ```python
 import reachy_sdk
 my_awesome_reachy = reachy_sdk.ReachySDK(host="localhost")
-my_awesome_reachy.head.look_at(0.5,0,0,4)
+my_awesome_reachy.head.look_at(0.5, 0, -0.5, 4)
 my_awesome_reachy.l_arm.l_elbow_pitch.goal_position = -90
 
 from reachy_sdk.trajectory import goto
