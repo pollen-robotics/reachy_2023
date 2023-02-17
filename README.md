@@ -93,8 +93,8 @@ ros2 launch reachy_bringup reachy.launch.py  fake:=true start_rviz:=true
 If you see a full_kit robot (torso, head and arms) inside rviz, then it should mean that most stuff
 went right, or at least that not everything went wrong. 
 
-Fake robot cna allow to test the bare minimum. 
-To actually some code, we will escalate this replacing fake by gazebo simulation. 
+Fake robot enables to test the bare minimum. 
+To actually run some code, we will escalate this replacing fake by gazebo simulation. 
 
 #### Gazebo
 ```commandline
