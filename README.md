@@ -5,7 +5,7 @@ This guide is meant for an Ubuntu 22.04
 https://docs.ros.org/en/humble/Installation.html
 
 We use Cyclone DDS, here is a [link](https://docs.ros.org/en/humble/Installation/DDS-Implementations/Working-with-Eclipse-CycloneDDS.html) 
-for reference, but everything to install it is already included in current guide.
+for reference, but there is no need to install more than what's already included in the following steps.
 
 After ROS2 Humble installation is completed, you should add the following to your bashrc.
 ```commandline
@@ -19,6 +19,7 @@ curl https://sh.rustup.rs -sSf | sh
 ```
 
 You may add to your bashrc, or source it anytime you want to build `reachy_ws`
+(the above script might have added this to your bashrc already)
 ```commandline
 source "$HOME/.cargo/env"
 ```
@@ -53,11 +54,13 @@ source /usr/share/gazebo/setup.bash
 ```
 
 If there is multiple ROS2 environement on the same network, you should think about using adding ROS_DOMAIN_ID yo your bashrc as well.
-
+(choosing an integer between 0 and 101 inclusive as domain ID  is a safe bet)
 e.g.
 ```commandline
 export ROS_DOMAIN_ID=42
 ```
+
+For a more detailed explanation os this mechanic, please have a look at this [documentation](https://docs.ros.org/en/humble/Concepts/About-Domain-ID.html)
 ### Nav
 
 
@@ -71,23 +74,34 @@ pip3 install -e .
 pip3 install scipy
 ```
 
-## Examples
+## Demos
+```commandline
+ros2 launch reachy_bringup reachy.launch.py  -s
+```
 
-### Fake
+This command should give you a list a currently accepted arguments by reachy.launch.py, 
+if you want to try things by yourself. Let's walk you through some of these.
+
+
+### Software only
+#### Fake
 
 ```commandline
 ros2 launch reachy_bringup reachy.launch.py  fake:=true start_rviz:=true
 ```
 
 If you see a full_kit robot (torso, head and arms) inside rviz, then it should mean that most stuff
-went right, or at least that not everything went wrong.
+went right, or at least that not everything went wrong. 
 
-### Gazebo
+Fake robot cna allow to test the bare minimum. 
+To actually some code, we will escalate this replacing fake by gazebo simulation. 
+
+#### Gazebo
 ```commandline
 ros2 launch reachy_bringup reachy.launch.py  gazebo:=true
 ```
 
-### Reachy SDK
+#### Reachy SDK
 To test a bit further, you can start a fake instance and gazebo, with sdk_server on
 ```commandline
 ros2 launch reachy_bringup reachy.launch.py  gazebo:=true start_sdk_server:=true
@@ -103,3 +117,11 @@ from reachy_sdk.trajectory import goto
 goto({my_awesome_reachy.l_arm.l_elbow_pitch : 0}, 10)
 
 ```
+More info on how to use Reachy's Python SDK can be found on 
+[its documentation](https://docs.pollen-robotics.com/sdk/getting-started/introduction/)
+
+### Full stack examples
+Now that is everything is set up properly on your environment, let's try to move some real stuff.
+
+To be continued...
+
