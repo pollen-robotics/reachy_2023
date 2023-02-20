@@ -21,6 +21,10 @@ The guide:
 https://moveit.ros.org/install-moveit2/source/
 
 
+OR THIS SEEMS TO WORK ON SIM SIM'S COMPUTER??
+- ros-humble-moveit
+- ros-humble-moveit-msgs
+
 ## Startup
 
 ### In Fake mode
