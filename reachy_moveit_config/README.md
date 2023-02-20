@@ -1,7 +1,15 @@
 # Reachy Moveit2 configuration package
-
+## The locales bug
+Make sure to add this t you .bashrc:
+```
+export LC_NUMERIC="en_US.UTF-8"
+```
 ## System dependencies
+2 options:
+### Installing from repos (easy, short)
+```sudo apt-get install ros-humble-moveit ros-humble-moveit-msgs```
 
+### Installing from source (long)
 sudo apt-get install ros-humble-moveit-msgs
 sudo apt remove ros-$ROS_DISTRO-moveit*
 
@@ -20,10 +28,6 @@ srdfdom
 The guide:
 https://moveit.ros.org/install-moveit2/source/
 
-
-OR THIS SEEMS TO WORK ON SIM SIM'S COMPUTER??
-- ros-humble-moveit
-- ros-humble-moveit-msgs
 
 ## Startup
 
