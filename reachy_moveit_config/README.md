@@ -26,6 +26,9 @@ rosparam_shortcuts
 srdfdom
 
 The guide:
+https://moveit.picknik.ai/humble/doc/tutorials/getting_started/getting_started.html
+
+Otherwise, this could help:
 https://moveit.ros.org/install-moveit2/source/
 
 
