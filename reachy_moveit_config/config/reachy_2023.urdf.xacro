@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="reachy_2023">
+    <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+
+    <!-- Import reachy_2023 urdf file -->
+    <xacro:arg name="use_fake_hardware" default="true" />
+    <xacro:arg name="use_gazebo" default="true" />
+    <xacro:arg name="use_moveit_gazebo" default="true" />
+
+    <xacro:arg name="depth_camera" default="true" />
+
+
+    <xacro:include filename="$(find reachy_description)/urdf/reachy.urdf.xacro" />
+
+
+    <!-- No need as we use the reachy_description -->
+    <!-- Import control_xacro -->
+    <!-- <xacro:include filename="reachy_2023.ros2_control.xacro" /> -->
+    <!-- <xacro:reachy_2023_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/> -->
+
+</robot>

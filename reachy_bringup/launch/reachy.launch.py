@@ -40,6 +40,8 @@ def launch_setup(context, *args, **kwargs):
     gazebo_py = gazebo_rl.perform(context) == 'true'
     start_sdk_server_rl = LaunchConfiguration('start_sdk_server')
     start_sdk_server_py = start_sdk_server_rl.perform(context) == 'true'
+    depth_camera_rl = LaunchConfiguration('depth_camera')
+    depth_camera = depth_camera_rl.perform(context) == 'true'
 
     # Robot model
     robot_model_rl = LaunchConfiguration('robot_model')
@@ -56,9 +58,11 @@ def launch_setup(context, *args, **kwargs):
             PathJoinSubstitution(
                 [FindPackageShare('reachy_description'), 'urdf', 'reachy.urdf.xacro']
             ),
-            *((' ', 'use_fake_hardware:=true', ' ') if fake_py else
-              (' ', 'use_fake_hardware:=true use_gazebo:=true depth_camera:=false', ' ') if gazebo_py else
-              (' ',)),
+
+            * ((' ', 'use_fake_hardware:=true', ' ') if fake_py else
+               (' ', f'use_fake_hardware:=true use_gazebo:=true depth_camera:={depth_camera} use_moveit_gazebo:=false', ' ') if gazebo_py else
+
+               (' ',)),
             f'robot_config:={robot_model_py}',
             ' ',
         ]
@@ -306,6 +310,13 @@ def generate_launch_description():
             description='Start a fake_hardware with gazebo as simulation tool.',
             choices=['true', 'false']
         ),
+        DeclareLaunchArgument(
+            'depth_camera',
+            default_value='false',
+            description='Start a simulated depth camera within gazebo (requires Gazebo).',
+            choices=['true', 'false']
+        ),
+
         DeclareLaunchArgument(
             'start_sdk_server',
             default_value='false',

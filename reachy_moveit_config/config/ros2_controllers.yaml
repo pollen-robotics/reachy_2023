@@ -1,0 +1,96 @@
+# This config file is used by ros2_control
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+    left_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+    right_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+    head_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+    left_gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+    right_gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+left_arm_controller:
+  ros__parameters:
+    joints:
+      - l_shoulder_pitch
+      - l_shoulder_roll
+      - l_arm_yaw
+      - l_elbow_pitch
+      - l_forearm_yaw
+      - l_wrist_pitch
+      - l_wrist_roll
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    use_sim_time: true
+
+right_arm_controller:
+  ros__parameters:
+    joints:
+      - r_shoulder_pitch
+      - r_shoulder_roll
+      - r_arm_yaw
+      - r_elbow_pitch
+      - r_forearm_yaw
+      - r_wrist_pitch
+      - r_wrist_roll
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    use_sim_time: true
+
+head_controller:
+  ros__parameters:
+    joints:
+      - neck_roll
+      - neck_pitch
+      - neck_yaw
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    use_sim_time: true
+
+left_gripper_controller:
+  ros__parameters:
+    joints:
+      - l_gripper
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    use_sim_time: true
+
+right_gripper_controller:
+  ros__parameters:
+    joints:
+      - r_gripper
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    use_sim_time: true
