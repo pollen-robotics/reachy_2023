@@ -33,7 +33,7 @@ def main():
         group_name=reachy_pymoveit2.MOVE_GROUP_ARM,
         callback_group=callback_group,
         follow_joint_trajectory_action_name='/left_arm_controller/follow_joint_trajectory',
-        # execute_via_moveit=True
+        execute_via_moveit=True
     )
 
     # Spin the node in background thread(s)
