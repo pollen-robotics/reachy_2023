@@ -100,7 +100,7 @@ def generate_demo_launch(moveit_config):
         )
 
     gz_world = PathJoinSubstitution(
-        [FindPackageShare('reachy_gazebo'), 'config', 'reachy_grapsing.sdf'])
+        [FindPackageShare('reachy_gazebo'), 'config', 'reachy_grasping.sdf'])
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
