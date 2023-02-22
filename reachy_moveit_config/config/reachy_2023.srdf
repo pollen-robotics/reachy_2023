@@ -80,7 +80,7 @@
         <joint name="l_wrist_pitch" value="0"/>
         <joint name="l_wrist_roll" value="0"/>
     </group_state>
-    <group_state name="right_init" group="right_arm">
+    <group_state name="right_init_pose" group="right_arm">
         <joint name="r_arm_yaw" value="0"/>
         <joint name="r_elbow_pitch" value="-1.57"/>
         <joint name="r_forearm_yaw" value="0"/>
