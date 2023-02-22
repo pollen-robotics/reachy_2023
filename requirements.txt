@@ -1,2 +1,4 @@
 git+https://github.com/colcon/colcon-cargo.git
 git+https://github.com/colcon/colcon-ros-cargo.git
+reachy-sdk
+setuptools==58.2.0
