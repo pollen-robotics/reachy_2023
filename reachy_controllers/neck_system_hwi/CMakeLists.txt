@@ -24,7 +24,7 @@ target_include_directories(
   ${PROJECT_NAME}
   PRIVATE
   include
-  ${CMAKE_SOURCE_DIR}/../../../orbita_serial_hwi/neck_hwi/
+  ${CMAKE_SOURCE_DIR}/../reachy_2023_controllers_rs/neck_hwi/
 )
 
 add_library(neck_hwi STATIC IMPORTED)
