@@ -49,18 +49,33 @@ NeckSystem::on_init(const hardware_interface::HardwareInfo & info)
 
 
   const char *serial_port;
-  double offsets[3];
+  uint8_t id;
+  double alpha;
+  double hardware_zero[3];
+  double encoder_resolution;
+  double reduction;
 
   for (auto const& params : info.hardware_parameters)
   {
     if (params.first == "serial_port") {
       serial_port = params.second.c_str();
     }
-    else if (params.first == "offsets") {
+    else if (params.first == "id") {
+      id = (uint8_t)std::stoi(params.second.c_str());
+    }
+    else if (params.first == "alpha") {
+      alpha = std::stod(params.second.c_str());
+    }
+    else if (params.first == "hardware_zero") {
       std::vector<float> v = parse_string_as_vec(params.second.c_str());
       for (uint i=0; i < v.size(); i++) {
-        offsets[i] = (int)v[i];
+        hardware_zero[i] = (double)v[i];
       }
+    }
+    else if (params.first == "encoder_resolution") {
+      encoder_resolution = std::stod(params.second.c_str());
+    } else if (params.first == "reduction") {
+      reduction = std::stod(params.second.c_str());
     }
   }
 
@@ -72,7 +87,11 @@ NeckSystem::on_init(const hardware_interface::HardwareInfo & info)
 
   this->uid = neck_hwi_init(
     serial_port,
-    offsets
+    id,
+    alpha,
+    hardware_zero,
+    encoder_resolution,
+    reduction
   );
 
   clock_ = rclcpp::Clock();
@@ -103,9 +122,9 @@ NeckSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
   }
 
   // TODO: make sure there is no error here!
-  neck_hwi_get_target_rpy_position(this->uid, hw_commands_position_);
-  neck_hwi_get_speed_limit(this->uid, hw_commands_speed_limit_);
-  neck_hwi_get_torque_limit(this->uid, hw_commands_torque_limit_);
+  neck_hwi_get_goal_orientation(this->uid, hw_commands_position_);
+  neck_hwi_get_max_speed(this->uid, hw_commands_speed_limit_);
+  neck_hwi_get_max_torque(this->uid, hw_commands_torque_limit_);
   neck_hwi_is_torque_on(this->uid, hw_commands_torque_);
   neck_hwi_get_pid(this->uid, hw_commands_p_gain_, hw_commands_i_gain_, hw_commands_d_gain_);
 
@@ -207,31 +226,15 @@ NeckSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
   rclcpp::Duration duration = current_timestamp - last_timestamp_;
   last_timestamp_ = current_timestamp;
 
-  if (neck_hwi_get_present_rpy_position(this->uid, hw_states_position_) != 0) {
+  if (neck_hwi_get_orientation_velocity_load(this->uid, hw_states_position_, hw_states_velocity_, hw_states_effort_) != 0) {
     RCLCPP_INFO_THROTTLE(
       rclcpp::get_logger("NeckSystem"),
       clock_,
       LOG_THROTTLE_DURATION,
-      "(%s) READ POSITION ERROR!", info_.name.c_str()
+      "(%s) READ ORIENTATION/VELOCITY/EFFORT ERROR!", info_.name.c_str()
     );
   }
 
-  if (neck_hwi_get_present_rpy_velocity(this->uid, hw_states_velocity_) != 0) {
-    RCLCPP_INFO_THROTTLE(
-      rclcpp::get_logger("NeckSystem"),
-      clock_,
-      LOG_THROTTLE_DURATION,
-      "(%s) READ VELOCITY ERROR!", info_.name.c_str()
-    );
-  }
-  if (neck_hwi_get_present_rpy_effort(this->uid, hw_states_effort_) != 0) {
-    RCLCPP_INFO_THROTTLE(
-      rclcpp::get_logger("NeckSystem"),
-      clock_,
-      LOG_THROTTLE_DURATION,
-      "(%s) READ EFFORT ERROR!", info_.name.c_str()
-    );
-  }
   if (neck_hwi_get_temperature(this->uid, hw_states_temperature_) != 0) {
       RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("NeckSystem"),
@@ -240,7 +243,8 @@ NeckSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
       );
   }
-  if (neck_hwi_get_torque_limit(this->uid, hw_states_torque_limit_) != 0) {
+
+  if (neck_hwi_get_max_torque(this->uid, hw_states_torque_limit_) != 0) {
     RCLCPP_INFO_THROTTLE(
       rclcpp::get_logger("NeckSystem"),
       clock_,
@@ -248,7 +252,7 @@ NeckSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
       "(%s) READ TORQUE LIMIT ERROR!", info_.name.c_str()
     );
   }
-  if (neck_hwi_get_speed_limit(this->uid, hw_states_speed_limit_) != 0) {
+  if (neck_hwi_get_max_speed(this->uid, hw_states_speed_limit_) != 0) {
     RCLCPP_INFO_THROTTLE(
       rclcpp::get_logger("NeckSystem"),
       clock_,
@@ -279,30 +283,20 @@ NeckSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
 hardware_interface::return_type
 NeckSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
 {
-  if (neck_hwi_set_target_rpy_position(this->uid, hw_commands_position_) != 0) {
+  if (neck_hwi_set_target_orientation_max_speed_max_torque(
+    this->uid, 
+    hw_commands_position_,
+    hw_commands_speed_limit_,
+    hw_commands_torque_limit_
+  ) != 0) {
     RCLCPP_INFO_THROTTLE(
       rclcpp::get_logger("NeckSystem"),
       clock_,
       LOG_THROTTLE_DURATION,
-      "(%s) WRITE POSITION ERROR!", info_.name.c_str()
+      "(%s) WRITE ORIENTATION/SPEED LIMIT/TORQUE LIMIT ERROR!", info_.name.c_str()
     );
   }
-  if (neck_hwi_set_speed_limit(this->uid, hw_commands_speed_limit_) != 0) {
-    RCLCPP_INFO_THROTTLE(
-      rclcpp::get_logger("NeckSystem"),
-      clock_,
-      LOG_THROTTLE_DURATION,
-      "(%s) WRITE SPEED LIMIT ERROR!", info_.name.c_str()
-    );
-  }
-  if (neck_hwi_set_torque_limit(this->uid, hw_commands_torque_limit_) != 0) {
-    RCLCPP_INFO_THROTTLE(
-      rclcpp::get_logger("NeckSystem"),
-      clock_,
-      LOG_THROTTLE_DURATION,
-      "(%s) WRITE TORQUE LIMIT ERROR!", info_.name.c_str()
-    );
-  }
+
   if (neck_hwi_set_torque(this->uid, hw_commands_torque_) != 0) {
     RCLCPP_INFO_THROTTLE(
       rclcpp::get_logger("NeckSystem"),

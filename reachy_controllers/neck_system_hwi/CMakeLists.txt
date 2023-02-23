@@ -24,11 +24,24 @@ target_include_directories(
   ${PROJECT_NAME}
   PRIVATE
   include
+  ${CMAKE_SOURCE_DIR}/../../../orbita_serial_hwi/neck_hwi/
 )
+
+add_library(neck_hwi STATIC IMPORTED)
+set_property(TARGET neck_hwi PROPERTY IMPORTED_LOCATION $ENV{PWD}/../../install/neck_hwi/lib/neck_hwi/libneck_hwi.a )
+
 
 target_link_libraries(
   ${PROJECT_NAME}
   neck_hwi
+  udev
+  gcc_s
+  util
+  rt
+  pthread
+  m
+  dl
+  c
  )
 
  ament_target_dependencies(
