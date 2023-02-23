@@ -106,7 +106,7 @@ def generate_demo_launch(moveit_config):
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
                 FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py']),
-            launch_arguments={'robot_config': f'{robot_model}', 'use_sim_time': f'{use_sim_time}', 'world': f'{gz_world}'}.items()
+            launch_arguments={'robot_config': f'{robot_model}', 'use_sim_time': f'{use_sim_time}', 'world': gz_world}.items()
         )
     )
 

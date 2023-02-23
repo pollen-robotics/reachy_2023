@@ -529,8 +529,8 @@
             <camera name="realsense_depth_camera">
               <horizontal_fov>1.46608</horizontal_fov>
               <image>
-                <width>424</width>
-                <height>240</height>
+                <width>640</width>
+                <height>480</height>
                 <format>B8G8R8</format>
               </image>
               <clip>
