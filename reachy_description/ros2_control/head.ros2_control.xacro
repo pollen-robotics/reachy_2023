@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:macro name="head_control">
+    <xacro:macro name="head_control" params="neck_orbita_serial_port neck_orbita_id neck_orbita_alpha neck_orbita_hardware_zero neck_orbita_encoder_resolution neck_orbita_reduction head_serial_port head_xl320_ids head_xl320_offsets head_xl320_is_direct head_xl320_reductions head_fan_id">
 
         <xacro:include filename="$(find reachy_description)/ros2_control/joint.ros2_control.xacro"/>
 
@@ -9,8 +9,12 @@
             <hardware>
                 <xacro:unless value="$(arg use_fake_hardware)">
                     <plugin>neck_system_hwi/NeckSystem</plugin>
-                    <param name="serial_port">/dev/neck</param>
-                    <param name="offsets">0.0, 0.0, 0.0</param>
+                    <param name="serial_port">${neck_orbita_serial_port}</param>
+                    <param name="id">${neck_orbita_id}</param>
+                    <param name="alpha">${neck_orbita_alpha}</param>
+                    <param name="hardware_zero">${neck_orbita_hardware_zero}</param>
+                    <param name="encoder_resolution">${neck_orbita_encoder_resolution}</param>
+                    <param name="reduction">${neck_orbita_reduction}</param>
                 </xacro:unless>
 
                 <xacro:if value="$(arg use_fake_hardware)">
@@ -34,13 +38,12 @@
             <hardware>
                 <xacro:unless value="$(arg use_fake_hardware)">
                     <plugin>head_system_hwi/HeadSystem</plugin>
-                    <param name="serial_port">/dev/usb2ax_head</param>
-                    <param name="xl320_ids">30, 31</param>
-                    <param name="offsets">0.0, 0.0</param>
-                    <param name="is_direct">0.0, 0.0</param>
-                    <param name="reductions">1.0, 1.0</param>
-                    <param name="fan_id">60</param>
-                    <!--          <plugin>fake_components/GenericSystem</plugin>-->
+                    <param name="serial_port">${head_serial_port}</param>
+                    <param name="xl320_ids">${head_xl320_ids}</param>
+                    <param name="offsets">${head_xl320_offsets}</param>
+                    <param name="is_direct">${head_xl320_is_direct}</param>
+                    <param name="reductions">${head_xl320_reductions}</param>
+                    <param name="fan_id">${head_fan_id}</param>
                 </xacro:unless>
 
                 <xacro:if value="$(arg use_fake_hardware)">
