@@ -141,7 +141,6 @@ ArmSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
 
   // TODO: Check error and retry if any!
   arm_hwi_get_goal_position(this->uid, hw_mx_commands_position_);
-  // TODO: why?? moving speed instead of speed_limit?
   arm_hwi_get_moving_speed(this->uid, hw_mx_commands_speed_limit_);
   arm_hwi_get_torque_limit(this->uid, hw_mx_commands_torque_limit_);
   arm_hwi_is_mx_torque_on(this->uid, hw_mx_commands_torque_);
