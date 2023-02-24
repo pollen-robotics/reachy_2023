@@ -46,11 +46,14 @@ def main():
     position = node.get_parameter("position").get_parameter_value().double_array_value
     quat_xyzw = node.get_parameter("quat_xyzw").get_parameter_value().double_array_value
     cartesian = node.get_parameter("cartesian").get_parameter_value().bool_value
+    plan = moveit2.plan(position, quat_xyzw)
+    node.get_logger().info(f'PLAN: {plan}')
 
     # Move to pose
     node.get_logger().info(
         f"Moving to {{position: {list(position)}, quat_xyzw: {list(quat_xyzw)}}}"
     )
+
     moveit2.move_to_pose(position=position, quat_xyzw=quat_xyzw, cartesian=cartesian)
     moveit2.wait_until_executed()
 
