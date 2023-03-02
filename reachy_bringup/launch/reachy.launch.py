@@ -10,22 +10,8 @@ from launch_ros.event_handlers import OnStateTransition
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
-from reachy_bringup.launch_shared import FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT
-
-
-def get_reachy_config():
-    import yaml
-    import os
-    config_file = os.path.expanduser('~/.reachy.yaml')
-    try:
-        with open(config_file) as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
-            return config["model"] if config["model"] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT] else False
-    except (FileNotFoundError, TypeError):
-        return False
-
-
-robot_model_file = get_reachy_config()
+from reachy_bringup.launch_shared import FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, get_reachy_config, \
+    fake_launch_arg, gazebo_launch_arg
 
 
 def launch_setup(context, *args, **kwargs):
@@ -44,6 +30,7 @@ def launch_setup(context, *args, **kwargs):
     # Robot model
     robot_model_rl = LaunchConfiguration('robot_model')
     robot_model_py = robot_model_rl.perform(context)
+    robot_model_file = get_reachy_config()
     if robot_model_file:
         LogInfo(msg="Using robot_model described in ~/.reachy.yaml ...").execute(context=context)
         robot_model_py = robot_model_file
@@ -166,13 +153,19 @@ def launch_setup(context, *args, **kwargs):
         )
     )
 
+    fake_nodes = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            FindPackageShare("reachy_fake"), '/launch/reachy_fake.launch.py']),
+    )
+
     return [
         # For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
         *((control_node,) if not gazebo_py else
           (SetUseSimTime(True),  # does not seem to work...
            gazebo_node)),
-        fake_camera_node,
-        fake_zoom_node,
+        # fake_camera_node,
+        # fake_zoom_node,
+        fake_nodes,
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
@@ -190,18 +183,8 @@ def generate_launch_description():
             description='Start RViz2 automatically with this launch file.',
             choices=['true', 'false']
         ),
-        DeclareLaunchArgument(
-            'fake',
-            default_value='false',
-            description='Start on fake_reachy mode with this launch file.',
-            choices=['true', 'false']
-        ),
-        DeclareLaunchArgument(
-            'gazebo',
-            default_value='false',
-            description='Start a fake_hardware with gazebo as simulation tool.',
-            choices=['true', 'false']
-        ),
+        fake_launch_arg,
+        gazebo_launch_arg,
         DeclareLaunchArgument(
             'start_sdk_server',
             default_value='false',
