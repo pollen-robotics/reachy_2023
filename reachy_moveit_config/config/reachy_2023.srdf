@@ -103,13 +103,23 @@
         <joint name="r_gripper" value="0.35"/>
     </group_state>
 
+    <group name="left_arm_gripper">
+      <group name="left_arm"/>
+      <group name="left_gripper"/>
+    </group>
+
+
+    <group name="right_arm_gripper">
+      <group name="right_arm"/>
+      <group name="right_gripper"/>
+    </group>
 
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
     <end_effector name="left_arm" parent_link="l_gripper_thumb" group="left_arm"/>
     <end_effector name="right_arm" parent_link="r_gripper_thumb" group="right_arm"/>
 
-    <end_effector name="left_gripper" parent_link="l_gripper_finger" group="left_gripper"/>
-    <end_effector name="right_gripper" parent_link="r_gripper_finger" group="right_gripper"/>
+    <end_effector name="left_gripper" parent_link="l_gripper_thumb" group="left_gripper" parent_group="left_arm"/>
+    <end_effector name="right_gripper" parent_link="r_gripper_thumb" group="right_gripper" parent_group="right_arm"/>
     <end_effector name="head" parent_link="head" group="head"/>
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="virtual_joint" type="fixed" parent_frame="world" child_link="torso"/>

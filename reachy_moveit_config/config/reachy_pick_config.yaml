@@ -5,13 +5,13 @@
 
     # Planning group and link names
     arm_group_name: "right_arm"
-    eef_name: "r_arm_tip"
+    eef_name: "right_arm"
     hand_group_name: "right_gripper"
     hand_frame: "r_gripper_finger"
 
     # Poses
     hand_open_pose: "right_gripper_open"
-    hand_close_pose: "right_gripper_close"
+    hand_close_pose: "right_gripper_closed"
     arm_home_pose: "right_init_pose"
 
     # Scene frames
