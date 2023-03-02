@@ -88,19 +88,15 @@ def launch_setup(context, *args, **kwargs):
                    '/controller_manager'],
     )
 
-    rviz_node = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output='log',
-        arguments=['-d', PathJoinSubstitution([FindPackageShare('reachy_description'), 'config', 'reachy.rviz'])],
-        condition=IfCondition(start_rviz_rl),
-    )
-
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
-            on_exit=[rviz_node],
+            on_exit=[
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource([
+                        FindPackageShare("reachy_bringup"), '/launch', '/rviz.launch.py']),
+                    condition=IfCondition(start_rviz_rl)
+                )],
         ),
     )
 
@@ -163,8 +159,6 @@ def launch_setup(context, *args, **kwargs):
         *((control_node,) if not gazebo_py else
           (SetUseSimTime(True),  # does not seem to work...
            gazebo_node)),
-        # fake_camera_node,
-        # fake_zoom_node,
         fake_nodes,
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
