@@ -40,6 +40,8 @@ def generate_move_group_launch(moveit_config):
     ld.add_action(DeclareBooleanLaunchArg("monitor_dynamics", default_value=False))
 
     should_publish = LaunchConfiguration("publish_monitored_planning_scene")
+    # Load  ExecuteTaskSolutionCapability so we can execute found solutions in simulation
+    move_group_capabilities = {"capabilities": "move_group/ExecuteTaskSolutionCapability"}
 
     move_group_configuration = {
         "publish_robot_description_semantic": True,
@@ -63,6 +65,7 @@ def generate_move_group_launch(moveit_config):
     move_group_params = [
         moveit_config.to_dict(),
         move_group_configuration,
+        move_group_capabilities,
     ]
 
     add_debuggable_node(
