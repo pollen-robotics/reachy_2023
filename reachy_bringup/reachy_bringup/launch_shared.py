@@ -28,3 +28,11 @@ gazebo_launch_arg = DeclareLaunchArgument(
     description='Start a fake_hardware with gazebo as simulation tool.',
     choices=['true', 'false']
 )
+
+robot_model_launch_arg = DeclareLaunchArgument(
+    'robot_model',
+    default_value=FULL_KIT,
+    description='Choose robot_model configuration. '
+                'If a robot_configuration is defined in ~/.reachy.yaml : it WILL BE CHOSEN over any given arg',
+    choices=[FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT]
+)

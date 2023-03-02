@@ -10,7 +10,7 @@ from launch_ros.event_handlers import OnStateTransition
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
-from reachy_bringup.launch_shared import FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT
+from reachy_bringup.launch_shared import FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, robot_model_launch_arg
 
 
 def launch_setup(context, *args, **kwargs):
@@ -113,10 +113,7 @@ def generate_launch_description():
             'robot_controllers',
             description='Path to robot_controllers file',
         ),
-        DeclareLaunchArgument(
-            'robot_model',
-            description='Start on fake_reachy mode with this launch file.',
-        ),
+        robot_model_launch_arg,
         OpaqueFunction(function=launch_setup)
     ])
 

@@ -11,7 +11,7 @@ from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 from reachy_bringup.launch_shared import FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, get_reachy_config, \
-    fake_launch_arg, gazebo_launch_arg
+    fake_launch_arg, gazebo_launch_arg, robot_model_launch_arg
 
 
 def launch_setup(context, *args, **kwargs):
@@ -26,15 +26,23 @@ def launch_setup(context, *args, **kwargs):
     gazebo_py = gazebo_rl.perform(context) == 'true'
     start_sdk_server_rl = LaunchConfiguration('start_sdk_server')
     start_sdk_server_py = start_sdk_server_rl.perform(context) == 'true'
-
-    # Robot model
     robot_model_rl = LaunchConfiguration('robot_model')
     robot_model_py = robot_model_rl.perform(context)
+
+    # Robot model
     robot_model_file = get_reachy_config()
     if robot_model_file:
         LogInfo(msg="Using robot_model described in ~/.reachy.yaml ...").execute(context=context)
         robot_model_py = robot_model_file
     LogInfo(msg="Robot Model :: {}".format(robot_model_py)).execute(context=context)
+
+    robot_controllers = PathJoinSubstitution(
+        [
+            FindPackageShare('reachy_bringup'),
+            'config',
+            f'reachy_{robot_model_py}_controllers.yaml',
+        ]
+    )
 
     robot_description_content = Command(
         [
@@ -53,14 +61,6 @@ def launch_setup(context, *args, **kwargs):
     robot_description = {
         'robot_description': ParameterValue(robot_description_content, value_type=str),
     }
-
-    robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare('reachy_bringup'),
-            'config',
-            f'reachy_{robot_model_py}_controllers.yaml',
-        ]
-    )
 
     control_node = Node(
         package='controller_manager',
@@ -177,21 +177,15 @@ def generate_launch_description():
             description='Start RViz2 automatically with this launch file.',
             choices=['true', 'false']
         ),
-        fake_launch_arg,
-        gazebo_launch_arg,
         DeclareLaunchArgument(
             'start_sdk_server',
             default_value='false',
             description='Start sdk_server along with reachy nodes with this launch file.',
             choices=['true', 'false']
         ),
-        DeclareLaunchArgument(
-            'robot_model',
-            default_value=FULL_KIT,
-            description='Choose robot_model configuration. '
-                        'If a robot_configuration is defined in ~/.reachy.yaml : it WILL BE CHOSEN over any given arg',
-            choices=[FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT]
-        ),
+        fake_launch_arg,
+        gazebo_launch_arg,
+        robot_model_launch_arg,
         OpaqueFunction(function=launch_setup)
     ])
 
