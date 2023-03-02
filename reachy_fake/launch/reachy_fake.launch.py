@@ -3,31 +3,22 @@ from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
+from reachy_bringup.reachy_bringup_launch_args import fake_launch_arg, gazebo_launch_arg
 
 
 def generate_launch_description():
-    fake = LaunchConfiguration('fake')
-    gazebo = LaunchConfiguration('gazebo')
+    fake = LaunchConfiguration(fake_launch_arg.name)
+    gazebo = LaunchConfiguration(gazebo_launch_arg.name)
 
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'fake',
-            default_value='false',
-            description='Start on fake_reachy mode with this launch file.',
-            choices=['true', 'false']
-        ),
-        DeclareLaunchArgument(
-            'gazebo',
-            default_value='false',
-            description='Start a fake_hardware with gazebo as simulation tool.',
-            choices=['true', 'false']
-        ),
+        fake_launch_arg,
+        gazebo_launch_arg,
         Node(
             package='reachy_fake',
             executable='fake_camera',
             condition=IfCondition(
                 PythonExpression(["\"", fake, "\" == \"true\""]),
-                # would be nicer if arg was True/False either than true/false
+                # would be better if arg was True/False either than true/false
                 # keep it that way for overall consistency with other roslaunch args
             )),
         Node(
@@ -35,6 +26,6 @@ def generate_launch_description():
             executable='fake_zoom',
             condition=IfCondition(
                 PythonExpression(["\"", fake, "\" == \"true\" or \"", gazebo, "\" == \"true\""])
-            ),
+            )
         )
     ])
