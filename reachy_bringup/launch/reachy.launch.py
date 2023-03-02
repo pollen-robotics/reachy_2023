@@ -10,7 +10,7 @@ from launch_ros.event_handlers import OnStateTransition
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
-FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT = 'full_kit', 'starter_kit_right', 'starter_kit_left'
+from reachy_bringup.launch_shared import FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT
 
 
 def get_reachy_config():
@@ -165,20 +165,6 @@ def launch_setup(context, *args, **kwargs):
             entities=[sdk_server_nodes],
         )
     )
-
-    # fake_camera_node = Node(
-    #     package='reachy_fake',
-    #     executable='fake_camera',
-    #     condition=IfCondition(fake_rl),
-    # )
-    #
-    # fake_zoom_node = Node(
-    #     package='reachy_fake',
-    #     executable='fake_zoom',
-    #     condition=IfCondition(
-    #         PythonExpression(f"{fake_py} or {gazebo_py}"),
-    #     ),
-    # )
 
     return [
         # For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)

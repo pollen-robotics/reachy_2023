@@ -3,7 +3,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
-from reachy_bringup.reachy_bringup_launch_args import fake_launch_arg, gazebo_launch_arg
+from reachy_bringup.launch_shared import fake_launch_arg, gazebo_launch_arg
 
 
 def generate_launch_description():

@@ -1,5 +1,8 @@
 from launch.actions import DeclareLaunchArgument
 
+FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT = 'full_kit', 'starter_kit_right', 'starter_kit_left'
+
+
 fake_launch_arg = DeclareLaunchArgument(
     name='fake',
     default_value='false',

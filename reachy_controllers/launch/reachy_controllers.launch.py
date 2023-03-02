@@ -10,7 +10,7 @@ from launch_ros.event_handlers import OnStateTransition
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
-FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT = 'full_kit', 'starter_kit_right', 'starter_kit_left'
+from reachy_bringup.launch_shared import FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT
 
 
 def launch_setup(context, *args, **kwargs):
