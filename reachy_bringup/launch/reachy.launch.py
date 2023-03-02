@@ -11,7 +11,7 @@ from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 from reachy_bringup.launch_shared import FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, get_reachy_config, \
-    fake_launch_arg, gazebo_launch_arg, robot_model_launch_arg
+    fake_launch_arg, gazebo_launch_arg, robot_model_launch_arg, get_robot_controllers, get_robot_description
 
 
 def launch_setup(context, *args, **kwargs):
@@ -35,32 +35,9 @@ def launch_setup(context, *args, **kwargs):
         LogInfo(msg="Using robot_model described in ~/.reachy.yaml ...").execute(context=context)
         robot_model_py = robot_model_file
     LogInfo(msg="Robot Model :: {}".format(robot_model_py)).execute(context=context)
+    robot_controllers = get_robot_controllers(robot_model_py)
 
-    robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare('reachy_bringup'),
-            'config',
-            f'reachy_{robot_model_py}_controllers.yaml',
-        ]
-    )
-
-    robot_description_content = Command(
-        [
-            PathJoinSubstitution([FindExecutable(name='xacro')]),
-            ' ',
-            PathJoinSubstitution(
-                [FindPackageShare('reachy_description'), 'urdf', 'reachy.urdf.xacro']
-            ),
-            *((' ', 'use_fake_hardware:=true', ' ') if fake_py else
-              (' ', 'use_fake_hardware:=true use_gazebo:=true depth_camera:=false', ' ') if gazebo_py else
-              (' ',)),
-            f'robot_config:={robot_model_py}',
-            ' ',
-        ]
-    )
-    robot_description = {
-        'robot_description': ParameterValue(robot_description_content, value_type=str),
-    }
+    robot_description = get_robot_description(robot_model_py, fake_py, gazebo_py)
 
     control_node = Node(
         package='controller_manager',
@@ -121,7 +98,7 @@ def launch_setup(context, *args, **kwargs):
 
     controller_nodes = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
-            FindPackageShare("reachy_controllers"), '/launch', '/reachy_controllers.launch.py']),
+            FindPackageShare("reachy_bringup"), '/launch', '/reachy_controllers.launch.py']),
         launch_arguments={'robot_model': f'{robot_model_py}',
                           'robot_controllers': robot_controllers}.items()
     )
@@ -136,16 +113,15 @@ def launch_setup(context, *args, **kwargs):
         ),
     )
 
-    sdk_server_nodes = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            FindPackageShare("reachy_sdk_server"), '/reachy_camera_sdk_server.launch.py']),
-        condition=IfCondition(start_sdk_server_rl),
-    )
-
     delay_sdk_server_after_kinematics = RegisterEventHandler(
         event_handler=OnStateTransition(
             target_lifecycle_node=kinematics_node, goal_state='inactive',
-            entities=[sdk_server_nodes],
+            entities=[
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource([
+                        FindPackageShare("reachy_sdk_server"), '/reachy_camera_sdk_server.launch.py']),
+                    condition=IfCondition(start_sdk_server_rl),
+                )],
         )
     )
 

@@ -1,4 +1,7 @@
 from launch.actions import DeclareLaunchArgument
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
+from launch_ros.descriptions import ParameterValue
 
 FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT = 'full_kit', 'starter_kit_right', 'starter_kit_left'
 
@@ -13,6 +16,35 @@ def get_reachy_config():
             return config["model"] if config["model"] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT] else False
     except (FileNotFoundError, TypeError):
         return False
+
+
+def get_robot_controllers(robot_model):
+    return PathJoinSubstitution(
+        [
+            FindPackageShare('reachy_bringup'),
+            'config',
+            f'reachy_{robot_model}_controllers.yaml',
+        ]
+    )
+
+
+def get_robot_description(robot_model, fake, gazebo):
+    return {
+        'robot_description': ParameterValue(Command(
+            [
+                PathJoinSubstitution([FindExecutable(name='xacro')]),
+                ' ',
+                PathJoinSubstitution(
+                    [FindPackageShare('reachy_description'), 'urdf', 'reachy.urdf.xacro']
+                ),
+                *((' ', 'use_fake_hardware:=true', ' ') if fake else
+                  (' ', 'use_fake_hardware:=true use_gazebo:=true depth_camera:=false', ' ') if gazebo else
+                  (' ',)),
+                f'robot_config:={robot_model}',
+                ' ',
+            ]
+        ), value_type=str),
+    }
 
 
 fake_launch_arg = DeclareLaunchArgument(
