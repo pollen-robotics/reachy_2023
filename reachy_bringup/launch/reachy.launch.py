@@ -121,6 +121,7 @@ def launch_setup(context, *args, **kwargs):
         event_handler=OnStateTransition(
             target_lifecycle_node=kinematics_node, goal_state='inactive',
             entities=[
+                LogInfo(msg='Kinematics started started, spawning sdk', condition=IfCondition(start_sdk_server_rl)),
                 IncludeLaunchDescription(
                     PythonLaunchDescriptionSource([
                         FindPackageShare("reachy_sdk_server"), '/reachy_camera_sdk_server.launch.py']),

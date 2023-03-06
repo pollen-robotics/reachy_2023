@@ -188,12 +188,11 @@ class ReachyKdlKinematics(LifecycleNode):
             self.fk_solver['head'] = fk_solver
             self.ik_solver['head'] = ik_solver
 
-        self.logger.info(f'Kinematics node ready!')
         self.trigger_configure()
 
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         # Dummy state to minimize impact on current behavior
-        self.logger.info("Configuring state has been called, going into inactive to release event trigger")
+        self.logger.info(f'Kinematics node ready!')
         return TransitionCallbackReturn.SUCCESS
 
     def forward_kinematics_srv(
