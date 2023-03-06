@@ -42,12 +42,11 @@ class FakeZoom(LifecycleNode):
         self.set_zoom_focus_service = self.create_service(SetCameraZoomFocus, 'set_camera_zoom_focus', self.dummy_service_cb)
         self.set_focus_state_service = self.create_service(SetFocusState, 'set_focus_state', self.dummy_service_cb)
 
-        self.logger.info(f'Fake zoom ready')
         self.trigger_configure()
 
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         # Dummy state to minimize impact on current behavior
-        self.logger.info("Configuring state has been called, going into inactive to release event trigger")
+        self.logger.info(f'Fake zoom ready')
         return TransitionCallbackReturn.SUCCESS
 
     def dummy_service_cb(self, request, response):
