@@ -22,7 +22,7 @@ LogInfo(msg="Some nice mesage {}".format(arg_py)).execute(context=context)
 This string format will work as intended in an opaque function, with a 
 pythonized, context-exececuted variable
 ```commandline
-PythonExpression(f"'{gazebo_py}' == 'true'")
+PythonExpression(f"'{var_py}' == 'True'")
 ```
 
 But this is the way to go in a standard launch context, as the call to 
@@ -31,5 +31,6 @@ The former expression will always return False as the string will be
 evaluated before context replacement, on a
 `launch.substitutions.launch_configuration.LaunchConfiguration object`
 ```commandline
-PythonExpression(["\"", gazebo, "\" == \"true\""])
+PythonExpression(["\"", var_rl, "\" == \"true\""])
 ```
+

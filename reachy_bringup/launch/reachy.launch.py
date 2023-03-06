@@ -45,7 +45,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[robot_description, robot_controllers],
         output='screen',
         condition=IfCondition(
-            PythonExpression(f"'{gazebo_py}' != 'true'")
+            PythonExpression(f"not {gazebo_py}")
         )  # For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
     )
 
