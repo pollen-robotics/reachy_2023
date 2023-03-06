@@ -44,6 +44,9 @@ def launch_setup(context, *args, **kwargs):
         executable='ros2_control_node',
         parameters=[robot_description, robot_controllers],
         output='screen',
+        condition=IfCondition(
+            PythonExpression(f"'{gazebo_py}' != 'true'")
+        )  # For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
     )
 
     robot_state_publisher_node = Node(
@@ -93,7 +96,8 @@ def launch_setup(context, *args, **kwargs):
     gazebo_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py']),
-        launch_arguments={'robot_config': f'{robot_model_py}'}.items()
+        launch_arguments={'robot_config': f'{robot_model_py}'}.items(),
+        condition=IfCondition(gazebo_rl)
     )
 
     controller_nodes = IncludeLaunchDescription(
@@ -131,10 +135,8 @@ def launch_setup(context, *args, **kwargs):
     )
 
     return [
-        # For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
-        *((control_node,) if not gazebo_py else
-          (SetUseSimTime(True),  # does not seem to work...
-           gazebo_node)),
+        control_node,
+        gazebo_node,
         fake_nodes,
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
