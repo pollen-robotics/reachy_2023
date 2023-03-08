@@ -92,7 +92,7 @@
     </spherical_coordinates>
     <model name='table'>
       <static>1</static>
-      <link name='link2'>
+      <link name='link_table'>
         <collision name='surface'>
           <pose>0 0 1 0 -0 0</pose>
           <geometry>
@@ -131,7 +131,7 @@
             </script>
           </material>
         </visual>
-        <collision name='front_left_leg'>
+        <collision name='front_left_legc'>
           <pose>0.68 0.38 0.5 0 -0 0</pose>
           <geometry>
             <cylinder>
@@ -168,7 +168,7 @@
             </script>
           </material>
         </visual>
-        <collision name='front_right_leg'>
+        <collision name='front_right_legc'>
           <pose>0.68 -0.38 0.5 0 -0 0</pose>
           <geometry>
             <cylinder>
@@ -205,7 +205,7 @@
             </script>
           </material>
         </visual>
-        <collision name='back_right_leg'>
+        <collision name='back_right_legc'>
           <pose>-0.68 -0.38 0.5 0 -0 0</pose>
           <geometry>
             <cylinder>
@@ -242,7 +242,7 @@
             </script>
           </material>
         </visual>
-        <collision name='back_left_leg'>
+        <collision name='back_left_legc'>
           <pose>-0.68 0.38 0.5 0 -0 0</pose>
           <geometry>
             <cylinder>
@@ -536,12 +536,6 @@
       <model name='table'>
         <pose>0.618528 -0.015107 -0.274767 0 -0 1.56835</pose>
         <scale>1 1 1</scale>
-        <link name='link2'>
-          <pose>0.618528 -0.015107 -0.274767 0 -0 1.56835</pose>
-          <velocity>0 0 0 0 -0 0</velocity>
-          <acceleration>0 0 0 0 -0 0</acceleration>
-          <wrench>0 0 0 0 -0 0</wrench>
-        </link>
       </model>
       <light name='sun'>
         <pose>0 0 10 0 -0 0</pose>

@@ -8,6 +8,8 @@ export LC_NUMERIC="en_US.UTF-8"
 2 options:
 ### Installing from repos (easy, short)
 ```sudo apt-get install ros-humble-moveit ros-humble-moveit-msgs```
+```sudo apt-get install ros-humble-moveit-ros-perception```
+```sudo apt-get install ros-humble-moveit-visual-tools```
 
 ### Installing from source (long)
 sudo apt-get install ros-humble-moveit-msgs

@@ -4,10 +4,10 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /MotionPlanning1
         - /MotionPlanning1/Scene Geometry1
+        - /MarkerArray2
       Splitter Ratio: 0.5
-    Tree Height: 179
+    Tree Height: 318
   - Class: rviz_common/Help
     Name: Help
   - Class: rviz_common/Views
@@ -15,6 +15,8 @@ Panels:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
+  - Class: rviz_visual_tools/RvizVisualToolsGui
+    Name: RvizVisualToolsGui
 Visualization Manager:
   Class: ""
   Displays:
@@ -257,7 +259,7 @@ Visualization Manager:
         Goal State Color: 250; 128; 0
         Interactive Marker Size: 0
         Joint Violation Color: 255; 0; 255
-        Planning Group: head
+        Planning Group: right_arm
         Query Goal State: true
         Query Start State: false
         Show Workspace: false
@@ -498,6 +500,210 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /gripper_vis
       Value: true
+    - Class: moveit_rviz_plugin/PlanningScene
+      Enabled: true
+      Move Group Namespace: ""
+      Name: PlanningScene
+      Planning Scene Topic: /monitored_planning_scene
+      Robot Description: robot_description
+      Scene Geometry:
+        Scene Alpha: 0.8999999761581421
+        Scene Color: 50; 230; 50
+        Scene Display Time: 0.009999999776482582
+        Show Scene Geometry: true
+        Voxel Coloring: Z-Axis
+        Voxel Rendering: Occupied Voxels
+      Scene Robot:
+        Attached Body Color: 150; 50; 150
+        Links:
+          All Links Enabled: true
+          Expand Joint Details: false
+          Expand Link Details: false
+          Expand Tree: false
+          Link Tree Style: Links in Alphabetic Order
+          bottom_neck_arm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          depth_camera_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          depth_camera_optical:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          head:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          head_tip:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          head_x:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          head_y:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          head_z:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          l_antenna_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_arm_tip:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          l_forearm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_gripper_finger:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_gripper_thumb:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_shoulder:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_shoulder_x:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_upper_arm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_wrist:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_wrist2hand:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          left_camera_optical:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          middle_neck_arm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_antenna_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_arm_tip:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          r_forearm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_finger:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_thumb:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_shoulder:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_shoulder_x:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_upper_arm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_wrist:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_wrist2hand:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          right_camera_optical:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          top_neck_arm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          torso:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          world:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+        Robot Alpha: 1
+        Show Robot Collision: false
+        Show Robot Visual: true
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        Text: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /rviz_visual_tools
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -516,7 +722,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.533031702041626
+      Distance: 2.845017671585083
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -531,15 +737,15 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7450000643730164
+      Pitch: 0.5649986863136292
       Target Frame: world
       Value: Orbit (rviz_default_plugins)
-      Yaw: 0.882000207901001
+      Yaw: 0.38199716806411743
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1031
+  Height: 1043
   Help:
     collapsed: false
   Hide Left Dock: false
@@ -548,9 +754,11 @@ Window Geometry:
     collapsed: false
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000002b4000003adfc0200000005fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000004100fffffffb000000100044006900730070006c006100790073010000003d00000136000000c900fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670100000179000001aa0000017d00fffffffb0000000800480065006c0070000000029a0000006e0000006e00fffffffb0000000a005600690065007700730100000329000000c1000000a400ffffff000004c6000003ad00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002b4000003b9fc0200000006fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb000000100044006900730070006c006100790073010000003d000001c1000000c900fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670100000204000001ab0000017d00fffffffb0000000800480065006c0070000000029a0000006e0000006e00fffffffb0000000a005600690065007700730000000333000000c3000000a400fffffffb00000024005200760069007a00560069007300750061006c0054006f006f006c007300470075006901000003b5000000410000004100ffffff000004c6000003b900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  RvizVisualToolsGui:
+    collapsed: false
   Views:
     collapsed: false
   Width: 1920
   X: 0
-  Y: 25
+  Y: 0
