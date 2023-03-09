@@ -5,7 +5,7 @@
   <xacro:property name="camera_link" value="0.05" /> <!-- Size of square 'camera' box -->
   <xacro:property name="camera_convergence" value="0.0" /> <!-- convergence angle (rad) of the cameras. 0=parallel-->
 
-  <xacro:macro name="head" params="parent damping friction neck_orbita_serial_port neck_orbita_id neck_orbita_alpha neck_orbita_hardware_zero neck_orbita_encoder_resolution neck_orbita_reduction head_serial_port head_xl320_ids head_xl320_offsets head_xl320_is_direct head_xl320_reductions head_fan_id">
+  <xacro:macro name="head" params="parent damping friction neck_orbita_serial_port neck_orbita_id neck_orbita_alpha neck_orbita_hardware_zero neck_orbita_reduction head_serial_port head_xl320_ids head_xl320_offsets head_xl320_is_direct head_xl320_reductions head_fan_id">
 
     <xacro:include filename="$(find reachy_description)/ros2_control/head.ros2_control.xacro"/>
 
@@ -247,7 +247,6 @@
       neck_orbita_id="${neck_orbita_id}"
       neck_orbita_alpha="${neck_orbita_alpha}"
       neck_orbita_hardware_zero="${neck_orbita_hardware_zero}"
-      neck_orbita_encoder_resolution="${neck_orbita_encoder_resolution}"
       neck_orbita_reduction="${neck_orbita_reduction}"
 
       head_serial_port="${head_serial_port}"

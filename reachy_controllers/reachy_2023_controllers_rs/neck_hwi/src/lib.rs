@@ -18,7 +18,6 @@ pub extern "C" fn neck_hwi_init(
     id: u8,
     alpha: f64,
     hardware_zero: *mut f64,
-    encoder_resolution: f64,
     reduction: f64,
 ) -> u32 {
     let serial_port = unsafe { CStr::from_ptr(serial_port) }.to_str().unwrap();
@@ -34,7 +33,6 @@ pub extern "C" fn neck_hwi_init(
         id,
         alpha,
         hardware_zero,
-        encoder_resolution as f32,
         reduction as f32,
     )
     .unwrap();

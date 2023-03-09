@@ -52,7 +52,6 @@ NeckSystem::on_init(const hardware_interface::HardwareInfo & info)
   uint8_t id;
   double alpha;
   double hardware_zero[3];
-  double encoder_resolution;
   double reduction;
 
   for (auto const& params : info.hardware_parameters)
@@ -72,9 +71,7 @@ NeckSystem::on_init(const hardware_interface::HardwareInfo & info)
         hardware_zero[i] = (double)v[i];
       }
     }
-    else if (params.first == "encoder_resolution") {
-      encoder_resolution = std::stod(params.second.c_str());
-    } else if (params.first == "reduction") {
+    else if (params.first == "reduction") {
       reduction = std::stod(params.second.c_str());
     }
   }
@@ -90,7 +87,6 @@ NeckSystem::on_init(const hardware_interface::HardwareInfo & info)
     id,
     alpha,
     hardware_zero,
-    encoder_resolution,
     reduction
   );
 

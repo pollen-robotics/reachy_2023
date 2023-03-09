@@ -10,7 +10,6 @@ uint32_t neck_hwi_init(const char *serial_port,
                        uint8_t id,
                        double alpha,
                        double *hardware_zero,
-                       double encoder_resolution,
                        double reduction);
 
 int32_t neck_hwi_get_orientation_velocity_load(uint32_t uid,

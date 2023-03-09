@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:macro name="head_control" params="neck_orbita_serial_port neck_orbita_id neck_orbita_alpha neck_orbita_hardware_zero neck_orbita_encoder_resolution neck_orbita_reduction head_serial_port head_xl320_ids head_xl320_offsets head_xl320_is_direct head_xl320_reductions head_fan_id">
+    <xacro:macro name="head_control" params="neck_orbita_serial_port neck_orbita_id neck_orbita_alpha neck_orbita_hardware_zero neck_orbita_reduction head_serial_port head_xl320_ids head_xl320_offsets head_xl320_is_direct head_xl320_reductions head_fan_id">
 
         <xacro:include filename="$(find reachy_description)/ros2_control/joint.ros2_control.xacro"/>
 
@@ -13,7 +13,6 @@
                     <param name="id">${neck_orbita_id}</param>
                     <param name="alpha">${neck_orbita_alpha}</param>
                     <param name="hardware_zero">${neck_orbita_hardware_zero}</param>
-                    <param name="encoder_resolution">${neck_orbita_encoder_resolution}</param>
                     <param name="reduction">${neck_orbita_reduction}</param>
                 </xacro:unless>
 
