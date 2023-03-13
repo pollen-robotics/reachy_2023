@@ -288,7 +288,9 @@ pub extern "C" fn neck_hwi_is_torque_on(uid: u32, is_on: *mut f64) -> i32 {
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub extern "C" fn neck_hwi_set_torque(uid: u32, on: *mut f64) -> i32 {
     let on = unsafe { std::slice::from_raw_parts_mut(on, 3) };
-    let on = on.iter().any(|&t| t != 0.0);
+    
+    // FIXME: This should not be done on each joint.
+    let on = on[0] != 0.0;
 
     if on {
         match NECK_CONTROLLER
