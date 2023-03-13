@@ -132,6 +132,8 @@ ArmSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
     hw_mx_states_effort_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_mx_states_temperature_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_mx_states_torque_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_mx_states_torque_limit_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_mx_states_speed_limit_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_mx_states_p_gain_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_mx_states_i_gain_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_mx_states_d_gain_[i] = std::numeric_limits<double>::quiet_NaN();
