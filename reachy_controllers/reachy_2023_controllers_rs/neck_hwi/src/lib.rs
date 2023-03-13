@@ -144,27 +144,12 @@ pub extern "C" fn neck_hwi_set_target_orientation_max_speed(
         yaw: target_orientation[2],
     };
 
-    let current_speed_limit = match NECK_CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .get_max_speed()
-    {
-        Ok(s) => s,
-        Err(_) => return 1,
-    };
-
+    // FIXME: This should not be done on each joint.
     let speed_limit = unsafe { std::slice::from_raw_parts_mut(speed_limit, 3) };
-    let speed_limit = speed_limit.iter().map(|&s| s as f32);
+    let speed_limit = speed_limit[0];
 
-    let mut new_speed_limit = None;
-    for cs in speed_limit {
-        if cs != current_speed_limit {
-            new_speed_limit = Some(cs);
-            break;
-        }
-    }
+    // let torque_limit = unsafe { std::slice::from_raw_parts_mut(torque_limit, 3) };
+    // let torque_limit = torque_limit[0];
 
     if NECK_CONTROLLER
         .lock()
@@ -177,17 +162,15 @@ pub extern "C" fn neck_hwi_set_target_orientation_max_speed(
         return 1;
     }
 
-    if let Some(max_speed) = new_speed_limit {
-        if NECK_CONTROLLER
-            .lock()
-            .unwrap()
-            .get_mut(&uid)
-            .unwrap()
-            .set_max_speed(max_speed)
-            .is_err()
-        {
-            return 1;
-        }
+    if NECK_CONTROLLER
+        .lock()
+        .unwrap()
+        .get_mut(&uid)
+        .unwrap()
+        .set_max_speed(speed_limit as f32)
+        .is_err()
+    {
+        return 1;
     }
 
     // if NECK_CONTROLLER
@@ -217,8 +200,8 @@ pub extern "C" fn neck_hwi_get_max_speed(uid: u32, max_speed: *mut f64) -> i32 {
         .get_max_speed()
     {
         Ok(s) => {
-            for ms in max_speed.iter_mut() {
-                *ms = s as f64;
+            for i in 0..3 {
+                max_speed[i] = s as f64;
             }
             0
         }
@@ -289,8 +272,8 @@ pub extern "C" fn neck_hwi_is_torque_on(uid: u32, is_on: *mut f64) -> i32 {
         .is_torque_on()
     {
         Ok(t) => {
-            for o in is_on.iter_mut() {
-                *o = if t { 1.0 } else { 0.0 };
+            for i in 0..3 {
+                is_on[i] = if t { 1.0 } else { 0.0 };
             }
             0
         }
@@ -302,57 +285,33 @@ pub extern "C" fn neck_hwi_is_torque_on(uid: u32, is_on: *mut f64) -> i32 {
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub extern "C" fn neck_hwi_set_torque(uid: u32, on: *mut f64) -> i32 {
     let on = unsafe { std::slice::from_raw_parts_mut(on, 3) };
-    let on = on.iter().map(|&t| t != 0.0);
 
-    let current_torque = match NECK_CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .is_torque_on()
-    {
-        Ok(t) => t,
-        Err(_) => return 1,
-    };
+    // FIXME: This should not be done on each joint.
+    let on = on[0] != 0.0;
 
-    // Check if any torque command is different from the current state
-    // We keep the first different value we found (if any).
-    let mut torque_command = None;
-    for new_torque in on {
-        if new_torque != current_torque {
-            torque_command = Some(new_torque);
-            break;
+    if on {
+        match NECK_CONTROLLER
+            .lock()
+            .unwrap()
+            .get_mut(&uid)
+            .unwrap()
+            .enable_torque()
+        {
+            Ok(_) => 0,
+            Err(_) => 1,
+        }
+    } else {
+        match NECK_CONTROLLER
+            .lock()
+            .unwrap()
+            .get_mut(&uid)
+            .unwrap()
+            .disable_torque()
+        {
+            Ok(_) => 0,
+            Err(_) => 1,
         }
     }
-
-    // Apply changes if any
-    if let Some(on) = torque_command {
-        return match on {
-            true => match NECK_CONTROLLER
-                .lock()
-                .unwrap()
-                .get_mut(&uid)
-                .unwrap()
-                .enable_torque()
-            {
-                Ok(_) => 0,
-                Err(_) => 1,
-            },
-
-            false => match NECK_CONTROLLER
-                .lock()
-                .unwrap()
-                .get_mut(&uid)
-                .unwrap()
-                .disable_torque()
-            {
-                Ok(_) => 0,
-                Err(_) => 1,
-            },
-        };
-    }
-
-    0
 }
 
 #[no_mangle]
@@ -389,47 +348,23 @@ pub extern "C" fn neck_hwi_set_pid(uid: u32, p: *mut f64, i: *mut f64, d: *mut f
     let i = unsafe { std::slice::from_raw_parts_mut(i, 3) };
     let d = unsafe { std::slice::from_raw_parts_mut(d, 3) };
 
-    let mut pids = Vec::new();
-    for j in 0..3 {
-        pids.push(Pid {
-            p: p[j] as f32,
-            i: i[j] as f32,
-            d: d[j] as f32,
-        });
-    }
+    // FIXME: This should not be done for each joint!
+    let pid = Pid {
+        p: p[0] as f32,
+        i: i[0] as f32,
+        d: d[0] as f32,
+    };
 
-    let current_pid = match NECK_CONTROLLER
+    match NECK_CONTROLLER
         .lock()
         .unwrap()
         .get_mut(&uid)
         .unwrap()
-        .get_angle_pid()
+        .set_angle_pid(pid)
     {
-        Ok(pid) => pid,
-        Err(_) => return 1,
-    };
-
-    let mut new_pid = None;
-    for pid in pids {
-        if pid != current_pid {
-            new_pid = Some(pid);
-            break;
-        }
+        Ok(_) => 0,
+        Err(_) => 1,
     }
-
-    if let Some(pid) = new_pid {
-        return match NECK_CONTROLLER
-            .lock()
-            .unwrap()
-            .get_mut(&uid)
-            .unwrap()
-            .set_angle_pid(pid)
-        {
-            Ok(_) => 0,
-            Err(_) => 1,
-        };
-    }
-    0
 }
 
 fn get_available_uid() -> u32 {
