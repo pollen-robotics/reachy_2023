@@ -46,41 +46,67 @@ pub extern "C" fn neck_hwi_init(
 
 #[no_mangle]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub extern "C" fn neck_hwi_get_orientation_velocity_load(
+pub extern "C" fn neck_hwi_get_orientation(
     uid: u32,
     orientation: *mut f64,
-    velocity: *mut f64,
-    load: *mut f64,
 ) -> i32 {
     let orientation = unsafe { std::slice::from_raw_parts_mut(orientation, 3) };
-    let velocity = unsafe { std::slice::from_raw_parts_mut(velocity, 3) };
-    let load = unsafe { std::slice::from_raw_parts_mut(load, 3) };
 
     match NECK_CONTROLLER
         .lock()
         .unwrap()
         .get_mut(&uid)
         .unwrap()
-        .get_current_rpy_orientation_velocity_effort()
+        .get_current_rpy_orientation()
     {
-        Ok((o, v, l)) => {
+        Ok(o) => {
             orientation[0] = o.roll;
             orientation[1] = o.pitch;
             orientation[2] = o.yaw;
-
-            velocity[0] = v.roll;
-            velocity[1] = v.pitch;
-            velocity[2] = v.yaw;
-
-            load[0] = l.roll;
-            load[1] = l.pitch;
-            load[2] = l.yaw;
 
             0
         }
         Err(_) => 1,
     }
 }
+
+// #[no_mangle]
+// #[allow(clippy::not_unsafe_ptr_arg_deref)]
+// pub extern "C" fn neck_hwi_get_orientation_velocity_load(
+//     uid: u32,
+//     orientation: *mut f64,
+//     velocity: *mut f64,
+//     load: *mut f64,
+// ) -> i32 {
+//     let orientation = unsafe { std::slice::from_raw_parts_mut(orientation, 3) };
+//     let velocity = unsafe { std::slice::from_raw_parts_mut(velocity, 3) };
+//     let load = unsafe { std::slice::from_raw_parts_mut(load, 3) };
+
+//     match NECK_CONTROLLER
+//         .lock()
+//         .unwrap()
+//         .get_mut(&uid)
+//         .unwrap()
+//         .get_current_rpy_orientation_velocity_effort()
+//     {
+//         Ok((o, v, l)) => {
+//             orientation[0] = o.roll;
+//             orientation[1] = o.pitch;
+//             orientation[2] = o.yaw;
+
+//             velocity[0] = v.roll;
+//             velocity[1] = v.pitch;
+//             velocity[2] = v.yaw;
+
+//             load[0] = l.roll;
+//             load[1] = l.pitch;
+//             load[2] = l.yaw;
+
+//             0
+//         }
+//         Err(_) => 1,
+//     }
+// }
 
 #[no_mangle]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -107,11 +133,12 @@ pub extern "C" fn neck_hwi_get_goal_orientation(uid: u32, target_orientation: *m
 
 #[no_mangle]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub extern "C" fn neck_hwi_set_target_orientation_max_speed_max_torque(
-    uid: u32,
+// pub extern "C" fn neck_hwi_set_target_orientation_max_speed_max_torque(
+pub extern "C" fn neck_hwi_set_target_orientation_max_speed(
+        uid: u32,
     target_orientation: *mut f64,
     speed_limit: *mut f64,
-    torque_limit: *mut f64,
+    // torque_limit: *mut f64,
 ) -> i32 {
     let target_orientation = unsafe { std::slice::from_raw_parts_mut(target_orientation, 3) };
     let target_orientation = Orientation {
@@ -124,8 +151,8 @@ pub extern "C" fn neck_hwi_set_target_orientation_max_speed_max_torque(
     let speed_limit = unsafe { std::slice::from_raw_parts_mut(speed_limit, 3) };
     let speed_limit = speed_limit[0];
 
-    let torque_limit = unsafe { std::slice::from_raw_parts_mut(torque_limit, 3) };
-    let torque_limit = torque_limit[0];
+    // let torque_limit = unsafe { std::slice::from_raw_parts_mut(torque_limit, 3) };
+    // let torque_limit = torque_limit[0];
 
     if NECK_CONTROLLER
         .lock()
@@ -146,19 +173,20 @@ pub extern "C" fn neck_hwi_set_target_orientation_max_speed_max_torque(
         .set_max_speed(speed_limit as f32)
         .is_err()
     {
+        println!("WTF SPEED");
         return 1;
     }
 
-    if NECK_CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .set_max_torque(torque_limit as f32)
-        .is_err()
-    {
-        return 1;
-    }
+    // if NECK_CONTROLLER
+    //     .lock()
+    //     .unwrap()
+    //     .get_mut(&uid)
+    //     .unwrap()
+    //     .set_max_torque(torque_limit as f32)
+    //     .is_err()
+    // {
+    //     return 1;
+    // }
 
     0
 }
@@ -185,50 +213,55 @@ pub extern "C" fn neck_hwi_get_max_speed(uid: u32, max_speed: *mut f64) -> i32 {
     }
 }
 
-#[no_mangle]
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub extern "C" fn neck_hwi_get_max_torque(uid: u32, max_torque: *mut f64) -> i32 {
-    let max_torque = unsafe { std::slice::from_raw_parts_mut(max_torque, 3) };
+// #[no_mangle]
+// #[allow(clippy::not_unsafe_ptr_arg_deref)]
+// pub extern "C" fn neck_hwi_get_max_torque(uid: u32, max_torque: *mut f64) -> i32 {
+//     let max_torque = unsafe { std::slice::from_raw_parts_mut(max_torque, 3) };
 
-    match NECK_CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .get_max_torque()
-    {
-        Ok(t) => {
-            for i in 0..3 {
-                max_torque[i] = t as f64;
-            }
-            0
-        }
-        Err(_) => 1,
-    }
-}
+//     for i in 0..3 {
+//         max_torque[i] = 42.0;
+//     }
+//     0
 
-#[no_mangle]
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub extern "C" fn neck_hwi_get_temperature(uid: u32, temperature: *mut f64) -> i32 {
-    let temperature = unsafe { std::slice::from_raw_parts_mut(temperature, 3) };
+//     // match NECK_CONTROLLER
+//     //     .lock()
+//     //     .unwrap()
+//     //     .get_mut(&uid)
+//     //     .unwrap()
+//     //     .get_max_torque()
+//     // {
+//     //     Ok(t) => {
+//     //         for i in 0..3 {
+//     //             max_torque[i] = t as f64;
+//     //         }
+//     //         0
+//     //     }
+//     //     Err(_) => 1,
+//     // }
+// }
 
-    match NECK_CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .get_motor_temperature()
-    {
-        Ok(t) => {
-            temperature[0] = t.top as f64;
-            temperature[1] = t.middle as f64;
-            temperature[2] = t.bottom as f64;
+// #[no_mangle]
+// #[allow(clippy::not_unsafe_ptr_arg_deref)]
+// pub extern "C" fn neck_hwi_get_temperature(uid: u32, temperature: *mut f64) -> i32 {
+//     let temperature = unsafe { std::slice::from_raw_parts_mut(temperature, 3) };
 
-            0
-        }
-        Err(_) => 1,
-    }
-}
+//     match NECK_CONTROLLER
+//         .lock()
+//         .unwrap()
+//         .get_mut(&uid)
+//         .unwrap()
+//         .get_motor_temperature()
+//     {
+//         Ok(t) => {
+//             temperature[0] = t.top as f64;
+//             temperature[1] = t.middle as f64;
+//             temperature[2] = t.bottom as f64;
+
+//             0
+//         }
+//         Err(_) => 1,
+//     }
+// }
 
 #[no_mangle]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -320,8 +353,8 @@ pub extern "C" fn neck_hwi_set_pid(uid: u32, p: *mut f64, i: *mut f64, d: *mut f
     // FIXME: This should not be done for each joint!
     let pid = Pid {
         p: p[0] as f32,
-        i: i[1] as f32,
-        d: d[2] as f32,
+        i: i[0] as f32,
+        d: d[0] as f32,
     };
 
     match NECK_CONTROLLER

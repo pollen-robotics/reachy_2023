@@ -120,7 +120,7 @@ NeckSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
   // TODO: make sure there is no error here!
   neck_hwi_get_goal_orientation(this->uid, hw_commands_position_);
   neck_hwi_get_max_speed(this->uid, hw_commands_speed_limit_);
-  neck_hwi_get_max_torque(this->uid, hw_commands_torque_limit_);
+  // neck_hwi_get_max_torque(this->uid, hw_commands_torque_limit_);
   neck_hwi_is_torque_on(this->uid, hw_commands_torque_);
   neck_hwi_get_pid(this->uid, hw_commands_p_gain_, hw_commands_i_gain_, hw_commands_d_gain_);
 
@@ -222,32 +222,42 @@ NeckSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
   rclcpp::Duration duration = current_timestamp - last_timestamp_;
   last_timestamp_ = current_timestamp;
 
-  if (neck_hwi_get_orientation_velocity_load(this->uid, hw_states_position_, hw_states_velocity_, hw_states_effort_) != 0) {
+
+  if (neck_hwi_get_orientation(this->uid, hw_states_position_) != 0) {
     RCLCPP_INFO_THROTTLE(
       rclcpp::get_logger("NeckSystem"),
       clock_,
       LOG_THROTTLE_DURATION,
-      "(%s) READ ORIENTATION/VELOCITY/EFFORT ERROR!", info_.name.c_str()
+      "(%s) READ ORIENTATION ERROR!", info_.name.c_str()
     );
   }
 
-  if (neck_hwi_get_temperature(this->uid, hw_states_temperature_) != 0) {
-      RCLCPP_INFO_THROTTLE(
-        rclcpp::get_logger("NeckSystem"),
-        clock_,
-        LOG_THROTTLE_DURATION,
-        "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
-      );
-  }
+    // if (neck_hwi_get_orientation_velocity_load(this->uid, hw_states_position_, hw_states_velocity_, hw_states_effort_) != 0) {
+  //   RCLCPP_INFO_THROTTLE(
+  //     rclcpp::get_logger("NeckSystem"),
+  //     clock_,
+  //     LOG_THROTTLE_DURATION,
+  //     "(%s) READ ORIENTATION/VELOCITY/EFFORT ERROR!", info_.name.c_str()
+  //   );
+  // }
 
-  if (neck_hwi_get_max_torque(this->uid, hw_states_torque_limit_) != 0) {
-    RCLCPP_INFO_THROTTLE(
-      rclcpp::get_logger("NeckSystem"),
-      clock_,
-      LOG_THROTTLE_DURATION,
-      "(%s) READ TORQUE LIMIT ERROR!", info_.name.c_str()
-    );
-  }
+  // if (neck_hwi_get_temperature(this->uid, hw_states_temperature_) != 0) {
+  //     RCLCPP_INFO_THROTTLE(
+  //       rclcpp::get_logger("NeckSystem"),
+  //       clock_,
+  //       LOG_THROTTLE_DURATION,
+  //       "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
+  //     );
+  // }
+
+  // if (neck_hwi_get_max_torque(this->uid, hw_states_torque_limit_) != 0) {
+  //   RCLCPP_INFO_THROTTLE(
+  //     rclcpp::get_logger("NeckSystem"),
+  //     clock_,
+  //     LOG_THROTTLE_DURATION,
+  //     "(%s) READ TORQUE LIMIT ERROR!", info_.name.c_str()
+  //   );
+  // }
   if (neck_hwi_get_max_speed(this->uid, hw_states_speed_limit_) != 0) {
     RCLCPP_INFO_THROTTLE(
       rclcpp::get_logger("NeckSystem"),
@@ -279,19 +289,32 @@ NeckSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
 hardware_interface::return_type
 NeckSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
 {
-  if (neck_hwi_set_target_orientation_max_speed_max_torque(
+  if (neck_hwi_set_target_orientation_max_speed(
     this->uid, 
     hw_commands_position_,
-    hw_commands_speed_limit_,
-    hw_commands_torque_limit_
+    hw_commands_speed_limit_
   ) != 0) {
     RCLCPP_INFO_THROTTLE(
       rclcpp::get_logger("NeckSystem"),
       clock_,
       LOG_THROTTLE_DURATION,
-      "(%s) WRITE ORIENTATION/SPEED LIMIT/TORQUE LIMIT ERROR!", info_.name.c_str()
+      "(%s) WRITE ORIENTATION/SPEED LIMIT ERROR!", info_.name.c_str()
     );
   }
+
+  // if (neck_hwi_set_target_orientation_max_speed_max_torque(
+  //   this->uid, 
+  //   hw_commands_position_,
+  //   hw_commands_speed_limit_,
+  //   hw_commands_torque_limit_
+  // ) != 0) {
+  //   RCLCPP_INFO_THROTTLE(
+  //     rclcpp::get_logger("NeckSystem"),
+  //     clock_,
+  //     LOG_THROTTLE_DURATION,
+  //     "(%s) WRITE ORIENTATION/SPEED LIMIT/TORQUE LIMIT ERROR!", info_.name.c_str()
+  //   );
+  // }
 
   if (neck_hwi_set_torque(this->uid, hw_commands_torque_) != 0) {
     RCLCPP_INFO_THROTTLE(
@@ -309,6 +332,7 @@ NeckSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
       "(%s) WRITE PID ERROR!", info_.name.c_str()
     );
   }
+
   return hardware_interface::return_type::OK;
 }
 
