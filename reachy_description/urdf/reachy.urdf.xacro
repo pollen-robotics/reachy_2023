@@ -101,7 +101,7 @@
       parent="torso"
       damping="${damping}" friction="${friction}"
 
-      neck_orbita_serial_port="/dev/usb2orbita_neck"
+      neck_orbita_serial_port="/dev/orbita_neck"
       neck_orbita_id="70"
       neck_orbita_alpha="54.0"
       neck_orbita_hardware_zero="0.4293648, 1.2923188, 0.018335864"
