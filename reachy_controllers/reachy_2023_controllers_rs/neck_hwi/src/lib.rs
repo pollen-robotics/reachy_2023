@@ -173,7 +173,6 @@ pub extern "C" fn neck_hwi_set_target_orientation_max_speed(
         .set_max_speed(speed_limit as f32)
         .is_err()
     {
-        println!("WTF SPEED");
         return 1;
     }
 
