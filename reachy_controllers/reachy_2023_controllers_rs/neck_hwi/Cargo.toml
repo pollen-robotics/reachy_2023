@@ -9,7 +9,7 @@ edition = "2021"
 lazy_static = "1.4.0"
 libc = "0.2.139"
 orbita_serial_controller = { version = "0.1.0", path = "../../../../../../Dev/orbita_serial_controller/" }
-rustypot = { version = "0.3.0", path = "../../../../../../Dev/rustypot/" }
+rustypot = "0.3.0"
 
 [build-dependencies]
 cbindgen = "0.24.3"
