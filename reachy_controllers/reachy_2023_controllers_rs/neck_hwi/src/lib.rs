@@ -46,10 +46,7 @@ pub extern "C" fn neck_hwi_init(
 
 #[no_mangle]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub extern "C" fn neck_hwi_get_orientation(
-    uid: u32,
-    orientation: *mut f64,
-) -> i32 {
+pub extern "C" fn neck_hwi_get_orientation(uid: u32, orientation: *mut f64) -> i32 {
     let orientation = unsafe { std::slice::from_raw_parts_mut(orientation, 3) };
 
     match NECK_CONTROLLER
@@ -135,7 +132,7 @@ pub extern "C" fn neck_hwi_get_goal_orientation(uid: u32, target_orientation: *m
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 // pub extern "C" fn neck_hwi_set_target_orientation_max_speed_max_torque(
 pub extern "C" fn neck_hwi_set_target_orientation_max_speed(
-        uid: u32,
+    uid: u32,
     target_orientation: *mut f64,
     speed_limit: *mut f64,
     // torque_limit: *mut f64,
@@ -276,7 +273,7 @@ pub extern "C" fn neck_hwi_is_torque_on(uid: u32, is_on: *mut f64) -> i32 {
     {
         Ok(t) => {
             for i in 0..3 {
-                is_on[i] = if t { 1.0 } else {0.0};
+                is_on[i] = if t { 1.0 } else { 0.0 };
             }
             0
         }
@@ -288,7 +285,9 @@ pub extern "C" fn neck_hwi_is_torque_on(uid: u32, is_on: *mut f64) -> i32 {
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub extern "C" fn neck_hwi_set_torque(uid: u32, on: *mut f64) -> i32 {
     let on = unsafe { std::slice::from_raw_parts_mut(on, 3) };
-    let on = on.iter().any(|&t| t != 0.0);
+
+    // FIXME: This should not be done on each joint.
+    let on = on[0] != 0.0;
 
     if on {
         match NECK_CONTROLLER
