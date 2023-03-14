@@ -1,0 +1,16 @@
+zuuu_hal:
+  ros__parameters:
+    laser_upper_angle: 2.85 # 2.5 is a low value tunned for Remi's robot, on a normal Reachy mobile this can be higher
+    laser_lower_angle: -2.85 # is often -laser_upper_angle
+    max_duty_cyle: 0.20 # max is 1.0
+    cmd_vel_timeout: 0.2
+    max_full_com_fails: 100
+    main_tick_period: 0.012
+    control_mode: "OPEN_LOOP"
+    max_accel_xy: 1.0
+    max_accel_theta: 1.0
+    xy_tol: 0.0
+    theta_tol: 0.0
+    smoothing_factor: 5.0
+    safety_distance: 0.70 # distance from the center of the robot
+    critical_distance: 0.55 # distance from the center of the robot
