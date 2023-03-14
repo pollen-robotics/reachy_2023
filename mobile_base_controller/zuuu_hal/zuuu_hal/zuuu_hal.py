@@ -161,8 +161,10 @@ class ZuuuHAL(Node):
             float_model = float(self.zuuu_model)
             if float_model < 1.0:
                 self.omnibase = MobileBase(left_wheel_id=24, right_wheel_id=72, back_wheel_id=None)
-            else:
+            elif float_model < 1.2:
                 self.omnibase = MobileBase(left_wheel_id=24, right_wheel_id=None, back_wheel_id=116)
+            else:
+                self.omnibase = MobileBase(left_wheel_id=None, right_wheel_id=72, back_wheel_id=116)
         except Exception:
             msg = "ZUUU version can't be processed, check that the 'zuuu_model' tag is "\
                 "present in the .reachy.yaml file"
