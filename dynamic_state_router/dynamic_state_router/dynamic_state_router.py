@@ -188,6 +188,8 @@ class DynamicStateRouterNode(Node):
         regular_commands = defaultdict(dict)
         pid_commands = defaultdict(dict)
 
+        commands = self.patch_orbita_commands(commands)
+
         for joint, iv in commands.items():
             for interface, value in iv.items():
                 if joint.endswith('gripper') and interface == 'position':
@@ -280,6 +282,36 @@ class DynamicStateRouterNode(Node):
             rclpy.spin_once(self)
         self.logger.info('Setup done!')
 
+    def patch_orbita_commands(self, commands):
+        patched_commands = defaultdict(dict)
+
+        for joint, iv in commands.items():
+            if _is_orbita_joint(joint):
+                other = _other_orbita_joint(joint)
+
+                for reg, val in iv.items():
+                    if reg in ('torque', 'p_gain', 'i_gain', 'd_gain', 'speed_limit'):
+                        for o in other:
+                            if o not in commands or reg not in commands[o]:
+                                patched_commands[o][reg] = val
+
+            patched_commands[joint] = iv
+
+        return patched_commands
+
+
+def _is_orbita_joint(joint):
+    return joint.startswith('neck_')
+
+def _other_orbita_joint(joint):
+    prefix, suffix = joint.split('_')
+
+    other = []
+    for s in ('roll', 'pitch', 'yaw'):
+        if suffix != s:
+            other.append(f'{prefix}_{s}')
+
+    return other
 
 def main():
     import argparse

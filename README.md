@@ -32,6 +32,13 @@ You may add to your bashrc, or source it anytime you want to build `reachy_ws`
 source "$HOME/.cargo/env"
 ```
 
+### Git LFS
+
+```commandline
+apt-get install -y git-lfs
+git lfs install
+```
+
 https://doc.rust-lang.org/cargo/getting-started/installation.html
 
 ## Reachy WorkSpace

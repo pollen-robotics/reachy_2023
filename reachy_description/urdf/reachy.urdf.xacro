@@ -100,6 +100,19 @@
     <xacro:head
       parent="torso"
       damping="${damping}" friction="${friction}"
+
+      neck_orbita_serial_port="/dev/orbita_neck"
+      neck_orbita_id="70"
+      neck_orbita_alpha="54.0"
+      neck_orbita_hardware_zero="0.4293648, 1.2923188, 0.018335864"
+      neck_orbita_reduction="4.26666667"
+
+      head_serial_port="/dev/usb2ax_head"
+      head_xl320_ids="30, 31"
+      head_xl320_offsets="0.0, 0.0"
+      head_xl320_is_direct="0.0, 0.0"
+      head_xl320_reductions="1.0, 1.0"
+      head_fan_id="60"
     />
   </xacro:if>
 

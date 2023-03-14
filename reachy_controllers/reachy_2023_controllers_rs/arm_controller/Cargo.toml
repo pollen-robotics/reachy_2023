@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 itertools = "0.10.5"
-rustypot = "0.1.0"
+rustypot = "0.3.0"
 serialport = "4.2.0"
 cache_cache = "0.1.0"
 motor_model = { path = "../motor_model" }

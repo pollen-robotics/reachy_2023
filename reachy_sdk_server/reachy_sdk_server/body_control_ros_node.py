@@ -133,34 +133,43 @@ class BodyControlNode(Node):
                 kwargs['name'] = name
 
             if field in (joint_pb2.JointField.PID, joint_pb2.JointField.ALL):
-                kwargs['pid'] = joint_pb2.PIDValue(pid=joint_pb2.PIDGains(p=values['p_gain'], i=values['i_gain'], d=values['d_gain']))
+                if 'p_gain' in values and 'i_gain' in values and 'd_gain' in values:
+                    kwargs['pid'] = joint_pb2.PIDValue(pid=joint_pb2.PIDGains(p=values['p_gain'], i=values['i_gain'], d=values['d_gain']))
 
             if field in (joint_pb2.JointField.UID, joint_pb2.JointField.ALL):
                 kwargs['uid'] = UInt32Value(value=values['uid'])
 
             if field in (joint_pb2.JointField.COMPLIANT, joint_pb2.JointField.ALL):
-                kwargs['compliant'] = BoolValue(value=not values['torque'])
+                if 'torque' in values:
+                    kwargs['compliant'] = BoolValue(value=not values['torque'])
 
             if field in (joint_pb2.JointField.TEMPERATURE, joint_pb2.JointField.ALL):
-                kwargs['temperature'] = FloatValue(value=values['temperature'])
+                if 'temperature' in values:
+                    kwargs['temperature'] = FloatValue(value=values['temperature'])
 
             if field in (joint_pb2.JointField.GOAL_POSITION, joint_pb2.JointField.ALL):
-                kwargs['goal_position'] = FloatValue(value=values['target_position'])
+                if 'target_position' in values:
+                    kwargs['goal_position'] = FloatValue(value=values['target_position'])
 
             if field in (joint_pb2.JointField.PRESENT_POSITION, joint_pb2.JointField.ALL):
-                kwargs['present_position'] = FloatValue(value=values['position'])
+                if 'position' in values:
+                    kwargs['present_position'] = FloatValue(value=values['position'])
 
             if field in (joint_pb2.JointField.PRESENT_SPEED, joint_pb2.JointField.ALL):
-                kwargs['present_speed'] = FloatValue(value=values['velocity'])
+                if 'velocity' in values:
+                    kwargs['present_speed'] = FloatValue(value=values['velocity'])
 
             if field in (joint_pb2.JointField.PRESENT_LOAD, joint_pb2.JointField.ALL):
-                kwargs['present_load'] = FloatValue(value=values['effort'])
+                if 'effort' in values:
+                    kwargs['present_load'] = FloatValue(value=values['effort'])
 
             if field in (joint_pb2.JointField.TORQUE_LIMIT, joint_pb2.JointField.ALL):
-                kwargs['torque_limit'] = FloatValue(value=values['torque_limit'])
+                if 'torque_limit' in values:
+                    kwargs['torque_limit'] = FloatValue(value=values['torque_limit'])
 
             if field in (joint_pb2.JointField.SPEED_LIMIT, joint_pb2.JointField.ALL):
-                kwargs['speed_limit'] = FloatValue(value=values['speed_limit'])
+                if 'speed_limit' in values:
+                    kwargs['speed_limit'] = FloatValue(value=values['speed_limit'])
 
         return joint_pb2.JointState(**kwargs)
 

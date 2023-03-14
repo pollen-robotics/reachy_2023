@@ -122,13 +122,18 @@ HeadSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
     hw_xl320_states_velocity_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_xl320_states_effort_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_xl320_states_temperature_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_xl320_states_torque_limit_[i] = std::numeric_limits<double>::quiet_NaN();
+    hw_xl320_states_speed_limit_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_xl320_states_torque_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_xl320_states_p_gain_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_xl320_states_i_gain_[i] = std::numeric_limits<double>::quiet_NaN();
     hw_xl320_states_d_gain_[i] = std::numeric_limits<double>::quiet_NaN();
 
   }
+
+  // TODO: make sure there is no error here!
   head_hwi_get_goal_position(this->uid, hw_xl320_commands_position_);
+  // TODO: why?? moving speed instead of speed_limit?
   head_hwi_get_moving_speed(this->uid, hw_xl320_commands_speed_limit_);
   head_hwi_get_torque_limit(this->uid, hw_xl320_commands_torque_limit_);
   head_hwi_is_xl320_torque_on(this->uid, hw_xl320_commands_torque_);
@@ -336,13 +341,6 @@ HeadSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         "(%s) READ FAN ERROR!", info_.name.c_str()
       );
     }
-//
-//    if (head_hwi_get_fan_state(this->uid, hw_fans_states_) != 0) {
-//      RCLCPP_INFO(
-//        rclcpp::get_logger("HeadSystem"),
-//        "(%s) READ FAN ERROR!", info_.name.c_str()
-//      );
-//    }
 
   return hardware_interface::return_type::OK;
 }
