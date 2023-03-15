@@ -133,7 +133,7 @@ HeadSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
 
   // TODO: make sure there is no error here!
   head_hwi_get_goal_position(this->uid, hw_xl320_commands_position_);
-  // TODO: why?? moving speed instead of speed_limit?
+  // Dynamixel moving speed here actually means speed limit
   head_hwi_get_moving_speed(this->uid, hw_xl320_commands_speed_limit_);
   head_hwi_get_torque_limit(this->uid, hw_xl320_commands_torque_limit_);
   head_hwi_is_xl320_torque_on(this->uid, hw_xl320_commands_torque_);
