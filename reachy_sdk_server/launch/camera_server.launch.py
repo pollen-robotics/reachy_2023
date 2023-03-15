@@ -7,5 +7,7 @@ def generate_launch_description():
         Node(
             package='reachy_sdk_server',
             executable='camera_server',
+            output='both'
+
         ),
     ])

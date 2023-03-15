@@ -2,7 +2,7 @@ from launch.launch_description import LaunchDescription
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch_ros.substitutions import FindPackageShare
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetUseSimTime
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
@@ -47,11 +47,11 @@ def launch_setup(context, *args, **kwargs):
         gazebo,
         fake_gz_interface,
         spawn_entity,
+        SetUseSimTime(True)  # does not seem to work...
     ]
 
 
 def generate_launch_description():
-
     return LaunchDescription(
         [
             DeclareLaunchArgument(

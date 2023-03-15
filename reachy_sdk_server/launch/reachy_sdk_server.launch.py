@@ -7,5 +7,6 @@ def generate_launch_description():
         Node(
             package='reachy_sdk_server',
             executable='reachy_sdk_server',
+            output='both'
         ),
     ])

@@ -24,9 +24,10 @@ from reachy_msgs.srv import GetCameraZoomLevel, GetCameraZoomSpeed
 from reachy_msgs.srv import SetCameraZoomLevel, SetCameraZoomSpeed
 from reachy_msgs.srv import GetCameraZoomFocus, SetCameraZoomFocus
 from reachy_msgs.srv import SetFocusState
+from rclpy.lifecycle import LifecycleNode, State, TransitionCallbackReturn
 
 
-class FakeZoom(Node):
+class FakeZoom(LifecycleNode):
     def __init__(self):
         super().__init__('fake_zoom')
 
@@ -41,7 +42,12 @@ class FakeZoom(Node):
         self.set_zoom_focus_service = self.create_service(SetCameraZoomFocus, 'set_camera_zoom_focus', self.dummy_service_cb)
         self.set_focus_state_service = self.create_service(SetFocusState, 'set_focus_state', self.dummy_service_cb)
 
+        self.trigger_configure()
+
+    def on_configure(self, state: State) -> TransitionCallbackReturn:
+        # Dummy state to minimize impact on current behavior
         self.logger.info(f'Fake zoom ready')
+        return TransitionCallbackReturn.SUCCESS
 
     def dummy_service_cb(self, request, response):
         '''Just make the camera services exist, used for Reachy camera server'''

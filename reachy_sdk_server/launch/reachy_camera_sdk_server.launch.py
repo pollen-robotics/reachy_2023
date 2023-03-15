@@ -1,16 +1,17 @@
-
-from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch import LaunchDescription, LaunchContext
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription
+from launch_ros.substitutions import FindPackageShare
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
     return LaunchDescription([
-        Node(
-            package='reachy_sdk_server',
-            executable='reachy_sdk_server',
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                FindPackageShare("reachy_sdk_server"), '/reachy_sdk_server.launch.py']),
         ),
-        Node(
-            package='reachy_sdk_server',
-            executable='camera_server',
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                FindPackageShare("reachy_sdk_server"), '/camera_server.launch.py']),
         ),
     ])

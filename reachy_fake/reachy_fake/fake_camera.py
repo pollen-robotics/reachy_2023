@@ -5,9 +5,10 @@ import cv2
 import numpy as np
 
 from sensor_msgs.msg._compressed_image import CompressedImage
+from rclpy.lifecycle import LifecycleNode, State, TransitionCallbackReturn
 
 
-class FakeCamera(Node):
+class FakeCamera(LifecycleNode):
     def __init__(self):
         super().__init__('fake_camera')
 
@@ -39,7 +40,12 @@ class FakeCamera(Node):
 
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.trigger_configure()
+
+    def on_configure(self, state: State) -> TransitionCallbackReturn:
+        # Dummy state to minimize impact on current behavior
         self.logger.info(f'Fake camera ready')
+        return TransitionCallbackReturn.SUCCESS
 
     def timer_callback(self):
         self.left_pub.publish(self.img_msg)
