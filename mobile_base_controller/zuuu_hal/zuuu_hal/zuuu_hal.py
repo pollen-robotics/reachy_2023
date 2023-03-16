@@ -57,6 +57,7 @@ from zuuu_interfaces.srv import SetSpeed, GetBatteryVoltage, SetZuuuSafety
 from zuuu_hal.utils import PID, angle_diff, sign
 from zuuu_hal.lidar_safety import LidarSafety
 from zuuu_hal import identify_zuuu_model
+from reachy_utils.config import get_zuuu_version
 
 
 class ZuuuModes(Enum):
@@ -156,7 +157,7 @@ class ZuuuHAL(Node):
         # self.zuuu_model = check_output(
         #     os.path.expanduser('~')+'/.local/bin/reachy-identify-zuuu-model'
         #     ).strip().decode()
-        self.zuuu_model = identify_zuuu_model()
+        self.zuuu_model = get_zuuu_version()
         try:
             float_model = float(self.zuuu_model)
             if float_model < 1.0:
