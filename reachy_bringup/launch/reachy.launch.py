@@ -9,23 +9,44 @@ from launch_ros.actions import Node, SetUseSimTime, LifecycleNode
 from launch_ros.event_handlers import OnStateTransition
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+import yaml
+import os
 
 FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT = 'full_kit', 'starter_kit_right', 'starter_kit_left'
+REACHY_CONFIG_MODEL = "model"
+REACHY_CONFIG_NECK_ORBITA_ZERO = "neck_orbita_zero"
+REACHY_CONFIG_TOP = "top"
+REACHY_CONFIG_BOTTOM = "bottom"
+REACHY_CONFIG_MIDDLE = "middle"
 
 
-def get_reachy_config():
-    import yaml
-    import os
-    config_file = os.path.expanduser('~/.reachy.yaml')
-    try:
+class ReachyConfig:
+    def __init__(self, config_file_path='~/.reachy.yaml'):
+
+        config_file = os.path.expanduser(config_file_path)
         with open(config_file) as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
-            return config["model"] if config["model"] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT] else False
-    except (FileNotFoundError, TypeError):
-        return False
 
+            # Robot model
+            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT]:
+                self.model = config[REACHY_CONFIG_MODEL]
+            else:
+                raise ValueError('Bad robot model "{}". Expected values are {}'.format(
+                    config[REACHY_CONFIG_MODEL], [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT]))
 
-robot_model_file = get_reachy_config()
+            # orbita zero
+            try:
+                self.neck_orbita_zero_top = config[REACHY_CONFIG_NECK_ORBITA_ZERO][REACHY_CONFIG_TOP]
+                self.neck_orbita_zero_middle = config[REACHY_CONFIG_NECK_ORBITA_ZERO][REACHY_CONFIG_MIDDLE]
+                self.neck_orbita_zero_bottom = config[REACHY_CONFIG_NECK_ORBITA_ZERO][REACHY_CONFIG_BOTTOM]
+            except KeyError as e:
+                raise KeyError("neck_orbita_zero key not found :: {}".format(e))
+
+    def __str__(self):
+        return "robot_model".ljust(25, ' ') + "{}\n".format(self.model) + \
+            "neck_orbita_zero_top".ljust(25, ' ') + "{}\n".format(self.neck_orbita_zero_top) + \
+            "neck_orbita_zero_middle".ljust(25, ' ') + "{}\n".format(self.neck_orbita_zero_middle) + \
+            "neck_orbita_zero_bottom".ljust(25, ' ') + "{}\n".format(self.neck_orbita_zero_bottom)
 
 
 def launch_setup(context, *args, **kwargs):
@@ -41,13 +62,9 @@ def launch_setup(context, *args, **kwargs):
     start_sdk_server_rl = LaunchConfiguration('start_sdk_server')
     start_sdk_server_py = start_sdk_server_rl.perform(context) == 'true'
 
-    # Robot model
-    robot_model_rl = LaunchConfiguration('robot_model')
-    robot_model_py = robot_model_rl.perform(context)
-    if robot_model_file:
-        LogInfo(msg="Using robot_model described in ~/.reachy.yaml ...").execute(context=context)
-        robot_model_py = robot_model_file
-    LogInfo(msg="Robot Model :: {}".format(robot_model_py)).execute(context=context)
+    # Robot config
+    reachy_config = ReachyConfig()
+    LogInfo(msg="Reachy config : \n{}".format(reachy_config)).execute(context=context)
 
     robot_description_content = Command(
         [
@@ -59,10 +76,17 @@ def launch_setup(context, *args, **kwargs):
             *((' ', 'use_fake_hardware:=true', ' ') if fake_py else
               (' ', 'use_fake_hardware:=true use_gazebo:=true depth_camera:=false', ' ') if gazebo_py else
               (' ',)),
-            f'robot_config:={robot_model_py}',
+            f'robot_config:={reachy_config.model}',
+            ' ',
+            'orbita_hardware_zero:="{}, {}, {}, "'.format(
+                reachy_config.neck_orbita_zero_top,
+                reachy_config.neck_orbita_zero_middle,
+                reachy_config.neck_orbita_zero_bottom),
             ' ',
         ]
-    )
+    ) # To be cleaned on issue #92
+    # print(robot_description_content.perform(context=context))
+
     robot_description = {
         'robot_description': ParameterValue(robot_description_content, value_type=str),
     }
@@ -71,7 +95,7 @@ def launch_setup(context, *args, **kwargs):
         [
             FindPackageShare('reachy_bringup'),
             'config',
-            f'reachy_{robot_model_py}_controllers.yaml',
+            f'reachy_{reachy_config.model}_controllers.yaml',
         ]
     )
 
@@ -90,7 +114,7 @@ def launch_setup(context, *args, **kwargs):
         package='reachy_sdk_server',
         executable='reachy_sdk_server',
         output='both',
-        arguments=[robot_model_py],
+        arguments=[reachy_config.model],
         condition=IfCondition(start_sdk_server_rl),
     )
 
@@ -141,7 +165,8 @@ def launch_setup(context, *args, **kwargs):
         executable='spawner',
         arguments=['r_arm_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
-            PythonExpression(f"'{robot_model_py}' == '{FULL_KIT}' or '{robot_model_py}' == '{STARTER_KIT_RIGHT}'")
+            PythonExpression(
+                f"'{reachy_config.model}' == '{FULL_KIT}' or '{reachy_config.model}' == '{STARTER_KIT_RIGHT}'")
         )
     )
 
@@ -150,7 +175,8 @@ def launch_setup(context, *args, **kwargs):
         executable='spawner',
         arguments=['l_arm_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
-            PythonExpression(f"'{robot_model_py}' == '{FULL_KIT}' or '{robot_model_py}' == '{STARTER_KIT_LEFT}'")
+            PythonExpression(
+                f"'{reachy_config.model}' == '{FULL_KIT}' or '{reachy_config.model}' == '{STARTER_KIT_LEFT}'")
         ),
     )
 
@@ -219,7 +245,7 @@ def launch_setup(context, *args, **kwargs):
     gazebo_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare("reachy_gazebo"), '/launch', '/gazebo.launch.py']),
-        launch_arguments={'robot_config': f'{robot_model_py}'}.items()
+        launch_arguments={'robot_config': f'{reachy_config.model}'}.items()
     )
     # For Gazebo simulation, we should not launch the controller manager (Gazebo does its own stuff)
 
@@ -311,13 +337,6 @@ def generate_launch_description():
             default_value='false',
             description='Start sdk_server along with reachy nodes with this launch file.',
             choices=['true', 'false']
-        ),
-        DeclareLaunchArgument(
-            'robot_model',
-            default_value=FULL_KIT,
-            description='Choose robot_model configuration. '
-                        'If a robot_configuration is defined in ~/.reachy.yaml : it WILL BE CHOSEN over any given arg',
-            choices=[FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT]
         ),
         OpaqueFunction(function=launch_setup)
     ])
