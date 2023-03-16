@@ -78,14 +78,14 @@ def launch_setup(context, *args, **kwargs):
               (' ',)),
             f'robot_config:={reachy_config.model}',
             ' ',
-            'orbita_hardware_zero:="{}, {}, {}, "'.format(
+            'orbita_hardware_zero:="{}, {}, {}"'.format(
                 reachy_config.neck_orbita_zero_top,
                 reachy_config.neck_orbita_zero_middle,
                 reachy_config.neck_orbita_zero_bottom),
             ' ',
         ]
     ) # To be cleaned on issue #92
-    # print(robot_description_content.perform(context=context))
+    print(robot_description_content.perform(context=context))
 
     robot_description = {
         'robot_description': ParameterValue(robot_description_content, value_type=str),
