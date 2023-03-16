@@ -85,7 +85,7 @@ def launch_setup(context, *args, **kwargs):
             ' ',
         ]
     ) # To be cleaned on issue #92
-    print(robot_description_content.perform(context=context))
+    #print(robot_description_content.perform(context=context))
 
     robot_description = {
         'robot_description': ParameterValue(robot_description_content, value_type=str),
