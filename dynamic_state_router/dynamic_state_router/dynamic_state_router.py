@@ -21,7 +21,6 @@ In more details, it:
 """
 from collections import defaultdict
 from functools import partial
-import time
 from threading import Event, Lock, Thread
 
 import rclpy
