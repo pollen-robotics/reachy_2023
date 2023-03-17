@@ -53,7 +53,6 @@ class DynamicStateRouterNode(Node):
             qos_profile=5,
             callback=self.on_dynamic_joint_states,
         )
-        self.joint_state_update = Event()
 
         # We wait to retrieve all setup info
         self.wait_for_setup()
@@ -168,10 +167,6 @@ class DynamicStateRouterNode(Node):
                 self.requested_commands.clear()
                 self.joint_command_request_pub.clear()
 
-            for _ in range(2):
-                self.joint_state_update.clear()
-                self.joint_state_update.wait()
-
     def publish_joint_commands(self):
         msg = JointState()
 
@@ -267,8 +262,6 @@ class DynamicStateRouterNode(Node):
 
             self.joint_state_ready.set()
         
-        self.joint_state_update.set()
-
     def on_forward_position_controller_update(self, msg: Float64MultiArray, controller_name: str):
         fc = self.forward_controllers[controller_name]
 
