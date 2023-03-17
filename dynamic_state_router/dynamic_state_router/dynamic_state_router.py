@@ -54,6 +54,8 @@ class DynamicStateRouterNode(Node):
             callback=self.on_dynamic_joint_states,
         )
 
+        self.joint_command = {}
+
         # We wait to retrieve all setup info
         self.wait_for_setup()
 
@@ -216,8 +218,14 @@ class DynamicStateRouterNode(Node):
             for gain in ('p_gain', 'i_gain', 'd_gain'):
                 if j in commands and gain in commands[j]:
                     msg.data.append(commands[j][gain])
+                elif j in self.joint_command and gain in self.joint_command[j]:
+                    msg.data.append(self.joint_command[j][gain])
                 else:
                     msg.data.append(self.joint_state[j][gain])
+
+        for j, gains in commands.items():
+            for g, val in gains.items():
+                self.joint_command[j][g] = val
 
         self.fc_publisher['forward_pid_controller'].publish(msg)
 
@@ -234,10 +242,18 @@ class DynamicStateRouterNode(Node):
             
             pub_interface = fc.interface if fc.interface != 'position' else 'target_position'
 
-            msg.data = [
-                new_cmd[j] if j in new_cmd else self.joint_state[j][pub_interface]
-                for j in fc.joints
-            ]
+            msg.data = []
+            for j in fc.joints:
+                if j in new_cmd:
+                    msg.data.append(new_cmd[j])
+                elif pub_interface in self.joint_command[j]:
+                    msg.data.append(self.joint_command[j][pub_interface])
+                else:
+                    msg.data.append(self.joint_state[j][pub_interface])
+
+            for j, val in new_cmd.items():
+                self.joint_command[j][pub_interface] = val
+
             self.fc_publisher[fc.name].publish(msg)
                 
 
@@ -250,6 +266,8 @@ class DynamicStateRouterNode(Node):
                 self.joint_state[name] = {}
                 self.joint_state[name]['name'] = name
                 self.joint_state[name]['uid'] = uid
+
+                self.joint_command[name] = {}
 
         for uid, (name, kv) in enumerate(zip(state.joint_names, state.interface_values)):
             for k, v in zip(kv.interface_names, kv.values):
