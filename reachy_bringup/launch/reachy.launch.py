@@ -118,6 +118,35 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(start_sdk_server_rl),
     )
 
+    camera_publisher_node = Node(
+        package='camera_controllers',
+        executable='camera_publisher',
+        output='both',
+        condition=IfCondition(
+            PythonExpression(
+                f"not {fake_py}"
+            )),
+    )
+    camera_focus_node = Node(
+        package='camera_controllers',
+        executable='camera_focus',
+        output='both',
+        condition=IfCondition(
+            PythonExpression(
+                f"not {fake_py}"
+            )),
+    )
+
+    camera_zoom_node = Node(
+        package='camera_controllers',
+        executable='camera_zoom_service',
+        output='both',
+        condition=IfCondition(
+            PythonExpression(
+                f"not {fake_py}"
+            )),
+    )
+
     sdk_camera_server_node = Node(
         package='reachy_sdk_server',
         executable='camera_server',
@@ -307,6 +336,9 @@ def launch_setup(context, *args, **kwargs):
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         gripper_safe_controller_node,
         delay_sdk_server_after_kinematics,
+        camera_publisher_node,
+        camera_focus_node,
+        camera_zoom_node,
 	    sdk_camera_server_node,
         dynamic_state_router_node,
     ]
