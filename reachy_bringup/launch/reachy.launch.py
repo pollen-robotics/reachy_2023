@@ -307,7 +307,7 @@ def launch_setup(context, *args, **kwargs):
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         gripper_safe_controller_node,
         delay_sdk_server_after_kinematics,
-        sdk_camera_server_node,
+	    sdk_camera_server_node,
         dynamic_state_router_node,
     ]
 
