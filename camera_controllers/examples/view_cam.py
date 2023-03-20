@@ -51,11 +51,6 @@ class RosCameraSubscriber(
 class OpenCvCameraViewer:
     """CameraViewer using OpenCV."""
 
-    side_to_port = {
-        'left': 6,
-        'right': 2,
-    }
-
     rot = {
         'left': 3,  # 3 * 90 = 270
         'right': 1,  # 1 * 90 = 90
@@ -63,7 +58,7 @@ class OpenCvCameraViewer:
 
     def __init__(self, side: str) -> None:
         """Initialize cap by connecting to the required video port and configuring it."""
-        self.cap = cv.VideoCapture(self.side_to_port[side], apiPreference=cv.CAP_V4L2)
+        self.cap = cv.VideoCapture(f'/dev/{side}_camera', apiPreference=cv.CAP_V4L2)
         self.cap.set(cv.CAP_PROP_FOURCC, cv.VideoWriter.fourcc('m', 'j', 'p', 'g'))
         self.cap.set(cv.CAP_PROP_FOURCC, cv.VideoWriter.fourcc('M', 'J', 'P', 'G'))
         self.cap.set(cv.CAP_PROP_FPS, 30)
