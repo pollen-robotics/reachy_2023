@@ -1,6 +1,6 @@
 from launch import LaunchDescription, LaunchContext
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription, TimerAction, \
-    OpaqueFunction, LogInfo
+    OpaqueFunction, LogInfo, SetEnvironmentVariable
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit, OnProcessStart, OnExecutionComplete
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
@@ -346,6 +346,9 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     return LaunchDescription([
+        # Needed by camera publisher - See: https://github.com/ros2/rosidl_python/issues/79
+        SetEnvironmentVariable('PYTHONOPTIMIZE', '1'),
+
         DeclareLaunchArgument(
             'start_rviz',
             default_value='false',
