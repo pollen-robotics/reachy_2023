@@ -142,21 +142,25 @@ impl HeadController {
         let moving_speed_to_update =
             differences(&self.xl320_ids, &current_moving_speed, &moving_speed);
         if !moving_speed_to_update.is_empty() {
-            let (keys, values): (Vec<u8>, Vec<u16>) = moving_speed_to_update
-                .iter()
-                .map(|(k, v)| {
-                    (
-                        *k,
-                        xl320::conv::rad_per_sec_to_xl320_abs_speed(
-                            self.xl320_params[k].to_local_max_speed(*v),
-                        ),
-                    )
-                })
-                .unzip();
+            let mut err = None;
 
-            xl320::sync_write_moving_speed(&self.io, self.serial_port.as_mut(), &keys, &values)?;
             for (k, v) in moving_speed_to_update {
-                self.xl320_moving_speed.insert(k, v);
+                let dxl_v = xl320::conv::rad_per_sec_to_xl320_abs_speed(
+                    self.xl320_params[&k].to_local_max_speed(v),
+                );
+
+                match xl320::write_moving_speed(&self.io, self.serial_port.as_mut(), k, dxl_v) {
+                    Ok(_) => {
+                        self.xl320_moving_speed.insert(k, v);
+                    }
+                    Err(e) => {
+                        err = Some(e);
+                    }
+                }
+            }
+
+            if let Some(err) = err {
+                return Err(err);
             }
         }
         Ok(())
@@ -166,14 +170,22 @@ impl HeadController {
         let torque_limit_to_update =
             differences(&self.xl320_ids, &current_torque_limit, &torque_limit);
         if !torque_limit_to_update.is_empty() {
-            let (keys, values): (Vec<u8>, Vec<u16>) = torque_limit_to_update
-                .iter()
-                .map(|(k, v)| (*k, xl320::conv::torque_to_xl320_abs_load(*v)))
-                .unzip();
+            let mut err = None;
 
-            xl320::sync_write_torque_limit(&self.io, self.serial_port.as_mut(), &keys, &values)?;
             for (k, v) in torque_limit_to_update {
-                self.xl320_torque_limit.insert(k, v);
+                let dxl_t = xl320::conv::torque_to_xl320_abs_load(v);
+
+                match xl320::write_torque_limit(&self.io, self.serial_port.as_mut(), k, dxl_t) {
+                    Ok(_) => {
+                        self.xl320_torque_limit.insert(k, v);
+                    },
+                    Err(e) => {
+                        err = Some(e);
+                    },
+                }
+            }
+            if let Some(err) = err {
+                return Err(err);
             }
         }
 
@@ -227,11 +239,21 @@ impl HeadController {
         let torque_to_update = differences(&self.xl320_ids, &current_torque, &torque);
 
         if !torque_to_update.is_empty() {
-            let (keys, values): (Vec<u8>, Vec<u8>) =
-                torque_to_update.iter().map(|(k, v)| (*k, *v as u8)).unzip();
-            xl320::sync_write_torque_enable(&self.io, self.serial_port.as_mut(), &keys, &values)?;
+            let mut err = None;
+
             for (k, v) in torque_to_update {
-                self.xl320_torque_on.insert(k, v);
+                match xl320::write_torque_enable(&self.io, self.serial_port.as_mut(), k, v as u8) {
+                    Ok(_) => {
+                        self.xl320_torque_on.insert(k, v);
+                    },
+                    Err(e) => {
+                        err = Some(e);
+                    },
+                }
+            }
+
+            if let Some(err) = err {
+                return Err(err);
             }
         }
 
@@ -261,18 +283,31 @@ impl HeadController {
         let pid_to_update = differences(&self.xl320_ids, &current_pid, pid);
 
         if !pid_to_update.is_empty() {
-            let (ids, xl320_p, xl320_i, xl320_d): (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) = multiunzip(
-                pid_to_update
-                    .iter()
-                    .map(|(id, pid)| (*id, pid.p as u8, pid.i as u8, pid.d as u8)),
-            );
-
-            xl320::sync_write_p_gain(&self.io, self.serial_port.as_mut(), &ids, &xl320_p)?;
-            xl320::sync_write_i_gain(&self.io, self.serial_port.as_mut(), &ids, &xl320_i)?;
-            xl320::sync_write_d_gain(&self.io, self.serial_port.as_mut(), &ids, &xl320_d)?;
+            let mut err = None;
 
             for (k, v) in pid_to_update {
-                self.xl320_pid.insert(k, v);
+                let mut is_ok = true;
+
+                if let Err(e) = xl320::write_p_gain(&self.io, self.serial_port.as_mut(), k, v.p as u8) {
+                    err = Some(e);
+                    is_ok = false;
+                }
+                if let Err(e) = xl320::write_i_gain(&self.io, self.serial_port.as_mut(), k, v.i as u8) {
+                    err = Some(e);
+                    is_ok = false;
+                }
+                if let Err(e) = xl320::write_d_gain(&self.io, self.serial_port.as_mut(), k, v.d as u8) {
+                    err = Some(e);
+                    is_ok = false;
+                }
+
+                if is_ok {
+                    self.xl320_pid.insert(k, v);
+                }
+            }
+
+            if let Some(err) = err {
+                return Err(err);
             }
         }
 

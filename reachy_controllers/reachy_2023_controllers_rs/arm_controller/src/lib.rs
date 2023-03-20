@@ -143,21 +143,25 @@ impl ArmController {
         let moving_speed_to_update =
             differences(&self.mx_ids, &current_moving_speed, &moving_speed);
         if !moving_speed_to_update.is_empty() {
-            let (keys, values): (Vec<u8>, Vec<u16>) = moving_speed_to_update
-                .iter()
-                .map(|(k, v)| {
-                    (
-                        *k,
-                        mx::conv::rad_per_sec_to_dxl_abs_speed(
-                            self.mx_params[k].to_local_max_speed(*v),
-                        ),
-                    )
-                })
-                .unzip();
+            let mut err = None;
 
-            mx::sync_write_moving_speed(&self.io, self.serial_port.as_mut(), &keys, &values)?;
             for (k, v) in moving_speed_to_update {
-                self.mx_moving_speed.insert(k, v);
+                let dxl_v = mx::conv::rad_per_sec_to_dxl_abs_speed(
+                    self.mx_params[&k].to_local_max_speed(v),
+                );
+
+                match mx::write_moving_speed(&self.io, self.serial_port.as_mut(), k, dxl_v) {
+                    Ok(_) => {
+                        self.mx_moving_speed.insert(k, v);
+                    }
+                    Err(e) => {
+                        err = Some(e);
+                    }
+                }
+            }
+
+            if let Some(err) = err {
+                return Err(err);
             }
         }
         Ok(())
@@ -167,14 +171,23 @@ impl ArmController {
         let torque_limit_to_update =
             differences(&self.mx_ids, &current_torque_limit, &torque_limit);
         if !torque_limit_to_update.is_empty() {
-            let (keys, values): (Vec<u8>, Vec<u16>) = torque_limit_to_update
-                .iter()
-                .map(|(k, v)| (*k, mx::conv::torque_to_dxl_abs_load(*v)))
-                .unzip();
+            let mut err = None;
 
-            mx::sync_write_torque_limit(&self.io, self.serial_port.as_mut(), &keys, &values)?;
             for (k, v) in torque_limit_to_update {
-                self.mx_torque_limit.insert(k, v);
+                let dxl_t = mx::conv::torque_to_dxl_abs_load(v);
+
+                match mx::write_torque_limit(&self.io, self.serial_port.as_mut(), k, dxl_t) {
+                    Ok(_) => {
+                        self.mx_torque_limit.insert(k, v);
+                    }
+                    Err(e) => {
+                        err = Some(e);
+                    }
+                }
+            }
+
+            if let Some(err) = err {
+                return Err(err);
             }
         }
 
@@ -228,11 +241,21 @@ impl ArmController {
         let torque_to_update = differences(&self.mx_ids, &current_torque, &torque);
 
         if !torque_to_update.is_empty() {
-            let (keys, values): (Vec<u8>, Vec<u8>) =
-                torque_to_update.iter().map(|(k, v)| (*k, *v as u8)).unzip();
-            mx::sync_write_torque_enable(&self.io, self.serial_port.as_mut(), &keys, &values)?;
+            let mut err = None;
+
             for (k, v) in torque_to_update {
-                self.mx_torque_on.insert(k, v);
+                match mx::write_torque_enable(&self.io, self.serial_port.as_mut(), k, v as u8) {
+                    Ok(_) => {
+                        self.mx_torque_on.insert(k, v);
+                    }
+                    Err(e) => {
+                        err = Some(e);
+                    }
+                };
+            }
+
+            if let Some(err) = err {
+                return Err(err);
             }
         }
 
@@ -260,18 +283,34 @@ impl ArmController {
         let pid_to_update = differences(&self.mx_ids, &current_pid, pid);
 
         if !pid_to_update.is_empty() {
-            let (ids, mx_p, mx_i, mx_d): (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) = multiunzip(
-                pid_to_update
-                    .iter()
-                    .map(|(id, pid)| (*id, pid.p as u8, pid.i as u8, pid.d as u8)),
-            );
-
-            mx::sync_write_p_gain(&self.io, self.serial_port.as_mut(), &ids, &mx_p)?;
-            mx::sync_write_i_gain(&self.io, self.serial_port.as_mut(), &ids, &mx_i)?;
-            mx::sync_write_d_gain(&self.io, self.serial_port.as_mut(), &ids, &mx_d)?;
+            let mut err = None;
 
             for (k, v) in pid_to_update {
-                self.mx_pid.insert(k, v);
+                let mut is_ok = true;
+
+                if let Err(e) = mx::write_p_gain(&self.io, self.serial_port.as_mut(), k, v.p as u8)
+                {
+                    err = Some(e);
+                    is_ok = false;
+                }
+                if let Err(e) = mx::write_i_gain(&self.io, self.serial_port.as_mut(), k, v.i as u8)
+                {
+                    err = Some(e);
+                    is_ok = false;
+                }
+                if let Err(e) = mx::write_d_gain(&self.io, self.serial_port.as_mut(), k, v.d as u8)
+                {
+                    err = Some(e);
+                    is_ok = false;
+                }
+
+                if is_ok {
+                    self.mx_pid.insert(k, v);
+                }
+            }
+
+            if let Some(err) = err {
+                return Err(err);
             }
         }
 
