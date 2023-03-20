@@ -10,7 +10,7 @@
     <xacro:include filename="$(find reachy_description)/ros2_control/head.ros2_control.xacro"/>
 
     <joint name="neck_roll" type="revolute">
-      <origin xyz="0.015 0.0 0.095" rpy="0 0.174 0" />
+      <origin xyz="0.015 0.0 0.095" rpy="-0.15105105 0.08669986 -1.05356462"/>
       <parent link="${parent}"/>
       <child link="head_x"/>
       <axis xyz="1 0 0"/>
@@ -61,7 +61,7 @@
     </link>
 
     <joint name="neck_fixed" type="fixed">
-      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+      <origin xyz="0 0 0" rpy="0.0 0.0 1.047"/>
       <parent link="head_z" />
       <child link="head" />
     </joint>
