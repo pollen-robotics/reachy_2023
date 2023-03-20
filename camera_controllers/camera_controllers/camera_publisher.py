@@ -61,9 +61,9 @@ class CameraPublisher(Node):
             self.logger.info(f'{side.capitalize()} camera ready to publish!')
 
             if side == 'right':
-                angle = '270'
-            else:
                 angle = '90'
+            else:
+                angle = '270'
 
             for frame in self.devices[side]:
                 self.publish_img(side, self._rotate(frame, angle))
