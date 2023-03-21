@@ -158,6 +158,7 @@ class ZuuuHAL(Node):
         #     os.path.expanduser('~')+'/.local/bin/reachy-identify-zuuu-model'
         #     ).strip().decode()
         self.zuuu_model = get_zuuu_version()
+        self.get_logger().info(f"zuuu version: {self.zuuu_model}")
         try:
             float_model = float(self.zuuu_model)
             if float_model < 1.0:
