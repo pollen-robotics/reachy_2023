@@ -1,14 +1,22 @@
 #!/bin/bash
 # source ROS2 Foxy setup file.
 # shellcheck disable=SC1091
-source /home/reachy/reachy_tips/config/reachy_ros_config
 
-IDENTIFY_CMD=$HOME/.local/bin/reachy-identify-zuuu-model
-zuuu_model=`$IDENTIFY_CMD`
 
+# Env setup
+source /opt/ros/humble/setup.bash
+source /home/reachy/reachy_ws/install/setup.bash
+source /usr/share/gazebo/setup.bash
+source /usr/share/colcon_cd/function/colcon_cd.sh
+export _colcon_cd_root=~/ros2_install
+export LC_NUMERIC="en_US.UTF-8"
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+source "$HOME/.cargo/env"
+export PATH=$PATH:$HOME/.local/bin
+
+
+zuuu_model=$(reachy-identify-zuuu-model 2>&1)
 # Start the ROS2 launch file
-zuuu_model=$(reachy-identify-zuuu-model)
-
 if [ $zuuu_model != none ];
 then
     echo "Starting mobile base launch file."
