@@ -17,6 +17,7 @@ from reachy_sdk_api import arm_kinematics_pb2, arm_kinematics_pb2_grpc
 from reachy_sdk_api import head_kinematics_pb2, head_kinematics_pb2_grpc
 from reachy_sdk_api import fullbody_cartesian_command_pb2, fullbody_cartesian_command_pb2_grpc
 from reachy_sdk_api import fan_pb2, fan_pb2_grpc
+from reachy_sdk_api import config_pb2, config_pb2_grpc
 
 from reachy_sdk_server.body_control_ros_node import BodyControlNode
 
@@ -28,9 +29,10 @@ class ReachySDKServer(
     joint_pb2_grpc.JointServiceServicer,
     sensor_pb2_grpc.SensorServiceServicer,
     fan_pb2_grpc.FanControllerServiceServicer,
+    config_pb2_grpc.ConfigServiceServicer,
 ):
     """Reachy SDK server node.
-    
+
     Converts gRPC requests to commands sent to the dynamic_state_router node.
     """
 
@@ -218,6 +220,17 @@ class ReachySDKServer(
             head_command_success=True,
         )
 
+    # Config gRPCs
+    def GetReachyConfig(self, request: Empty, context) -> config_pb2.ConfigReachy:
+        """Get Reachy generation and if there is a mobile base attached."""
+        from reachy_utils.config import get_reachy_generation, get_zuuu_version
+        generation = get_reachy_generation()
+        mobile_base_presence = True if get_zuuu_version() != 'none' else False
+        return config_pb2.ConfigReachy(
+            generation=generation,
+            mobile_base_presence=mobile_base_presence,
+        )
+
 
 def main():
     """Run the Node and the gRPC server."""
@@ -234,6 +247,7 @@ def main():
     joint_pb2_grpc.add_JointServiceServicer_to_server(sdk_server, server)
     sensor_pb2_grpc.add_SensorServiceServicer_to_server(sdk_server, server)
     fan_pb2_grpc.add_FanControllerServiceServicer_to_server(sdk_server, server)
+    config_pb2_grpc.add_ConfigServiceServicer_to_server(sdk_server, server)
 
     server.add_insecure_port('[::]:50055')
     server.start()
