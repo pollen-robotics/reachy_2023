@@ -138,10 +138,9 @@ class RPLidarScanPublisher : public rclcpp::Node
                     RCLCPP_ERROR(this->get_logger(),"Error, rplidar internal error detected. Please reboot the device to retry.");
                     return false;
             }
-        } else {
-            RCLCPP_ERROR(this->get_logger(),"Error, cannot retrieve rplidar health code: %x", op_result);
-            return false;
         }
+        RCLCPP_ERROR(this->get_logger(),"Error, cannot retrieve rplidar health code: %x", op_result);
+        return false;
     }
 
     bool stop_motor(const std::shared_ptr<std_srvs::srv::Empty::Request> req,
