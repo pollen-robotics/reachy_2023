@@ -111,7 +111,7 @@
                 head_serial_port="/dev/usb2ax_head"
                 head_xl320_ids="30, 31"
                 head_xl320_offsets="0.0, 0.0"
-                head_xl320_is_direct="0.0, 0.0"
+                head_xl320_is_direct="1.0, 1.0"
                 head_xl320_reductions="1.0, 1.0"
                 head_fan_id="60"
         />
