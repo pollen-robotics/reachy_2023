@@ -84,8 +84,8 @@ def launch_setup(context, *args, **kwargs):
                 reachy_config.neck_orbita_zero_bottom),
             ' ',
         ]
-    ) # To be cleaned on issue #92
-    #print(robot_description_content.perform(context=context))
+    )  # To be cleaned on issue #92
+    # print(robot_description_content.perform(context=context))
 
     robot_description = {
         'robot_description': ParameterValue(robot_description_content, value_type=str),
@@ -124,7 +124,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py}"
+                f"not {fake_py} and not {gazebo_py}"
             )),
     )
     camera_focus_node = Node(
@@ -133,7 +133,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py}"
+                f"not {fake_py} and not {gazebo_py}"
             )),
     )
 
@@ -143,7 +143,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py}"
+                f"not {fake_py} and not {gazebo_py}"
             )),
     )
 
@@ -339,7 +339,7 @@ def launch_setup(context, *args, **kwargs):
         camera_publisher_node,
         camera_focus_node,
         camera_zoom_node,
-	    sdk_camera_server_node,
+        sdk_camera_server_node,
         dynamic_state_router_node,
     ]
 
