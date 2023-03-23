@@ -223,12 +223,20 @@ class ReachySDKServer(
     # Config gRPCs
     def GetReachyConfig(self, request: Empty, context) -> config_pb2.ConfigReachy:
         """Get Reachy generation and if there is a mobile base attached."""
-        from reachy_utils.config import get_reachy_generation, get_zuuu_version
+        from reachy_utils.config import get_reachy_generation, get_zuuu_version, get_camera_parameters
         generation = get_reachy_generation()
         mobile_base_presence = True if get_zuuu_version() != 'none' else False
+
+        camera_parameters = get_camera_parameters()
+
+        left = list(camera_parameters["left"].values())
+        right = list(camera_parameters["right"].values())
+        camera_parameters = [left + right]
+
         return config_pb2.ConfigReachy(
             generation=generation,
             mobile_base_presence=mobile_base_presence,
+            camera_parameters=camera_parameters
         )
 
 
