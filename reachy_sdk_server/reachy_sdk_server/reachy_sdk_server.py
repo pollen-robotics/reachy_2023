@@ -231,12 +231,12 @@ class ReachySDKServer(
 
         left = list(camera_parameters["left"].values())
         right = list(camera_parameters["right"].values())
-        camera_parameters = [left + right]
+        camera_parameters = left + right
 
         return config_pb2.ConfigReachy(
             generation=generation,
             mobile_base_presence=mobile_base_presence,
-            camera_parameters=camera_parameters
+            camera_parameters=camera_parameters,
         )
 
 
