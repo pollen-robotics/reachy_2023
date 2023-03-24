@@ -29,6 +29,9 @@ std::vector<float> parse_string_as_vec(std::string s) {
 
 namespace arm_system_hwi
 {
+int log_throttle_duration = LOG_THROTTLE_DURATION_DEFAULT;
+
+
 CallbackReturn
 ArmSystem::on_init(const hardware_interface::HardwareInfo & info)
 {
@@ -36,6 +39,12 @@ ArmSystem::on_init(const hardware_interface::HardwareInfo & info)
   {
     return CallbackReturn::ERROR;
   }
+
+        const char* env_p = std::getenv("TEST");
+    std::printf("coucou\n");
+    std::printf(env_p);
+    std::printf("coucou\n");
+
 
   if (info.joints.size() != 8 + 3)
   {
@@ -52,6 +61,8 @@ ArmSystem::on_init(const hardware_interface::HardwareInfo & info)
       rclcpp::get_logger("ArmSystem"),
       "Exactly 1 sensor should be provided (force_sensor)!"
     );
+
+
     return CallbackReturn::ERROR;
   }
 
@@ -303,7 +314,7 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
         "(%s) READ POS/VEL/EFF ERROR!", info_.name.c_str()
       );
   }
@@ -312,7 +323,7 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
         "(%s) READ TEMPERATURE ERROR!", info_.name.c_str()
       );
   }
@@ -340,7 +351,7 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
         "(%s) READ PID ERROR!", info_.name.c_str()
       );
     }
@@ -349,7 +360,7 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
         "(%s) READ TORQUE ERROR!", info_.name.c_str()
       );
     }
@@ -358,7 +369,7 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
         "(%s) READ FORCE SENSOR ERROR!", info_.name.c_str()
       );
     }
@@ -367,7 +378,7 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
         "(%s) READ FAN ERROR!", info_.name.c_str()
       );
     }
@@ -391,7 +402,7 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
           RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
         "(%s) WRITE TORQUE ERROR!", info_.name.c_str()
       );
   }
@@ -404,7 +415,7 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
       RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
         "(%s) WRITE POS/SPEED/TORQUE ERROR!", info_.name.c_str()
       );
   }
@@ -418,7 +429,7 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
           RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
         "(%s) WRITE PID ERROR!", info_.name.c_str()
       );
   }
@@ -430,7 +441,7 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
       RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
         "(%s) WRITE FAN ERROR!", info_.name.c_str()
       );
   }
@@ -440,7 +451,7 @@ ArmSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
       RCLCPP_DEBUG_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        log_throttle_duration,
     "(%s) WRITE ITER DT %fms", info_.name.c_str(), dt.seconds() * 1000.0    
   );
 
