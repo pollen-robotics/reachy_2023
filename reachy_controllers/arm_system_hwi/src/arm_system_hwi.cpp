@@ -29,7 +29,7 @@ std::vector<float> parse_string_as_vec(std::string s) {
 
 namespace arm_system_hwi
 {
-int log_throttle_duration = LOG_THROTTLE_DURATION;
+int log_throttle_duration = LOG_THROTTLE_DURATION_DEFAULT;
 CallbackReturn
 ArmSystem::on_init(const hardware_interface::HardwareInfo & info)
 {
