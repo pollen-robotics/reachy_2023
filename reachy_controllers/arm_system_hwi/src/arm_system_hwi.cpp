@@ -327,7 +327,7 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
         RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
         clock_,
-        LOG_THROTTLE_DURATION,
+        arm_system_hwi::log_throttle_duration,
         "(%s) READ POS/VEL/EFF ERROR!", info_.name.c_str()
       );
   }
