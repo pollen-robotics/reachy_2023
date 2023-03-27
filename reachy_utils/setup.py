@@ -31,6 +31,7 @@ setup(
             "reachy-udev-rule-right-arm = reachy_utils.udev_rules:write_udev_rules_right_arm",
             "reachy-udev-rule-left-arm = reachy_utils.udev_rules:write_udev_rules_left_arm",
             "reachy-udev-rule-head = reachy_utils.udev_rules:write_udev_rules_head",
+            "reachy-identify-zuuu-model = reachy_utils.config:get_zuuu_version",
         ],
     },
     author="Pollen Robotics",
