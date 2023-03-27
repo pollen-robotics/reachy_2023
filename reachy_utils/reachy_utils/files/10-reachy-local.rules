@@ -2,7 +2,7 @@
 KERNEL=="ttyACM[0-9]", ATTRS{product}=="STM32F103C8T6", ATTRS{manufacturer}=="tomeko net", SYMLINK+="kurokesu"
 
 # Rules for Arduino board
-KERNEL=="ttyACM[0-9]", KERNELS=="1-2", ATTRS{product}=="Arduino Nano Every", SYMLINK+="arduino"
+KERNEL=="ttyACM[0-9]", ATTRS{product}=="Arduino Nano Every", SYMLINK+="arduino"
 
 # Rules for RPLIDAR S2
 KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="666", SYMLINK+="rplidar_s2"
