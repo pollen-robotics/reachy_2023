@@ -1,9 +1,12 @@
+SCRIPT=$(realpath "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
+
 tee reachy_sdk_server.service <<EOF
 [Unit]
 Description=Reachy SDK server service
 [Service]
 SyslogIdentifier=reachy_sdk_server
-ExecStart=/usr/bin/bash $PWD/launch.bash
+ExecStart=/usr/bin/bash $SCRIPTPATH/launch.bash
 [Install]
 WantedBy=default.target
 EOF
