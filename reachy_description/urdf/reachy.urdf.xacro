@@ -66,6 +66,12 @@
         <xacro:property name="use_head" value="true"/>
     </xacro:if>
 
+    <xacro:if value="${robot_config == 'headless'}">
+        <xacro:property name="use_right_arm" value="true"/>
+        <xacro:property name="use_left_arm" value="true"/>
+        <xacro:property name="use_head" value="false"/>
+    </xacro:if>
+
     <xacro:if value="${use_right_arm}">
         <!-- RIGHT ARM-->
         <xacro:arm

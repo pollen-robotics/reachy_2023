@@ -51,6 +51,16 @@ DUMMY_SPECIAL_INTERFACES = {
         'r_antenna_fan': 'state',
         'r_force_gripper': 'force',
     },
+    'headless': {
+        'l_shoulder_fan': 'state',
+        'l_elbow_fan': 'state',
+        'l_wrist_fan': 'state',
+        'l_force_gripper': 'force',
+        'r_shoulder_fan': 'state',
+        'r_elbow_fan': 'state',
+        'r_wrist_fan': 'state',
+        'r_force_gripper': 'force',
+    },
     'starter_kit_right': {
         'l_antenna_fan': 'state',
         'r_elbow_fan': 'state',

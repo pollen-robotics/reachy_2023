@@ -12,7 +12,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 import yaml
 import os
 
-FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT = 'full_kit', 'starter_kit_right', 'starter_kit_left'
+FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS = 'full_kit', 'starter_kit_right', 'starter_kit_left', 'headless'
 REACHY_CONFIG_MODEL = "model"
 REACHY_CONFIG_NECK_ORBITA_ZERO = "neck_orbita_zero"
 REACHY_CONFIG_TOP = "top"
@@ -28,11 +28,11 @@ class ReachyConfig:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
             # Robot model
-            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT]:
+            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS]:
                 self.model = config[REACHY_CONFIG_MODEL]
             else:
                 raise ValueError('Bad robot model "{}". Expected values are {}'.format(
-                    config[REACHY_CONFIG_MODEL], [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT]))
+                    config[REACHY_CONFIG_MODEL], [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS]))
 
             # orbita zero
             try:
@@ -187,6 +187,10 @@ def launch_setup(context, *args, **kwargs):
         package='controller_manager',
         executable='spawner',
         arguments=['neck_forward_position_controller', '-c', '/controller_manager'],
+        condition=IfCondition(
+            PythonExpression(
+                f"'{reachy_config.model}' != '{HEADLESS}'")
+        )
     )
 
     r_arm_forward_position_controller_spawner = Node(
@@ -213,6 +217,10 @@ def launch_setup(context, *args, **kwargs):
         package='controller_manager',
         executable='spawner',
         arguments=['antenna_forward_position_controller', '-c', '/controller_manager'],
+        condition=IfCondition(
+            PythonExpression(
+                f"'{reachy_config.model}' != '{HEADLESS}'")
+        )
     )
 
     gripper_forward_position_controller_spawner = Node(
