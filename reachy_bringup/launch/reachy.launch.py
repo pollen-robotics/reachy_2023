@@ -124,7 +124,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py}"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != '{HEADLESS}' "
             )),
     )
     camera_focus_node = Node(
@@ -133,7 +133,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py}"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != '{HEADLESS}' "
             )),
     )
 
@@ -143,7 +143,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py}"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != '{HEADLESS}' "
             )),
     )
 
@@ -151,7 +151,9 @@ def launch_setup(context, *args, **kwargs):
         package='reachy_sdk_server',
         executable='camera_server',
         output='both',
-        condition=IfCondition(start_sdk_server_rl),
+        condition=IfCondition(PythonExpression(
+                f"{start_sdk_server_py} and '{reachy_config.model}' != '{HEADLESS}' "
+            )),
     )
 
     robot_state_publisher_node = Node(
