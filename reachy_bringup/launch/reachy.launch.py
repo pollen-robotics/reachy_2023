@@ -201,7 +201,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['r_arm_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' == '{FULL_KIT}' or '{reachy_config.model}' == '{STARTER_KIT_RIGHT}'")
+                f"'{reachy_config.model}' != '{STARTER_KIT_LEFT}'")
         )
     )
 
@@ -211,7 +211,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['l_arm_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' == '{FULL_KIT}' or '{reachy_config.model}' == '{STARTER_KIT_LEFT}'")
+                f"'{reachy_config.model}' != '{STARTER_KIT_RIGHT}'")
         ),
     )
 
