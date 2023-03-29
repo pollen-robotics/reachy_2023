@@ -16,6 +16,7 @@ robot_config_to_parts = {
     "full_kit": ["right_arm", "head", "left_arm"],
     "starter_kit_left": ["left_arm", "head"],
     "starter_kit_right": ["right_arm", "head"],
+    "headless": ["right_arm", "left_arm"],
 }
 
 motor_id_to_name = {
