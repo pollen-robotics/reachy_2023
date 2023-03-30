@@ -318,16 +318,21 @@ ArmSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
   }
   
   if (arm_hwi_get_torque_limit(this->uid, hw_mx_states_torque_limit_)) {
-      RCLCPP_INFO(
+
+        RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ TORQUE_LIMIT ERROR!", info_.name.c_str()
       );
   }
 
 
   if (arm_hwi_get_moving_speed(this->uid, hw_mx_states_speed_limit_)) {
-      RCLCPP_INFO(
+  RCLCPP_INFO_THROTTLE(
         rclcpp::get_logger("ArmSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) READ SPEED_LIMIT ERROR!", info_.name.c_str()
       );
   }
