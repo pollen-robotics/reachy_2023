@@ -11,8 +11,7 @@ KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="
 KERNEL=="ttyACM[0-9]", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", ATTRS{product}=="ChibiOS/RT Virtual COM Port", MODE="666", SYMLINK+="vesc_wheels"
 
 # Rules for neck Orbita
-SUBSYSTEM=="usb-serial", DRIVER=="ftdi_sio", ATTR{latency_timer}="1"
-KERNEL=="ttyUSB[0-9]", ATTRS{idProduct}=="6001", ATTRS{idVendor}=="0403", SYMLINK+="orbita_neck", MODE="666"
+KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{manufacturer}=="FTDI", ATTRS{idProduct}=="6015", ATTR{latency_timer}="1", SYMLINK+="orbita_neck"
 
 # Rules for C2 cameras
 KERNEL=="video[0-9]", ATTR{index}=="0", ATTRS{serial}=="KTM-00001", SYMLINK+="left_camera"
