@@ -102,7 +102,7 @@ def _init_missing_motors():
     missing_motors_init = {}
 
     for part in robot_config_to_parts[get_reachy_model()]:
-        missing_motors_init[part] = {}
+        missing_motors_init[part] = []
     return missing_motors_init
 
 
