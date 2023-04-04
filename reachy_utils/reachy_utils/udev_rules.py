@@ -103,5 +103,5 @@ def write_udev_rules_left_arm():
     write_udev_rules_usb2ax('left_arm')
 
 
-def write_udev_rule_head():
+def write_udev_rules_head():
     write_udev_rules_usb2ax('head')
