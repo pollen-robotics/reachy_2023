@@ -111,7 +111,7 @@ class ReachyKdlKinematics(LifecycleNode):
                         forward_publisher=forward_position_pub,
                     ),
                 )
-                self.averaged_pose[arm] = PoseAverager(window_length=10)
+                self.averaged_pose[arm] = PoseAverager(window_length=1)
                 self.max_joint_vel[arm] = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
                 self.logger.info(f'Adding subscription on "{self.target_sub[arm].topic}"...')
 
@@ -179,7 +179,7 @@ class ReachyKdlKinematics(LifecycleNode):
                 ),
             )
             self.averaged_target_sub['head'] = sub
-            self.averaged_pose['head'] = PoseAverager(window_length=10)
+            self.averaged_pose['head'] = PoseAverager(window_length=1)
 
             self.max_joint_vel['head'] = np.array([0.1, 0.1, 0.1])
             self.logger.info(f'Adding subscription on "{sub.topic}"...')
@@ -290,7 +290,7 @@ class ReachyKdlKinematics(LifecycleNode):
         current_position = np.array(self.get_current_position(self.chain[name]))
 
         vel = np.array(sol) - current_position
-        vel = np.clip(vel, -self.max_joint_vel[name], self.max_joint_vel[name])
+        # vel = np.clip(vel, -self.max_joint_vel[name], self.max_joint_vel[name])
 
         smoothed_sol = current_position + vel
 

@@ -199,9 +199,9 @@ impl ArmController {
         moving_speed: [f64; 8],
         torque_limit: [f64; 8],
     ) -> Result<()> {
-        self.set_mx_target_position(target_position)?;
         self.set_mx_moving_speed(moving_speed)?;
         self.set_mx_torque_limit(torque_limit)?;
+        self.set_mx_target_position(target_position)?;
         Ok(())
     }
     pub fn get_mx_temperature(&mut self) -> Result<[f64; 8]> {
