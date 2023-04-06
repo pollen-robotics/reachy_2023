@@ -110,7 +110,7 @@
 
                 neck_orbita_serial_port="/dev/orbita_neck"
                 neck_orbita_id="70"
-                neck_orbita_alpha="54.0"
+                neck_orbita_alpha="0.9424777960769379"
                 neck_orbita_hardware_zero="$(arg orbita_hardware_zero)"
                 neck_orbita_reduction="4.26666667"
 
