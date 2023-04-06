@@ -7,6 +7,8 @@ Description=Reachy SDK server service
 [Service]
 SyslogIdentifier=reachy_sdk_server
 ExecStart=/usr/bin/bash $SCRIPTPATH/launch.bash
+KillSignal=SIGKILL
+
 [Install]
 WantedBy=default.target
 EOF

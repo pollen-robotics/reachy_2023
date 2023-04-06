@@ -13,7 +13,7 @@ Description=Mobile base SDK server service
 SyslogIdentifier=reachy_mobile_base
 ExecStartPre=/bin/sleep 10
 ExecStart=/usr/bin/bash $SCRIPTPATH/launch_mobile_base.bash
-
+KillSignal=SIGKILL
 
 [Install]
 WantedBy=default.target
