@@ -7,3 +7,4 @@ export LC_NUMERIC="en_US.UTF-8"
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 source "$HOME/.cargo/env"
 export PATH=$PATH:$HOME/.local/bin
+export ROS_DOMAIN_ID=$(grep "export ROS_DOMAIN_ID=" ~/.bashrc | cut -d "=" -f2)
