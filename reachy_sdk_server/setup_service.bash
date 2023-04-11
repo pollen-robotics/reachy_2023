@@ -6,6 +6,7 @@ tee reachy_sdk_server.service <<EOF
 Description=Reachy SDK server service
 [Service]
 SyslogIdentifier=reachy_sdk_server
+ExecStartPre=/bin/sleep 2
 ExecStart=/usr/bin/bash $SCRIPTPATH/launch.bash
 KillSignal=SIGKILL
 
