@@ -229,7 +229,12 @@
       <parent link="${prefix}_wrist2hand"/>
       <child link="${prefix}_gripper_thumb"/>
       <axis xyz="1 0 0"/>
-      <limit lower="-0.785" upper="0.785" effort="10." velocity="0.0"/>
+      <xacro:if value="${side == 'right'}">
+        <limit lower="-0.95" upper="0.61" effort="10." velocity="0.0"/>
+      </xacro:if>
+      <xacro:if value="${side == 'left'}">
+        <limit lower="-0.61" upper="0.95" effort="10." velocity="0.0"/>
+      </xacro:if>    
       <dynamics damping="${damping}" friction="${friction}"/>
   </joint>
 
