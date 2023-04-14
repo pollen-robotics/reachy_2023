@@ -1,0 +1,18 @@
+[package]
+name = "neck_hwi"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lazy_static = "1.4.0"
+libc = "0.2.139"
+orbita_serial_controller = { git = "ssh://git@github.com/pollen-robotics/orbita_serial_controller.git"}
+rustypot = "0.3.1"
+
+[build-dependencies]
+cbindgen = "0.24.3"
+
+[lib]
+crate-type = ["staticlib"]

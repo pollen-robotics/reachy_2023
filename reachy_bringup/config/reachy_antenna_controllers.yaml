@@ -1,0 +1,85 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 1  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+
+    antenna_forward_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
+
+    forward_torque_controller:
+      type: forward_command_controller/ForwardCommandController
+
+    forward_torque_limit_controller:
+      type: forward_command_controller/ForwardCommandController
+
+    forward_speed_limit_controller:
+      type: forward_command_controller/ForwardCommandController
+
+    forward_fan_controller:
+      type: forward_command_controller/ForwardCommandController
+
+    forward_pid_controller:
+      type: pid_command_controller/PIDCommandController
+
+
+
+joint_state_broadcaster:
+  ros__parameters:
+    use_sim_time: false
+
+
+
+antenna_forward_position_controller:
+  ros__parameters:
+    joints:
+      - l_antenna
+      - r_antenna
+    interface_name: position
+    use_sim_time: false
+
+forward_torque_controller:
+  ros__parameters:
+    joints:
+      - l_antenna
+      - r_antenna
+    interface_name: torque
+    use_sim_time: false
+
+forward_torque_limit_controller:
+  ros__parameters:
+    joints:
+      - l_antenna
+      - r_antenna
+    interface_name: torque_limit
+    use_sim_time: false
+
+forward_speed_limit_controller:
+  ros__parameters:
+    joints:
+      - l_antenna
+      - r_antenna
+    interface_name: speed_limit
+    use_sim_time: false
+
+forward_fan_controller:
+  ros__parameters:
+    joints:
+      - l_antenna_fan
+      - r_antenna_fan
+    interface_name: state
+    use_sim_time: false
+
+
+forward_pid_controller:
+  ros__parameters:
+    joints:
+
+      - l_antenna
+      - r_antenna
+    use_sim_time: false
+
+

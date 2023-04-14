@@ -1,0 +1,10 @@
+# Service to set the focus and zoom of left and right camera
+# The focus is within the range [0-500]
+# The zoom is within the range [0-600]
+# Each attribute contains a boolean indicating whether the value should be sent or not.
+reachy_msgs/ZoomCommand left_focus
+reachy_msgs/ZoomCommand left_zoom
+reachy_msgs/ZoomCommand right_zoom
+reachy_msgs/ZoomCommand right_focus
+---
+bool success

@@ -1,0 +1,18 @@
+# Rules for Kurokesu camera control board
+KERNEL=="ttyACM[0-9]", ATTRS{product}=="STM32F103C8T6", ATTRS{manufacturer}=="tomeko net", SYMLINK+="kurokesu"
+
+# Rules for Arduino board
+KERNEL=="ttyACM[0-9]", ATTRS{product}=="Arduino Nano Every", SYMLINK+="arduino"
+
+# Rules for RPLIDAR S2
+KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="666", SYMLINK+="rplidar_s2"
+
+# Rules for VESC controllers
+KERNEL=="ttyACM[0-9]", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", ATTRS{product}=="ChibiOS/RT Virtual COM Port", MODE="666", SYMLINK+="vesc_wheels"
+
+# Rules for neck Orbita
+KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{manufacturer}=="FTDI", ATTRS{idProduct}=="6015", ATTR{latency_timer}="1", SYMLINK+="orbita_neck"
+
+# Rules for C2 cameras
+KERNEL=="video[0-9]", ATTR{index}=="0", ATTRS{serial}=="KTM-00001", SYMLINK+="left_camera"
+KERNEL=="video[0-9]", ATTR{index}=="0", ATTRS{serial}=="KTM-00002", SYMLINK+="right_camera"

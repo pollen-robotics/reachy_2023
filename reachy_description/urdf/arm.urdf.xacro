@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-<xacro:macro name="arm" params="prefix parent side damping friction">
+<xacro:macro name="arm" params="prefix parent side damping friction serial_port mx_ids offsets is_direct reductions force_sensor_id fan_id">
+
+  <xacro:include filename="$(find reachy_description)/ros2_control/arm.ros2_control.xacro"/>
 
   <xacro:if value="${side == 'left'}">
     <xacro:property name="reflect" value="-1"/>
@@ -20,7 +22,7 @@
       <visual name="">
           <origin xyz="0.0 ${0.04*reflect} 0.0" rpy="${1.57*reflect} 1.57 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/shoulder.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/shoulder.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -49,7 +51,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/shoulder_x.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/shoulder_x.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -83,7 +85,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 -0.0526" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/upper_arm.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/upper_arm.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -112,7 +114,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/forearm.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/forearm.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -141,7 +143,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 -0.100" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/wrist.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/wrist.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -170,7 +172,7 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/wrist2hand.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/wrist2hand.dae"/>
           </geometry>
       </visual>
       <collision>
@@ -199,23 +201,40 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/${prefix}_gripper_thumb.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_thumb.dae"/>
           </geometry>
       </visual>
       <collision>
-          <origin xyz="0.0 0.02 -0.06" rpy="0.0 1.57 0.0"/>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
           <geometry>
-              <box size="0.1 0.012 0.035" />
+              <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_thumb.dae"/>
           </geometry>
+          <!-- <origin xyz="0.0 0.02 -0.06" rpy="0.0 1.57 0.0"/> -->
+          <!-- <geometry> -->
+          <!--     <box size="0.1 0.012 0.035" /> -->
+          <!-- </geometry> -->
       </collision>
+
   </link>
+
+
+  <gazebo reference="${prefix}_gripper_thumb">
+    <self_collide>1</self_collide>
+  </gazebo>
+
+
 
   <joint name="${prefix}_wrist_roll" type="revolute">
       <origin xyz="0 0 -0.0325" rpy="0.0 0.0 0.0"/>
       <parent link="${prefix}_wrist2hand"/>
       <child link="${prefix}_gripper_thumb"/>
       <axis xyz="1 0 0"/>
-      <limit lower="-0.785" upper="0.785" effort="10." velocity="0.0"/>
+      <xacro:if value="${side == 'right'}">
+        <limit lower="-0.95" upper="0.61" effort="10." velocity="0.0"/>
+      </xacro:if>
+      <xacro:if value="${side == 'left'}">
+        <limit lower="-0.61" upper="0.95" effort="10." velocity="0.0"/>
+      </xacro:if>    
       <dynamics damping="${damping}" friction="${friction}"/>
   </joint>
 
@@ -228,18 +247,35 @@
       <visual name="">
           <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
           <geometry>
-              <mesh filename="package://reachy_description/meshes/${prefix}_gripper_finger.dae"/>
+              <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_finger.dae"/>
           </geometry>
       </visual>
       <collision>
-          <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
           <geometry>
-              <box size="0.1 0.012 0.035" />
+              <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_finger.dae"/>
           </geometry>
+          <!-- <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/> -->
+          <!-- <geometry> -->
+          <!--     <box size="0.1 0.012 0.035" /> -->
+          <!-- </geometry> -->
       </collision>
+
+
   </link>
 
-  <link name="${prefix}_arm_tip"/>
+  <gazebo reference="${prefix}_gripper_finger">
+    <self_collide>1</self_collide>
+  </gazebo>
+
+  <link name="${prefix}_arm_tip">
+    <inertial>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+          <mass value="0.001"/>
+          <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+    </inertial>
+    </link>
+
 
   <joint name="${prefix}_arm_tip" type="fixed">
       <origin xyz="0 -0.012 -0.085" rpy="0 0 0" />
@@ -252,9 +288,76 @@
       <parent link="${prefix}_gripper_thumb"/>
       <child link="${prefix}_gripper_finger"/>
       <axis xyz="1 0 0"/>
-      <limit lower="-1.2" upper="0.35" effort="10." velocity="0.0"/>
+
+
+      <xacro:if value="${side == 'right'}">
+        <limit lower="-1.2" upper="0.35" effort="10." velocity="0.0"/>
+      </xacro:if>
+      <xacro:if value="${side == 'left'}">
+        <limit lower="-0.35" upper="1.2" effort="10." velocity="0.0"/>
+      </xacro:if>
+
+
       <dynamics damping="${damping}" friction="${friction}"/>
   </joint>
+
+  <xacro:if value="$(arg use_gazebo)">
+    <gazebo reference="${prefix}_gripper">
+      <provideFeedback>true</provideFeedback>
+    </gazebo>
+    <gazebo>
+      <plugin name="gazebo_ros_ft" filename="libgazebo_ros_ft_sensor.so">
+
+        <ros>
+          <!-- Add namespace and remap the default topic -->
+          <namespace>/${prefix}_force_sensor</namespace>
+          <argument>wrench:=${prefix}_gripper_ft_sensor</argument>
+        </ros>
+
+        <joint_name>${prefix}_gripper</joint_name>
+        <update_rate>200</update_rate>
+        <update_rate>1</update_rate>
+        <gaussian_noise>0.01</gaussian_noise>
+      </plugin>
+    </gazebo>
+  </xacro:if>
+
+
+  <!-- Doesn't work... -->
+  <!-- <xacro:if value="$(arg use_gazebo)"> -->
+  <!--   <gazebo reference="${prefix}_gripper_thumb"> -->
+  <!--     <provideFeedback>true</provideFeedback> -->
+  <!--   </gazebo> -->
+  <!--   <gazebo> -->
+  <!--     <plugin name="gazebo_ros_force_sensor" filename="libgazebo_ros_force.so"> -->
+
+  <!--       <ros> -->
+  <!--         <!-\- Add namespace and remap the default topic -\-> -->
+  <!--         <namespace>/${prefix}_force_sensor</namespace> -->
+  <!--       </ros> -->
+
+  <!--       <link_name>${prefix}_gripper_thumb</link_name> -->
+  <!--       <force_frame>world</force_frame> -->
+  <!--       <update_rate>200</update_rate> -->
+  <!--       <update_rate>1</update_rate> -->
+  <!--       <gaussian_noise>0.01</gaussian_noise> -->
+  <!--     </plugin> -->
+  <!--   </gazebo> -->
+  <!-- </xacro:if> -->
+
+
+
+
+  <xacro:arm_control
+    name="${prefix}"
+    serial_port="${serial_port}"
+    mx_ids="${mx_ids}"
+    offsets="${offsets}"
+    is_direct="${is_direct}"
+    reductions="${reductions}"
+    force_sensor_id="${force_sensor_id}"
+    fan_id="${fan_id}"
+  />
 
 </xacro:macro>
 </robot>

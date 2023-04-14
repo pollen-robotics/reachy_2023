@@ -1,0 +1,12 @@
+<library path="neck_system_hwi">
+
+  <class
+    name="neck_system_hwi/NeckSystem"
+    type="neck_system_hwi::NeckSystem"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Neck hardware interface plugin.
+    </description>
+  </class>
+
+</library>

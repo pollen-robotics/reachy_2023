@@ -34,6 +34,8 @@ def generate_launch_description():
                  'urdf', description_file]
             ),
             ' ',
+            'robot_config:=starter_kit_left',
+            '',
         ]
     )
     robot_description = {'robot_description': ParameterValue(

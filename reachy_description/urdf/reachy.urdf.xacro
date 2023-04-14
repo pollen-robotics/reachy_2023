@@ -1,62 +1,134 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="reachy_2023">
 
-  <xacro:include filename="$(find reachy_description)/urdf/arm.urdf.xacro"/>
-  <xacro:include filename="$(find reachy_description)/urdf/head.urdf.xacro"/>
+    <xacro:arg name="use_fake_hardware" default="false"/>
+    <xacro:arg name="use_gazebo" default="false"/>
 
-  <link name="world"/>
-  <joint name="world_joint" type="fixed">
-    <origin xyz="0 0 1.0" rpy="0 0 0"/>
-    <parent link="world"/>
-    <child link="torso"/>
-  </joint>
+    <xacro:arg name="robot_config" default="full_kit"/>
+    <xacro:arg name="orbita_hardware_zero" default="0.0, 0.0, 0.0"/>
 
-  <link name="torso">
-      <inertial>
-          <origin xyz="0.0 0.019 -0.009" rpy="0.0 0.0 0.0"/>
-          <mass value="0.527"/>
-          <inertia ixx="2.89598e-3" ixy="-1.16791e-6" ixz="-8.28749e-6" iyy="4.491e-3" iyz="2.343e-4" izz="3.995e-3"/>
-      </inertial>
-      <visual name="">
-          <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-          <geometry>
-              <mesh filename="package://reachy_description/meshes/torso.dae"/>
-          </geometry>
-      </visual>
-      <collision>
-          <origin xyz="0 0 -0.1" rpy="0 0.05 0" />
-          <geometry>
-              <box size="0.11 0.2 0.32" />
-          </geometry>
-      </collision>
-  </link>
+    <xacro:include filename="$(find reachy_description)/urdf/arm.urdf.xacro"/>
+    <xacro:include filename="$(find reachy_description)/urdf/head.urdf.xacro"/>
 
-  <gazebo reference="torso">
-    <material>Gazebo/Black</material>
-    <static>true</static>
-  </gazebo>
+    <link name="world"/>
+    <joint name="world_joint" type="fixed">
+        <origin xyz="0 0 1.0" rpy="0 0 0"/>
+        <parent link="world"/>
+        <child link="torso"/>
+    </joint>
+
+    <link name="torso">
+        <inertial>
+            <origin xyz="0.0 0.019 -0.009" rpy="0.0 0.0 0.0"/>
+            <mass value="0.527"/>
+            <inertia ixx="2.89598e-3" ixy="-1.16791e-6" ixz="-8.28749e-6" iyy="4.491e-3" iyz="2.343e-4" izz="3.995e-3"/>
+        </inertial>
+        <visual name="">
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <mesh filename="file://$(find reachy_description)/meshes/torso.dae"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 -0.1" rpy="0 0.05 0"/>
+            <geometry>
+                <box size="0.11 0.2 0.32"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <gazebo reference="torso">
+        <material>Gazebo/White</material>
+        <static>true</static>
+    </gazebo>
 
 
-  <!--MODEL PARAMETERS-->
-  <xacro:property name="damping" value="0.1"/>
-  <xacro:property name="friction" value="0.1"/>
+    <!--MODEL PARAMETERS-->
+    <xacro:property name="damping" value="0.1"/>
+    <xacro:property name="friction" value="0.1"/>
+    <xacro:property name="robot_config" value="$(arg robot_config)"/>
 
-  <!-- RIGHT ARM-->
-  <xacro:arm
-    prefix="r" parent="torso" side="right"
-    damping="${damping}" friction="${friction}"
-  />
+    <xacro:if value="${robot_config == 'full_kit'}">
+        <xacro:property name="use_right_arm" value="true"/>
+        <xacro:property name="use_left_arm" value="true"/>
+        <xacro:property name="use_head" value="true"/>
+    </xacro:if>
 
-  <!-- LEFT ARM-->
-  <xacro:arm
-    prefix="l" parent="torso" side="left"
-    damping="${damping}" friction="${friction}"
-  />
+    <xacro:if value="${robot_config == 'starter_kit_left'}">
+        <xacro:property name="use_right_arm" value="false"/>
+        <xacro:property name="use_left_arm" value="true"/>
+        <xacro:property name="use_head" value="true"/>
+    </xacro:if>
 
-  <!-- HEAD-->
-  <xacro:head
-    parent="torso"
-    damping="${damping}" friction="${friction}"
-  />
+    <xacro:if value="${robot_config == 'starter_kit_right'}">
+        <xacro:property name="use_right_arm" value="true"/>
+        <xacro:property name="use_left_arm" value="false"/>
+        <xacro:property name="use_head" value="true"/>
+    </xacro:if>
 
+    <xacro:if value="${robot_config == 'headless'}">
+        <xacro:property name="use_right_arm" value="true"/>
+        <xacro:property name="use_left_arm" value="true"/>
+        <xacro:property name="use_head" value="false"/>
+    </xacro:if>
+
+    <xacro:if value="${use_right_arm}">
+        <!-- RIGHT ARM-->
+        <xacro:arm
+                prefix="r" parent="torso" side="right"
+                damping="${damping}" friction="${friction}"
+                serial_port="/dev/usb2ax_right_arm"
+                mx_ids="10, 11, 12, 13, 14, 15, 16, 17"
+                offsets="1.57, 1.57, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0"
+                is_direct="0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0"
+                reductions="1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -2.0"
+                force_sensor_id="40"
+                fan_id="41"
+        />
+    </xacro:if>
+
+    <xacro:if value="${use_left_arm}">
+        <!-- LEFT ARM-->
+        <xacro:arm
+                prefix="l" parent="torso" side="left"
+                damping="${damping}" friction="${friction}"
+                serial_port="/dev/usb2ax_left_arm"
+                mx_ids="20, 21, 22, 23, 24, 25, 26, 27"
+                offsets="1.57, -1.57, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0"
+                is_direct="1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0"
+                reductions="1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -2.0"
+                force_sensor_id="50"
+                fan_id="51"
+        />
+    </xacro:if>
+
+    <xacro:if value="${use_head}">
+        <!-- HEAD-->
+        <xacro:head
+                parent="torso"
+                damping="${damping}" friction="${friction}"
+
+                neck_orbita_serial_port="/dev/orbita_neck"
+                neck_orbita_id="70"
+                neck_orbita_alpha="0.9424777960769379"
+                neck_orbita_hardware_zero="$(arg orbita_hardware_zero)"
+                neck_orbita_reduction="4.26666667"
+
+                head_serial_port="/dev/usb2ax_head"
+                head_xl320_ids="30, 31"
+                head_xl320_offsets="0.0, 0.0"
+                head_xl320_is_direct="1.0, 1.0"
+                head_xl320_reductions="1.0, 1.0"
+                head_fan_id="60"
+        />
+    </xacro:if>
+
+    <xacro:if value="$(arg use_gazebo)">
+        <gazebo>
+            <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+                <parameters>$(find reachy_bringup)/config/reachy_${robot_config}_controllers.yaml</parameters>
+                <robotNamespace>/reachy</robotNamespace>
+            </plugin>
+        </gazebo>
+    </xacro:if>
 </robot>

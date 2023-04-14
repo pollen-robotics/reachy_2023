@@ -1,0 +1,12 @@
+<library path="arm_system_hwi">
+
+  <class
+    name="arm_system_hwi/ArmSystem"
+    type="arm_system_hwi::ArmSystem"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Arm hardware interface plugin.
+    </description>
+  </class>
+
+</library>

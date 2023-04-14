@@ -1,0 +1,4 @@
+string[] eye
+bool[] state
+---
+bool success
