@@ -22,7 +22,7 @@ jobs:
         with:
           repository: 'pollen-robotics/reachy_2023'
           token: ${{ secrets.PAT_ROBOTSETUP }}
-          ref: 'workflow_dispatch_test'
+          ref: 'develop'
           lfs: 'true'
       
       # Build lib
