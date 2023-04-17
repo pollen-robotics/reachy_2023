@@ -3,7 +3,7 @@ jobs:
   libneck:
     runs-on: ubuntu-latest
     steps:
-    
+        
       # Setup
       - name: Install SSH_KEY
         uses: webfactory/ssh-agent@v0.7.0
@@ -21,23 +21,28 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: 'pollen-robotics/reachy_2023'
-          token: ${{ secrets.PAT_ROBOTSETUP }}
+          token: ${{ secrets.PAT_CDUSSIEUX }}
           ref: 'workflow_dispatch_test'
           lfs: 'true'
       
       # Build lib
       - name: Check libneck hash pre-build
+        #run: md5sum  reachy_controllers/reachy_2023_controllers_rs/neck_hwi/target/debug/libneck_hwi.a
         run: echo "PREBUILDHASH=$(md5sum  reachy_controllers/reachy_2023_controllers_rs/neck_hwi/target/debug/libneck_hwi.a | awk '{ print $1 }')" >> $GITHUB_ENV
       - name: Build libneck_hwi.a
         run: cd reachy_controllers/reachy_2023_controllers_rs/neck_hwi && cargo build 
       - name: Check libneck hash post-build
         run: echo "POSTBUILDHASH=$(md5sum  reachy_controllers/reachy_2023_controllers_rs/neck_hwi/target/debug/libneck_hwi.a | awk '{ print $1 }')" >> $GITHUB_ENV
 
-      # 
+
+     
+      # Get dependencies version
       - name: Get dependencies version
         run: |
           echo "ORBITA3D_MODEL_RS_COMMIT_SHA=$(grep orbita3d_model_rs.git reachy_controllers/reachy_2023_controllers_rs/neck_hwi/Cargo.lock | cut -d'#' -f2 | cut -d'"' -f1)" >> $GITHUB_ENV
           echo "ORBITA_SERIAL_CONTROLLER_COMMIT_SHA=$(grep orbita_serial_controller.git reachy_controllers/reachy_2023_controllers_rs/neck_hwi/Cargo.lock | cut -d'#' -f2 | cut -d'"' -f1)" >> $GITHUB_ENV
+      - run: echo ${{ env.ORBITA3D_MODEL_RS_COMMIT_SHA }}
+      - run: echo ${{ env.ORBITA_SERIAL_CONTROLLER_COMMIT_SHA }}
 
       # Commit if need be
       - name: Commit new libneck_hwi.a
@@ -46,7 +51,7 @@ jobs:
           git config --global user.name "CI"
           git config --global user.email "robot.setup@pollen-robotics.com"
           git add -f reachy_controllers/reachy_2023_controllers_rs/neck_hwi/target/debug/libneck_hwi.a 
-          git commit -m "Update libneck_hwi.a\norbita3d_model_rs : ${{ env.ORBITA3D_MODEL_RS_COMMIT_SHA }}\norbita_serial_controller : ${{ env.ORBITA_SERIAL_CONTROLLER_COMMIT_SHA }} " "
+          git commit -m $'Update libneck_hwi.a\n\norbita3d_model_rs : ${{ env.ORBITA3D_MODEL_RS_COMMIT_SHA }}\norbita_serial_controller : ${{ env.ORBITA_SERIAL_CONTROLLER_COMMIT_SHA }}\nlibneck_hwi.a  : ${{ env.POSTBUILDHASH }}'
           git push
 
 
