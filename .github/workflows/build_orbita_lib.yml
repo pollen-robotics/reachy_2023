@@ -1,10 +1,52 @@
 on: workflow_dispatch
 jobs:
-  bash-example:
+  libneck:
     runs-on: ubuntu-latest
     steps:
-      - name: Group of log lines
+    
+      # Setup
+      - name: Install SSH_KEY
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Install libudev dependency
+        run: sudo apt-get install -y  libudev-dev
+        
+      # Get code
+      - name: Checkout Reachy_2023
+        uses: actions/checkout@v3
+        with:
+          repository: 'pollen-robotics/reachy_2023'
+          token: ${{ secrets.PAT_ROBOTSETUP }}
+          ref: 'workflow_dispatch_test'
+          lfs: 'true'
+      
+      # Build lib
+      - name: Check libneck hash pre-build
+        run: echo "PREBUILDHASH=$(md5sum  reachy_controllers/reachy_2023_controllers_rs/neck_hwi/target/debug/libneck_hwi.a | awk '{ print $1 }')" >> $GITHUB_ENV
+      - name: Build libneck_hwi.a
+        run: cd reachy_controllers/reachy_2023_controllers_rs/neck_hwi && cargo build 
+      - name: Check libneck hash post-build
+        run: echo "POSTBUILDHASH=$(md5sum  reachy_controllers/reachy_2023_controllers_rs/neck_hwi/target/debug/libneck_hwi.a | awk '{ print $1 }')" >> $GITHUB_ENV
+
+      # 
+      - name: Get dependencies version
         run: |
-            echo "::group::My title"
-            echo "Inside group"
-            echo "::endgroup::"
+          echo "ORBITA3D_MODEL_RS_COMMIT_SHA=$(grep orbita3d_model_rs.git reachy_controllers/reachy_2023_controllers_rs/neck_hwi/Cargo.lock | cut -d'#' -f2 | cut -d'"' -f1)" >> $GITHUB_ENV
+          echo "ORBITA_SERIAL_CONTROLLER_COMMIT_SHA=$(grep orbita_serial_controller.git reachy_controllers/reachy_2023_controllers_rs/neck_hwi/Cargo.lock | cut -d'#' -f2 | cut -d'"' -f1)" >> $GITHUB_ENV
+
+      # Commit if need be
+      - name: Commit new libneck_hwi.a
+        if: env.PREBUILDHASH != env.POSTBUILDHASH
+        run: |
+          git config --global user.name "CI"
+          git config --global user.email "robot.setup@pollen-robotics.com"
+          git add -f reachy_controllers/reachy_2023_controllers_rs/neck_hwi/target/debug/libneck_hwi.a 
+          git commit -m "Update libneck_hwi.a\norbita3d_model_rs : ${{ env.ORBITA3D_MODEL_RS_COMMIT_SHA }}\norbita_serial_controller : ${{ env.ORBITA_SERIAL_CONTROLLER_COMMIT_SHA }} " "
+          git push
+
+
