@@ -21,13 +21,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: 'pollen-robotics/reachy_2023'
-          token: ${{ secrets.PAT_CDUSSIEUX }}
+          token: ${{ secrets.PAT_ROBOTSETUP }}
           ref: 'workflow_dispatch_test'
           lfs: 'true'
       
       # Build lib
       - name: Check libneck hash pre-build
-        #run: md5sum  reachy_controllers/reachy_2023_controllers_rs/neck_hwi/target/debug/libneck_hwi.a
         run: echo "PREBUILDHASH=$(md5sum  reachy_controllers/reachy_2023_controllers_rs/neck_hwi/target/debug/libneck_hwi.a | awk '{ print $1 }')" >> $GITHUB_ENV
       - name: Build libneck_hwi.a
         run: cd reachy_controllers/reachy_2023_controllers_rs/neck_hwi && cargo build 
