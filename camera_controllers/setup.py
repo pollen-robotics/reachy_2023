@@ -7,7 +7,7 @@ package_name = 'camera_controllers'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.1.0',
     packages=[package_name, 'examples'],
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -21,10 +21,10 @@ setup(
         'zoom_kurokesu>=1.1',
         ],
     zip_safe=True,
-    maintainer='simsim',
-    maintainer_email='32677536+simheo@users.noreply.github.com',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    maintainer='Pollen Robotics',
+    maintainer_email='contact@pollen-robotics.com',
+    description='ROS2 Humble package for Reachy 2023 camera controllers.',
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
