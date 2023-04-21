@@ -74,7 +74,7 @@ def launch_setup(context, *args, **kwargs):
                 [FindPackageShare('reachy_description'), 'urdf', 'reachy.urdf.xacro']
             ),
             *((' ', 'use_fake_hardware:=true', ' ') if fake_py else
-              (' ', 'use_fake_hardware:=true use_gazebo:=true depth_camera:=false', ' ') if gazebo_py else
+              (' ', 'use_fake_hardware:=true use_gazebo:=true depth_camera:=true', ' ') if gazebo_py else
               (' ',)),
             f'robot_config:={reachy_config.model}',
             ' ',
@@ -153,7 +153,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(PythonExpression(
                 f"{start_sdk_server_py} and '{reachy_config.model}' != '{HEADLESS}' "
-            )),
+        )),
     )
 
     robot_state_publisher_node = Node(
