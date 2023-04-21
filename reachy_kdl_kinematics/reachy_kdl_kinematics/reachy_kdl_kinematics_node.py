@@ -3,6 +3,8 @@ from threading import Event
 from typing import List
 
 import numpy as np
+import copy
+import re
 
 from scipy.spatial.transform import Rotation
 
@@ -27,6 +29,8 @@ from .kdl_kinematics import (
     ros_pose_to_matrix,
 )
 import ik_reachy_placo
+
+USE_QP_IK = True
 
 
 class ReachyKdlKinematics(LifecycleNode):
@@ -59,7 +63,11 @@ class ReachyKdlKinematics(LifecycleNode):
         # https://github.com/Rhoban/placo/issues/1
         urdf_path = "/tmp/reachy.urdf"
         tmp_file = open(urdf_path, "w+")
-        tmp_file.write(self.urdf)
+        new_urdf = copy.copy(self.urdf)
+        new_urdf = remove_ros2_control_tags(new_urdf)
+        new_urdf = fix_arm_tip_names(new_urdf)
+
+        tmp_file.write(new_urdf)
         tmp_file.close()
         self.ik_reachy_placo = ik_reachy_placo.IKReachyQP(viewer_on=True)
         self.ik_reachy_placo.setup(urdf_path)
@@ -267,20 +275,24 @@ class ReachyKdlKinematics(LifecycleNode):
         M = ros_pose_to_matrix(request.pose)
         q0 = request.q0.position
 
-        # IK using KDL
-        # error, sol = inverse_kinematics(
-        #     self.ik_solver[name],
-        #     q0=q0,
-        #     target_pose=M,
-        #     nb_joints=self.chain[name].getNrOfJoints(),
-        # )
-
-        # IK using Placo
-        sol, errors = self.ik_reachy_placo.ik_continuous(
-            M,
-            arm_name=name,
-            q0=q0,
-        )
+        if not (USE_QP_IK):
+            # IK using KDL
+            error, sol = inverse_kinematics(
+                self.ik_solver[name],
+                q0=q0,
+                target_pose=M,
+                nb_joints=self.chain[name].getNrOfJoints(),
+            )
+        else:
+            # IK using Placo
+            sol, errors = self.ik_reachy_placo.ik_continuous(
+                M,
+                arm_name=name,
+                q0=q0,
+            )
+            # rads to deg
+            for s in sol:
+                s = s * 180 / np.pi
 
         # TODO: use error
         response.success = True
@@ -292,20 +304,24 @@ class ReachyKdlKinematics(LifecycleNode):
     def on_target_pose(self, msg: PoseStamped, name, q0, forward_publisher):
         M = ros_pose_to_matrix(msg.pose)
 
-        # IK using KDL
-        # error, sol = inverse_kinematics(
-        #     self.ik_solver[name],
-        #     q0=q0,
-        #     target_pose=M,
-        #     nb_joints=self.chain[name].getNrOfJoints(),
-        # )
-
-        # IK using Placo
-        sol, errors = self.ik_reachy_placo.ik_continuous(
-            M,
-            arm_name=name,
-            q0=q0,
-        )
+        if not (USE_QP_IK):
+            # IK using KDL
+            error, sol = inverse_kinematics(
+                self.ik_solver[name],
+                q0=q0,
+                target_pose=M,
+                nb_joints=self.chain[name].getNrOfJoints(),
+            )
+        else:
+            # IK using Placo
+            sol, errors = self.ik_reachy_placo.ik_continuous(
+                M,
+                arm_name=name,
+                q0=q0,
+            )
+            # rads to deg
+            for s in sol:
+                s = s * 180 / np.pi
 
         # TODO: check error
 
@@ -320,20 +336,24 @@ class ReachyKdlKinematics(LifecycleNode):
 
         M = ros_pose_to_matrix(avg_pose)
 
-        # IK using KDL
-        # error, sol = inverse_kinematics(
-        #     self.ik_solver[name],
-        #     q0=q0,
-        #     target_pose=M,
-        #     nb_joints=self.chain[name].getNrOfJoints(),
-        # )
-
-        # IK using Placo
-        sol, errors = self.ik_reachy_placo.ik_continuous(
-            M,
-            arm_name=name,
-            q0=q0,
-        )
+        if not (USE_QP_IK):
+            # IK using KDL
+            error, sol = inverse_kinematics(
+                self.ik_solver[name],
+                q0=q0,
+                target_pose=M,
+                nb_joints=self.chain[name].getNrOfJoints(),
+            )
+        else:
+            # IK using Placo
+            sol, errors = self.ik_reachy_placo.ik_continuous(
+                M,
+                arm_name=name,
+                q0=q0,
+            )
+            # rads to deg
+            for s in sol:
+                s = s * 180 / np.pi
 
         # TODO: check error
 
@@ -407,6 +427,49 @@ class ReachyKdlKinematics(LifecycleNode):
             chain.getSegment(i).getJoint().getName()
             for i in range(chain.getNrOfJoints())
         ]
+
+
+def remove_ros2_control_tags(urdf_string):
+    # Use regex to find and remove everything between <ros2_control> and </ros2_control>, including the tags
+    stripped_urdf_string = re.sub(
+        r"<ros2_control[^>]*>.*?</ros2_control>", "", urdf_string, flags=re.DOTALL
+    )
+    return stripped_urdf_string
+
+
+def fix_arm_tip_names(urdf_string):
+    # Replace 'r_arm_tip' and 'l_arm_tip' link names with 'r_arm_tip_link' and 'l_arm_tip_link'
+    modified_urdf_string = urdf_string.replace(
+        '<link name="r_arm_tip">', '<link name="r_arm_tip_link">'
+    )
+    modified_urdf_string = modified_urdf_string.replace(
+        '<link name="l_arm_tip">', '<link name="l_arm_tip_link">'
+    )
+
+    # Replace child link names 'r_arm_tip' and 'l_arm_tip' with 'r_arm_tip_link' and 'l_arm_tip_link' in <joint> tags
+    modified_urdf_string = modified_urdf_string.replace(
+        '<child link="r_arm_tip"/>', '<child link="r_arm_tip_link"/>'
+    )
+    modified_urdf_string = modified_urdf_string.replace(
+        '<child link="l_arm_tip"/>', '<child link="l_arm_tip_link"/>'
+    )
+
+    return modified_urdf_string
+
+
+# Does not work as expected
+# def fix_arm_tip_names(urdf_string):
+#     # Replace 'r_arm_tip' and 'l_arm_tip' link names with 'r_arm_tip_link' and 'l_arm_tip_link'
+#     modified_urdf_string = re.sub(
+#         r'(<link name=")(r|l)(_arm_tip)(">)', r"\1\2\3_link\4", urdf_string
+#     )
+
+#     # Replace child link names 'r_arm_tip' and 'l_arm_tip' with 'r_arm_tip_link' and 'l_arm_tip_link' in <joint> tags
+#     modified_urdf_string = re.sub(
+#         r'(<child link=")(r|l)(_arm_tip)(">)', r"\1\2\3_link\4", modified_urdf_string
+#     )
+
+#     return modified_urdf_string
 
 
 def main():
