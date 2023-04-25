@@ -20,10 +20,10 @@ setup(
         'reachy_sdk_api>=0.6.0',
         ],
     zip_safe=True,
-    maintainer='reachy',
-    maintainer_email='32677536+simheo@users.noreply.github.com',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    maintainer='Pollen Robotics',
+    maintainer_email='contact@pollen-robotics.com',
+    description='ROS2 Humble package handling the grpc server for the mobile base.',
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
