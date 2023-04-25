@@ -1,0 +1,5 @@
+trajectory_msgs/JointTrajectory trajectory
+---
+reachy_msgs/TrajectoryResult result
+---
+reachy_msgs/TrajectoryFeedback feedback

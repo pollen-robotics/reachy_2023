@@ -1,0 +1,3 @@
+std_msgs/Header header
+string status
+float64 time_to_completion
