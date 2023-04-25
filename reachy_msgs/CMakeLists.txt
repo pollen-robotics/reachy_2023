@@ -21,6 +21,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ZoomCommand.msg"
   "msg/TrajectoryFeedback.msg"
   "msg/TrajectoryResult.msg"
+  "msg/GraspPose.msg"
+  "msg/GraspPoseArray.msg"
 
   "action/GotoTrajectory.action"
 
