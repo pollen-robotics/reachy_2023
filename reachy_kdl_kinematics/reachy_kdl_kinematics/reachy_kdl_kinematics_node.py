@@ -290,6 +290,8 @@ class ReachyKdlKinematics(LifecycleNode):
                 arm_name=name,
                 q0=q0,
             )
+
+            # self.logger.info(f"IK errors: {[round(error, 4) for error in errors]}")
             # rads to deg
             for s in sol:
                 s = s * 180 / np.pi
