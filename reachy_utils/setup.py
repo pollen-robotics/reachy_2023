@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """Setup config file."""
-
 from os import path
-
 from setuptools import find_packages, setup
 
 package_name = "reachy_utils"
@@ -34,7 +32,8 @@ setup(
             "reachy-identify-zuuu-model = reachy_utils.config:get_zuuu_version",
         ],
     },
-    author="Pollen Robotics",
-    author_email="contact@pollen-robotics.com",
-    description=".",
+    maintainer='Pollen Robotics',
+    maintainer_email='contact@pollen-robotics.com',
+    description='Tools used for Reachy 2023.',
+    license='Apache-2.0',
 )
