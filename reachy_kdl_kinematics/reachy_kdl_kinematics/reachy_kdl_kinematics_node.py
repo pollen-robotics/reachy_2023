@@ -28,7 +28,7 @@ from .kdl_kinematics import (
     inverse_kinematics,
     ros_pose_to_matrix,
 )
-import ik_reachy_placo
+from reachy_placo import ik_reachy_placo
 
 USE_QP_IK = True
 
