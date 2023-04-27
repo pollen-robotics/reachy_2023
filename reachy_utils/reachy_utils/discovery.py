@@ -111,7 +111,7 @@ def _init_missing_motors():
     return missing_motors_init
 
 
-def get_missing_motors_reachy():
+def get_missing_motors_reachy(check_service: bool = True):
     reachy_model = get_reachy_model()
     missing_motors = _init_missing_motors()
     service_was_active = False
@@ -123,12 +123,13 @@ def get_missing_motors_reachy():
     )
     status = pipe.stdout.decode().split()
 
-    if status[0] == "active":
-        service_was_active = True
-        print("Disabling reachy_sdk_server.service to access the usb2ax boards.")
-        run(
-            ["systemctl --user stop reachy_sdk_server.service"], stdout=PIPE, shell=True
-        )
+    if check_service:
+        if status[0] == "active":
+            service_was_active = True
+            print("Disabling reachy_sdk_server.service to access the usb2ax boards.")
+            run(
+                ["systemctl --user stop reachy_sdk_server.service"], stdout=PIPE, shell=True
+            )
 
     for part in robot_config_to_parts[reachy_model]:
         if "arm" in part:
