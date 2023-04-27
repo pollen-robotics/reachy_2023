@@ -1,8 +1,13 @@
-from pypot.dynamixel import DxlIO, Dxl320IO
-from reachy_utils.config import get_reachy_model
+import os
 from serial import SerialException
 from subprocess import run, PIPE
 from typing import Dict
+import yaml
+
+from pypot.dynamixel import DxlIO, Dxl320IO
+from reachy_utils.config import get_reachy_model
+
+_latest_discovery_file = os.path.expanduser("~/.reachy-latest-discovery.yaml")
 
 
 motor_ids_per_part = {
@@ -137,6 +142,9 @@ def get_missing_motors_reachy():
         run(
                 ["systemctl --user start reachy_sdk_server.service"], stdout=PIPE, shell=True
         )
+
+    with open(_latest_discovery_file, 'w')as f:
+        yaml.dump(missing_motors, f)
 
     return missing_motors
 

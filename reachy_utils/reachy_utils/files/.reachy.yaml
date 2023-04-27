@@ -1,6 +1,7 @@
 generation: 2023
 model: full_kit
 zuuu_version: 1.2
+serial_number: todo
 neck_orbita_zero:
     top: 0.0
     middle: 0.0
