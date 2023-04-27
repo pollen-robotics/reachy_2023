@@ -205,14 +205,14 @@
           </geometry>
       </visual>
       <collision>
-          <!-- <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/> -->
-          <!-- <geometry> -->
-              <!-- <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_thumb.dae"/> -->
-          <!-- </geometry> -->
-          <origin xyz="0.0 ${0.02 *reflect} -0.06" rpy="0.0 1.57 0.0"/>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
           <geometry>
-              <box size="0.1 0.012 0.035" />
+              <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_thumb.dae"/>
           </geometry>
+          <!-- <origin xyz="0.0 0.02 -0.06" rpy="0.0 1.57 0.0"/> -->
+          <!-- <geometry> -->
+          <!--     <box size="0.1 0.012 0.035" /> -->
+          <!-- </geometry> -->
       </collision>
 
   </link>
@@ -251,14 +251,14 @@
           </geometry>
       </visual>
       <collision>
-          <!-- <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/> -->
-          <!-- <geometry> -->
-              <!-- <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_finger.dae"/> -->
-          <!-- </geometry> -->
-          <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/>
+          <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
           <geometry>
-              <box size="0.1 0.012 0.035" />
+              <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_finger.dae"/>
           </geometry>
+          <!-- <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/> -->
+          <!-- <geometry> -->
+          <!--     <box size="0.1 0.012 0.035" /> -->
+          <!-- </geometry> -->
       </collision>
 
 
