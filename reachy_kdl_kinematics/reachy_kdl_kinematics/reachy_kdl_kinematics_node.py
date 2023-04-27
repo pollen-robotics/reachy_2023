@@ -5,6 +5,8 @@ from typing import List
 import numpy as np
 import copy
 import re
+import time
+import os
 
 from scipy.spatial.transform import Rotation
 
@@ -58,19 +60,24 @@ class ReachyKdlKinematics(LifecycleNode):
         self.averaged_pose = {}
         self.max_joint_vel = {}
 
-        # Setuping the QP solver
-        # TODO Placo will be updated soon, this workaround is temporay
-        # https://github.com/Rhoban/placo/issues/1
-        urdf_path = "/tmp/reachy.urdf"
-        tmp_file = open(urdf_path, "w+")
+        # Removing URDF tags that Placo does not support
         new_urdf = copy.copy(self.urdf)
         new_urdf = remove_ros2_control_tags(new_urdf)
         new_urdf = fix_arm_tip_names(new_urdf)
 
-        tmp_file.write(new_urdf)
-        tmp_file.close()
-        self.ik_reachy_placo = ik_reachy_placo.IKReachyQP(viewer_on=True)
-        self.ik_reachy_placo.setup(urdf_path)
+        # Using the collision.json file from reachy_placo
+        collision_file_location = os.path.join(
+            os.path.dirname(ik_reachy_placo.__file__), "reachy"
+        )
+
+        self.ik_reachy_placo = ik_reachy_placo.IKReachyQP(
+            viewer_on=True, collision_avoidance=True
+        )
+        self.ik_reachy_placo.setup(
+            urdf_path=collision_file_location,
+            urdf_string=new_urdf,
+        )
+
         self.ik_reachy_placo.create_tasks()
 
         for prefix in ("l", "r"):
@@ -275,7 +282,7 @@ class ReachyKdlKinematics(LifecycleNode):
         M = ros_pose_to_matrix(request.pose)
         q0 = request.q0.position
 
-        if not (USE_QP_IK):
+        if name == "head" or not (USE_QP_IK):
             # IK using KDL
             error, sol = inverse_kinematics(
                 self.ik_solver[name],
@@ -285,14 +292,19 @@ class ReachyKdlKinematics(LifecycleNode):
             )
         else:
             # IK using Placo
+            self.logger.info(f"calling IK for {name}")
+
+            lt0 = time.time()
             sol, errors = self.ik_reachy_placo.ik_continuous(
                 M,
                 arm_name=name,
                 q0=q0,
             )
+            dt = time.time() - lt0
+            self.logger.info(f"IK took {dt*1000:.2f} ms")
 
-            self.logger.info(f"IK errors: {[round(error, 4) for error in errors]}")
-            self.logger.info(f"sol: {sol}")
+            # self.logger.info(f"IK errors: {[round(error, 4) for error in errors]}")
+            # self.logger.info(f"sol: {sol}")
             # rads to deg
             for s in sol:
                 s = s * 180 / np.pi
@@ -307,7 +319,7 @@ class ReachyKdlKinematics(LifecycleNode):
     def on_target_pose(self, msg: PoseStamped, name, q0, forward_publisher):
         M = ros_pose_to_matrix(msg.pose)
 
-        if not (USE_QP_IK):
+        if name == "head" or not (USE_QP_IK):
             # IK using KDL
             error, sol = inverse_kinematics(
                 self.ik_solver[name],
@@ -339,7 +351,7 @@ class ReachyKdlKinematics(LifecycleNode):
 
         M = ros_pose_to_matrix(avg_pose)
 
-        if not (USE_QP_IK):
+        if name == "head" or not (USE_QP_IK):
             # IK using KDL
             error, sol = inverse_kinematics(
                 self.ik_solver[name],
