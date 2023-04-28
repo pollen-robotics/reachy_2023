@@ -32,8 +32,6 @@ def launch_setup(context, *args, **kwargs):
         arguments=[
             "-topic", "robot_description",
             "-entity", LaunchConfiguration("robot_name"),
-            "-x","3.7",
-            "-y","2",
         ],
         output="screen"
     )
