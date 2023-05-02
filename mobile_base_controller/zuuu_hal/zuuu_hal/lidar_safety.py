@@ -8,7 +8,7 @@ from typing import List
 from sensor_msgs.msg import LaserScan
 
 from zuuu_hal.utils import angle_diff
-from zuuu_hal import identify_zuuu_model
+from reachy_utils.config import get_zuuu_version
 
 
 class LidarSafety:
@@ -33,19 +33,18 @@ class LidarSafety:
         self.critical_angles = []
         self.at_least_one_critical = False
         self.logger = logger
-        zuuu_model = identify_zuuu_model()
-        # zuuu_model = check_output(os.path.expanduser('~')+'/.local/bin/reachy-identify-zuuu-model').strip().decode()
+        zuuu_version = get_zuuu_version()
 
         # Not using the TF transforms because this is faster
         # TODO use a static TF2 transform instead
         try:
-            float_model = float(zuuu_model)
+            float_model = float(zuuu_version)
             if float_model < 1.0:
                 self.x_offset = 0.155
             else:
                 self.x_offset = 0.1815
         except Exception:
-            msg = "ZUUU version can't be processed, check that the 'zuuu_model' tag is "\
+            msg = "ZUUU version can't be processed, check that the 'zuuu_version' tag is "\
                 "present in the .reachy.yaml file"
             self.logger.error(msg)
             self.logger.error(traceback.format_exc())
