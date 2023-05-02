@@ -56,7 +56,7 @@ class ReachyKdlKinematics(LifecycleNode):
         self.wait_for_joint_state()
 
         self.chain, self.fk_solver, self.ik_solver = {}, {}, {}
-        self.fk_srv, self.ik_srv, reachability_srv = {}, {}, {}
+        self.fk_srv, self.ik_srv, self.reach_srv = {}, {}, {}
         self.target_sub, self.averaged_target_sub = {}, {}
         self.averaged_pose = {}
         self.max_joint_vel = {}
@@ -109,12 +109,12 @@ class ReachyKdlKinematics(LifecycleNode):
                 self.logger.info(f'Adding service "{self.ik_srv[arm].srv_name}"...')
                 
                 # Create reachability service
-                self.reachability_srv[arm] = self.create_service(
+                self.reach_srv[arm] = self.create_service(
                     srv_type=GetReachability,
                     srv_name=f"/{arm}/reachability",
                     callback=partial(self.reachability_srv, name=arm),
                 )
-                self.logger.info(f'Adding service "{self.reachability_srv[arm].srv_name}"...')
+                self.logger.info(f'Adding service "{self.reach_srv[arm].srv_name}"...')
                 
                 
 
@@ -335,41 +335,54 @@ class ReachyKdlKinematics(LifecycleNode):
         response: GetReachability.Response,
         name,
     ) -> GetReachability.Response:
-        M = ros_pose_to_matrix(request.pose)
-        q0 = request.q0.position
+        try :
+            M = ros_pose_to_matrix(request.pose)
+            q0 = request.q0.position
 
-        if name == "head" :
-            self.logger.error(f"The reachability service does not exist for {name} yet")
-        elif not (USE_QP_IK):
-            self.logger.error(f"The reachability service needs the flag USE_QP_IK to be True" )
-        else:
-            # Reachability check + IK using Placo
-            self.logger.info(f"calling the Reachability service for {name}")
+            if name == "head" :
+                self.logger.error(f"The reachability service does not exist for {name} yet")
+                raise NotImplementedError
+            elif not (USE_QP_IK):
+                self.logger.error(f"The reachability service needs the flag USE_QP_IK to be True" )
+                raise ValueError
+            else:
+                # Reachability check + IK using Placo
+                self.logger.info(f"calling the Reachability service for {name}")
 
-            lt0 = time.time()
-            is_reachable, sol, errors = self.ik_reachy_placo.is_pose_reachable(
-                M,
-                arm_name=name,
-                q0=q0,
-                max_iter=20,
-                nb_stepper_solve=5,
-                tolerances=[0.001, 0.001, 0.001, 0.02, 0.02, 0.02],
-            )
-            dt = time.time() - lt0
-            self.logger.info(f"Reachability took {dt*1000:.2f} ms")
+                lt0 = time.time()
+                is_reachable, sol, errors = self.ik_reachy_placo.is_pose_reachable(
+                    M,
+                    arm_name=name,
+                    q0=q0,
+                    max_iter=20,
+                    nb_stepper_solve=5,
+                    tolerances=[0.001, 0.001, 0.001, 0.02, 0.02, 0.02],
+                )
+                dt = time.time() - lt0
+                self.logger.info(f"Reachability took {dt*1000:.2f} ms")
 
-            # self.logger.info(f"IK errors: {[round(error, 4) for error in errors]}")
-            # self.logger.info(f"sol: {sol}")
-            # rads to deg
-            for s in sol:
-                s = s * 180 / np.pi
+                # self.logger.info(f"IK errors: {[round(error, 4) for error in errors]}")
+                # self.logger.info(f"sol: {sol}")
+                # rads to deg
+                for s in sol:
+                    s = s * 180 / np.pi
 
-        response.success = True
-        response.joint_position.name = self.get_chain_joints_name(self.chain[name])
-        response.joint_position.position = sol
-        response.errors = errors
-
-        return response
+                response.success = is_reachable
+                self.logger.info(f"a")
+                
+                response.joint_position.name = self.get_chain_joints_name(self.chain[name])
+                self.logger.info(f"b")
+                
+                response.joint_position.position = sol
+                self.logger.info(f"c")
+                
+                response.errors = errors
+                self.logger.info(f"Returning...")
+                return response
+                
+        except Exception as e:
+            self.logger.error(f"Error in reachability service: {e}")
+            raise e    
     
 
     def on_target_pose(self, msg: PoseStamped, name, q0, forward_publisher):
