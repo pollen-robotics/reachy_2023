@@ -1,0 +1,15 @@
+# A service call to check if a pose is reachable and carry out the inverse kinematics computation for Reachy
+# Pose request
+geometry_msgs/Pose pose
+sensor_msgs/JointState q0
+# List of tolerances of the solution in task space: [x, y, z, roll, pitch, yaw]. xyz in meters, roll, pitch, yaw in radians.
+float64[6] tolerances
+
+---
+
+# The returned solution 
+bool success
+# Position of each joints
+sensor_msgs/JointState joint_position
+# List of errors of the solution in task space: [x, y, z, roll, pitch, yaw]. xyz in meters, roll, pitch, yaw in radians.
+float64[6] errors

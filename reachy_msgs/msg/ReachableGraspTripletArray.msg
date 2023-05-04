@@ -1,0 +1,2 @@
+
+reachy_msgs/ReachableGraspTriplet[] reachable_grasp_triplets

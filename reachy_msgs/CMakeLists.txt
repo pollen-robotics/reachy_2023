@@ -23,6 +23,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TrajectoryResult.msg"
   "msg/GraspPose.msg"
   "msg/GraspPoseArray.msg"
+  "msg/ReachableGraspTriplet.msg"
+  "msg/ReachableGraspTripletArray.msg"
 
   "action/GotoTrajectory.action"
 
@@ -36,6 +38,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetCameraZoomSpeed.srv"
   "srv/SetFocusState.srv"
   "srv/GetDynamicState.srv"
+  "srv/GetReachability.srv"
 
   DEPENDENCIES geometry_msgs sensor_msgs std_msgs trajectory_msgs
 )

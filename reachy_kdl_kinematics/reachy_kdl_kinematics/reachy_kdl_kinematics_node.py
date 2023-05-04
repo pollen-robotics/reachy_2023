@@ -22,6 +22,7 @@ from std_msgs.msg import Float64MultiArray, String
 from reachy_msgs.srv import (
     GetForwardKinematics,
     GetInverseKinematics,
+    GetReachability,
 )
 
 from .kdl_kinematics import (
@@ -55,7 +56,7 @@ class ReachyKdlKinematics(LifecycleNode):
         self.wait_for_joint_state()
 
         self.chain, self.fk_solver, self.ik_solver = {}, {}, {}
-        self.fk_srv, self.ik_srv = {}, {}
+        self.fk_srv, self.ik_srv, self.reach_srv = {}, {}, {}
         self.target_sub, self.averaged_target_sub = {}, {}
         self.averaged_pose = {}
         self.max_joint_vel = {}
@@ -106,6 +107,16 @@ class ReachyKdlKinematics(LifecycleNode):
                     callback=partial(self.inverse_kinematics_srv, name=arm),
                 )
                 self.logger.info(f'Adding service "{self.ik_srv[arm].srv_name}"...')
+                
+                # Create reachability service
+                self.reach_srv[arm] = self.create_service(
+                    srv_type=GetReachability,
+                    srv_name=f"/{arm}/reachability",
+                    callback=partial(self.reachability_srv, name=arm),
+                )
+                self.logger.info(f'Adding service "{self.reach_srv[arm].srv_name}"...')
+                
+                
 
                 # Create cartesian control pub/subscription
                 forward_position_pub = self.create_publisher(
@@ -299,6 +310,8 @@ class ReachyKdlKinematics(LifecycleNode):
                 M,
                 arm_name=name,
                 q0=q0,
+                max_iter=20,
+                nb_stepper_solve=5,
             )
             dt = time.time() - lt0
             self.logger.info(f"IK took {dt*1000:.2f} ms")
@@ -315,6 +328,61 @@ class ReachyKdlKinematics(LifecycleNode):
         response.joint_position.position = sol
 
         return response
+    
+    def reachability_srv(
+        self,
+        request: GetReachability.Request,
+        response: GetReachability.Response,
+        name,
+    ) -> GetReachability.Response:
+        try :
+            M = ros_pose_to_matrix(request.pose)            
+            q0 = request.q0.position
+            tolerances = request.tolerances
+
+            if name == "head" :
+                self.logger.error(f"The reachability service does not exist for {name} yet")
+                raise NotImplementedError
+            elif not (USE_QP_IK):
+                self.logger.error(f"The reachability service needs the flag USE_QP_IK to be True" )
+                raise ValueError
+            else:
+                # Reachability check + IK using Placo
+                lt0 = time.time()
+                is_reachable, sol, errors = self.ik_reachy_placo.is_pose_reachable(
+                    M,
+                    arm_name=name,
+                    q0=q0,
+                    max_iter=20,
+                    nb_stepper_solve=5,
+                    tolerances=tolerances,
+                )
+                dt = time.time() - lt0
+                self.logger.info(f"Reachability took {dt*1000:.2f} ms for {name}")
+                
+                # TODO temp for debug
+                self.ik_reachy_placo._tick_viewer()
+                
+
+                # self.logger.info(f"IK errors: {[round(error, 4) for error in errors]}")
+                # self.logger.info(f"sol: {sol}")
+                # rads to deg
+                for s in sol:
+                    s = s * 180 / np.pi
+
+                response.success = is_reachable
+                
+                response.joint_position.name = self.get_chain_joints_name(self.chain[name])
+                
+                response.joint_position.position = sol
+                
+                response.errors = errors
+                return response
+                
+        except Exception as e:
+            self.logger.error(f"Error in reachability service: {e}")
+            raise e    
+    
 
     def on_target_pose(self, msg: PoseStamped, name, q0, forward_publisher):
         M = ros_pose_to_matrix(msg.pose)
@@ -333,6 +401,8 @@ class ReachyKdlKinematics(LifecycleNode):
                 M,
                 arm_name=name,
                 q0=q0,
+                max_iter=20,
+                nb_stepper_solve=5,
             )
             # rads to deg
             for s in sol:
@@ -365,6 +435,8 @@ class ReachyKdlKinematics(LifecycleNode):
                 M,
                 arm_name=name,
                 q0=q0,
+                max_iter=20,
+                nb_stepper_solve=5,
             )
             # rads to deg
             for s in sol:
