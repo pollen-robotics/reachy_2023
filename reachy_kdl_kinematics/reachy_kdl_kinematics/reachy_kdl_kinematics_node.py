@@ -336,8 +336,9 @@ class ReachyKdlKinematics(LifecycleNode):
         name,
     ) -> GetReachability.Response:
         try :
-            M = ros_pose_to_matrix(request.pose)
+            M = ros_pose_to_matrix(request.pose)            
             q0 = request.q0.position
+            tolerances = request.tolerances
 
             if name == "head" :
                 self.logger.error(f"The reachability service does not exist for {name} yet")
@@ -347,8 +348,6 @@ class ReachyKdlKinematics(LifecycleNode):
                 raise ValueError
             else:
                 # Reachability check + IK using Placo
-                self.logger.info(f"calling the Reachability service for {name}")
-
                 lt0 = time.time()
                 is_reachable, sol, errors = self.ik_reachy_placo.is_pose_reachable(
                     M,
@@ -356,10 +355,14 @@ class ReachyKdlKinematics(LifecycleNode):
                     q0=q0,
                     max_iter=20,
                     nb_stepper_solve=5,
-                    tolerances=[0.001, 0.001, 0.001, 0.02, 0.02, 0.02],
+                    tolerances=tolerances,
                 )
                 dt = time.time() - lt0
-                self.logger.info(f"Reachability took {dt*1000:.2f} ms")
+                self.logger.info(f"Reachability took {dt*1000:.2f} ms for {name}")
+                
+                # TODO temp for debug
+                self.ik_reachy_placo._tick_viewer()
+                
 
                 # self.logger.info(f"IK errors: {[round(error, 4) for error in errors]}")
                 # self.logger.info(f"sol: {sol}")
@@ -368,16 +371,12 @@ class ReachyKdlKinematics(LifecycleNode):
                     s = s * 180 / np.pi
 
                 response.success = is_reachable
-                self.logger.info(f"a")
                 
                 response.joint_position.name = self.get_chain_joints_name(self.chain[name])
-                self.logger.info(f"b")
                 
                 response.joint_position.position = sol
-                self.logger.info(f"c")
                 
                 response.errors = errors
-                self.logger.info(f"Returning...")
                 return response
                 
         except Exception as e:
