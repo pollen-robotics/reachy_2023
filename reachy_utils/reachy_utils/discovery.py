@@ -11,10 +11,10 @@ _latest_discovery_file = os.path.expanduser("~/.reachy-latest-discovery.yaml")
 
 
 motor_ids_per_part = {
-    "right_arm": [10, 11, 12, 13, 14, 15, 16, 17],
-    "left_arm": [20, 21, 22, 23, 24, 25, 26, 27],
-    "head": [30, 31],
-    "orbita_neck": [40],
+    "right_arm": [10, 11, 12, 13, 14, 15, 16, 17, 40, 41],
+    "left_arm": [20, 21, 22, 23, 24, 25, 26, 27, 50, 51],
+    "head": [30, 31, 60],
+    "orbita_neck": [70],
 }
 
 robot_config_to_parts = {
@@ -43,7 +43,12 @@ motor_id_to_name = {
     27: "l_gripper",
     30: "r_antenna",
     31: "l_antenna",
-    40: "orbita_neck",
+    40: "r_gripper_force_sensor",
+    41: "r_fans",
+    50: "l_gripper_force_sensor",
+    51: "l_fans",
+    60: "head_fans",
+    70: "orbita_neck",
 }
 
 
@@ -94,7 +99,7 @@ def check_if_orbita_missing(missing_motors: Dict):
         missing_motors["head"] += ["orbita_neck"]
         return missing_motors
 
-    scan = dxl_io.scan([70])
+    scan = dxl_io.scan(motor_ids_per_part['orbita_neck'])
     dxl_io.close()
 
     if scan == []:
