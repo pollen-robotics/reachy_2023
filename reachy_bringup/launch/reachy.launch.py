@@ -12,7 +12,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 import yaml
 import os
 
-FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS = 'full_kit', 'starter_kit_right', 'starter_kit_left', 'headless'
+FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI = 'full_kit', 'starter_kit_right', 'starter_kit_left', 'headless', 'mini'
 REACHY_CONFIG_MODEL = "model"
 REACHY_CONFIG_NECK_ORBITA_ZERO = "neck_orbita_zero"
 REACHY_CONFIG_TOP = "top"
@@ -33,11 +33,11 @@ class ReachyConfig:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
             # Robot model
-            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS]:
+            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI]:
                 self.model = config[REACHY_CONFIG_MODEL]
             else:
                 raise ValueError('Bad robot model "{}". Expected values are {}'.format(
-                    config[REACHY_CONFIG_MODEL], [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS]))
+                    config[REACHY_CONFIG_MODEL], [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI]))
 
             # orbita zero
             try:
@@ -132,6 +132,7 @@ def launch_setup(context, *args, **kwargs):
                 f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != '{HEADLESS}' "
             )),
     )
+
     camera_focus_node = Node(
         package='camera_controllers',
         executable='camera_focus',
@@ -206,7 +207,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['r_arm_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' != '{STARTER_KIT_LEFT}'")
+                f"'{reachy_config.model}' in ['{STARTER_KIT_RIGHT}', '{FULL_KIT}', '{HEADLESS}']")
         )
     )
 
@@ -216,7 +217,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['l_arm_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' != '{STARTER_KIT_RIGHT}'")
+                f"'{reachy_config.model}' in ['{STARTER_KIT_RIGHT}', '{FULL_KIT}', '{HEADLESS}']")
         ),
     )
 
@@ -234,6 +235,10 @@ def launch_setup(context, *args, **kwargs):
         package='controller_manager',
         executable='spawner',
         arguments=['gripper_forward_position_controller', '-c', '/controller_manager'],
+        condition=IfCondition(
+            PythonExpression(
+                f"'{reachy_config.model}' != '{MINI}'")
+        ),
     )
 
     forward_torque_controller_spawner = Node(
@@ -322,7 +327,11 @@ def launch_setup(context, *args, **kwargs):
     gripper_safe_controller_node = Node(
         package='gripper_safe_controller',
         executable='gripper_safe_controller',
-        arguments=['--controllers-file', robot_controllers]
+        arguments=['--controllers-file', robot_controllers],
+        condition=IfCondition(
+                    PythonExpression(
+                        f"'{reachy_config.model}' != '{MINI}'")
+        ),
     )
 
     fake_camera_node = Node(
