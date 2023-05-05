@@ -144,7 +144,7 @@ def get_missing_motors_reachy(check_service: bool = True):
                 ["systemctl --user start reachy_sdk_server.service"], stdout=PIPE, shell=True
         )
 
-    with open(_latest_discovery_file, 'w')as f:
+    with open(_latest_discovery_file, 'w') as f:
         yaml.dump(missing_motors, f)
 
     return missing_motors
