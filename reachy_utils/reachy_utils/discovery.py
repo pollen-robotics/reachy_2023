@@ -85,7 +85,20 @@ def get_missing_motors_head(missing_motors: Dict):
     scan = dxl320_io.scan([30, 31])
     dxl320_io.close()
 
+    try:
+        dxl_io = DxlIO(port='/dev/usb2ax_head')
+    except SerialException:
+        print(
+            "Port /dev/usb2ax_head not found. Make sure that the udev rules is set and the usb2ax board plugged."
+        )
+        missing_motors["head"] = [motor_id_to_name[motor_id] for motor_id in motor_ids_per_part["head"]]
+        return missing_motors
+
+    scan += dxl_io.scan([60])
+    dxl_io.close()
+
     missing_motors["head"] = [motor_id_to_name[motor_id] for motor_id in motor_ids_per_part["head"] if motor_id not in scan]
+
     return missing_motors
 
 
