@@ -1,8 +1,13 @@
-from pypot.dynamixel import DxlIO, Dxl320IO
-from reachy_utils.config import get_reachy_model
+import os
 from serial import SerialException
 from subprocess import run, PIPE
 from typing import Dict
+import yaml
+
+from pypot.dynamixel import DxlIO, Dxl320IO
+from reachy_utils.config import get_reachy_model
+
+_latest_discovery_file = os.path.expanduser("~/.reachy-latest-discovery.yaml")
 
 
 motor_ids_per_part = {
@@ -106,7 +111,7 @@ def _init_missing_motors():
     return missing_motors_init
 
 
-def get_missing_motors_reachy():
+def get_missing_motors_reachy(check_service: bool = True):
     reachy_model = get_reachy_model()
     missing_motors = _init_missing_motors()
     service_was_active = False
@@ -118,12 +123,13 @@ def get_missing_motors_reachy():
     )
     status = pipe.stdout.decode().split()
 
-    if status[0] == "active":
-        service_was_active = True
-        print("Disabling reachy_sdk_server.service to access the usb2ax boards.")
-        run(
-            ["systemctl --user stop reachy_sdk_server.service"], stdout=PIPE, shell=True
-        )
+    if check_service:
+        if status[0] == "active":
+            service_was_active = True
+            print("Disabling reachy_sdk_server.service to access the usb2ax boards.")
+            run(
+                ["systemctl --user stop reachy_sdk_server.service"], stdout=PIPE, shell=True
+            )
 
     for part in robot_config_to_parts[reachy_model]:
         if "arm" in part:
@@ -137,6 +143,9 @@ def get_missing_motors_reachy():
         run(
                 ["systemctl --user start reachy_sdk_server.service"], stdout=PIPE, shell=True
         )
+
+    with open(_latest_discovery_file, 'w') as f:
+        yaml.dump(missing_motors, f)
 
     return missing_motors
 

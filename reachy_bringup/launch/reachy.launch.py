@@ -20,6 +20,11 @@ REACHY_CONFIG_BOTTOM = "bottom"
 REACHY_CONFIG_MIDDLE = "middle"
 
 
+# Before launching each node, scan the usb2ax to check if there are any missing motors
+from reachy_utils.discovery import get_missing_motors_reachy
+get_missing_motors_reachy(check_service=False)
+
+
 class ReachyConfig:
     def __init__(self, config_file_path='~/.reachy.yaml'):
 
