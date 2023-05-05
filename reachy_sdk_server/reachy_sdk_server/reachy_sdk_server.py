@@ -139,7 +139,7 @@ class ReachySDKServer(
     
     # Force Sensors gRPCs
     def GetAllForceSensorsId(self, request: Empty, context) -> sensor_pb2.SensorsId:
-        if self.body_control_node.sensors == {}:
+        if not self.body_control_node.sensors:
             return sensor_pb2.SensorsId(names=[], uids=[])
 
         names, uids = zip(*[
