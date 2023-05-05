@@ -63,7 +63,7 @@ def get_missing_motors_arm(arm: str, missing_motors: Dict):
         missing_motors[arm] = missing
         return missing_motors
 
-    scan = dxl_io.scan(range(40))
+    scan = dxl_io.scan(range(55))
     dxl_io.close()
 
     missing = [motor_id_to_name[motor_id] for motor_id in motor_ids_per_part[arm] if motor_id not in scan]
