@@ -23,6 +23,7 @@ robot_config_to_parts = {
     "starter_kit_right": ["right_arm", "head"],
     "headless": ["right_arm", "left_arm"],
     "mini": ["head"],
+    "starter_kit_right_no_head": ["right_arm", "orbita"]
 }
 
 motor_id_to_name = {
@@ -156,6 +157,9 @@ def get_missing_motors_reachy(check_service: bool = True):
 
         elif "head" in part:
             missing_motors = get_missing_motors_head(missing_motors)
+            missing_motors = check_if_orbita_missing(missing_motors)
+
+        elif "orbita" in part:
             missing_motors = check_if_orbita_missing(missing_motors)
 
     if service_was_active:

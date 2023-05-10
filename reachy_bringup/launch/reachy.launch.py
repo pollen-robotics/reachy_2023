@@ -13,6 +13,8 @@ import yaml
 import os
 
 FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI = 'full_kit', 'starter_kit_right', 'starter_kit_left', 'headless', 'mini'
+STARTER_KIT_RIGHT_NO_HEAD = 'starter_kit_right_no_head'
+
 REACHY_CONFIG_MODEL = "model"
 REACHY_CONFIG_NECK_ORBITA_ZERO = "neck_orbita_zero"
 REACHY_CONFIG_TOP = "top"
@@ -33,11 +35,11 @@ class ReachyConfig:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
             # Robot model
-            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI]:
+            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD]:
                 self.model = config[REACHY_CONFIG_MODEL]
             else:
                 raise ValueError('Bad robot model "{}". Expected values are {}'.format(
-                    config[REACHY_CONFIG_MODEL], [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI]))
+                    config[REACHY_CONFIG_MODEL],[FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD]))
 
             # orbita zero
             try:
@@ -129,7 +131,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != '{HEADLESS}' "
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
             )),
     )
 
@@ -139,7 +141,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != '{HEADLESS}' "
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
             )),
     )
 
@@ -149,7 +151,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != '{HEADLESS}' "
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
             )),
     )
 
@@ -158,7 +160,7 @@ def launch_setup(context, *args, **kwargs):
         executable='camera_server',
         output='both',
         condition=IfCondition(PythonExpression(
-                f"{start_sdk_server_py} and '{reachy_config.model}' != '{HEADLESS}' "
+                f"{start_sdk_server_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
             )),
     )
 
@@ -227,7 +229,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['antenna_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' != '{HEADLESS}'")
+                f"'{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')")
         )
     )
 
