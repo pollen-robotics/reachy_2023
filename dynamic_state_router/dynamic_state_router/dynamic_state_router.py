@@ -211,7 +211,12 @@ class DynamicStateRouterNode(Node):
         self.gripper_pub.publish(msg)  
 
     def handle_pid_commands(self, commands):
-        pid_fc = self.forward_controllers['forward_pid_controller']
+        try:
+            pid_fc = self.forward_controllers['forward_pid_controller']
+        
+        except KeyError:
+            return
+
         msg = Float64MultiArray()
 
         for j in pid_fc.joints:

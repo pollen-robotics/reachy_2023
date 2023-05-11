@@ -72,30 +72,39 @@ class BodyControlNode(Node):
         self.inverse_kin_client = {}
         self.target_pose_publisher = {}
 
-        for chain in ('l_arm', 'r_arm', 'head'):
-            forward_srv = self.create_client(
-                srv_type=GetForwardKinematics,
-                srv_name=f'/{chain}/forward_kinematics',
-            )
-            if not forward_srv.service_is_ready():
-                continue
-
-            self.forward_kin_client[chain] = forward_srv
-
-            inverse_srv = self.create_client(
-                srv_type=GetInverseKinematics,
-                srv_name=f'/{chain}/inverse_kinematics',
-            )
-
-            self.inverse_kin_client[chain] = inverse_srv
-
+        for chain in ['r_arm']:
             self.target_pose_publisher[chain] = self.create_publisher(
                 msg_type=PoseStamped,
-                topic=f'/{chain}/averaged_target_pose',
+                topic=f'/{chain}/target_pose',
                 qos_profile=5,
             )
 
             self.logger.info(f'Load kinematics (forward/inverse) for "{chain}"')
+
+        # for chain in ('l_arm', 'r_arm', 'head'):
+        #     forward_srv = self.create_client(
+        #         srv_type=GetForwardKinematics,
+        #         srv_name=f'/{chain}/forward_kinematics',
+        #     )
+        #     if not forward_srv.service_is_ready():
+        #         continue
+
+        #     self.forward_kin_client[chain] = forward_srv
+
+        #     inverse_srv = self.create_client(
+        #         srv_type=GetInverseKinematics,
+        #         srv_name=f'/{chain}/inverse_kinematics',
+        #     )
+
+        #     self.inverse_kin_client[chain] = inverse_srv
+
+        #     self.target_pose_publisher[chain] = self.create_publisher(
+        #         msg_type=PoseStamped,
+        #         topic=f'/{chain}/averaged_target_pose',
+        #         qos_profile=5,
+        #     )
+
+        #     self.logger.info(f'Load kinematics (forward/inverse) for "{chain}"')
 
         self.wait_for_setup()
 
@@ -200,6 +209,7 @@ class BodyControlNode(Node):
                     self._device_type[name] = 'fans'
                 else:
                     self.logger.warning(f'Unkwnon device {name} with interfaces ({kv.interface_names})')
+                    continue
 
                 d = getattr(self, self._device_type[name])
 
@@ -210,8 +220,9 @@ class BodyControlNode(Node):
 
         for uid, (name, kv) in enumerate(zip(state.joint_names, state.interface_values)):
             for k, v in zip(kv.interface_names, kv.values):
-                d = getattr(self, self._device_type[name])
-                d[name][k] = v
+                if name in self._device_type:
+                    d = getattr(self, self._device_type[name])
+                    d[name][k] = v
 
         self.joint_state_ready.set()
 
@@ -437,6 +448,7 @@ class BodyControlNode(Node):
     def handle_arm_cartesian_request(self, request: ArmIKRequest, name) -> bool:
         if name not in self.target_pose_publisher:
             return False
+
 
         pose = PoseStamped()
         pose.header.stamp = self.get_clock().now().to_msg()
