@@ -14,6 +14,7 @@ import os
 
 FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI = 'full_kit', 'starter_kit_right', 'starter_kit_left', 'headless', 'mini'
 STARTER_KIT_RIGHT_NO_HEAD = 'starter_kit_right_no_head'
+RIGHT_ARM = 'right_arm'
 
 REACHY_CONFIG_MODEL = "model"
 REACHY_CONFIG_NECK_ORBITA_ZERO = "neck_orbita_zero"
@@ -35,11 +36,11 @@ class ReachyConfig:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
             # Robot model
-            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD]:
+            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD, RIGHT_ARM]:
                 self.model = config[REACHY_CONFIG_MODEL]
             else:
                 raise ValueError('Bad robot model "{}". Expected values are {}'.format(
-                    config[REACHY_CONFIG_MODEL],[FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD]))
+                    config[REACHY_CONFIG_MODEL],[FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD, RIGHT_ARM]))
 
             # orbita zero
             try:
@@ -131,7 +132,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{RIGHT_ARM}']"
             )),
     )
 
@@ -141,7 +142,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{RIGHT_ARM}']"
             )),
     )
 
@@ -151,7 +152,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{RIGHT_ARM}']"
             )),
     )
 
@@ -160,7 +161,7 @@ def launch_setup(context, *args, **kwargs):
         executable='camera_server',
         output='both',
         condition=IfCondition(PythonExpression(
-                f"{start_sdk_server_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
+                f"{start_sdk_server_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{RIGHT_ARM}']"
             )),
     )
 
@@ -199,7 +200,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['neck_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' != '{HEADLESS}'")
+                f"'{reachy_config.model}' not in ['{HEADLESS}', '{RIGHT_ARM}']")
         )
     )
 
@@ -209,7 +210,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['r_arm_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' in ['{STARTER_KIT_RIGHT}', '{FULL_KIT}', '{HEADLESS}']")
+                f"'{reachy_config.model}' in ['{STARTER_KIT_RIGHT}', '{FULL_KIT}', '{HEADLESS}', '{RIGHT_ARM}']")
         )
     )
 
@@ -229,7 +230,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['antenna_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')")
+                f"'{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{RIGHT_ARM}']")
         )
     )
 
