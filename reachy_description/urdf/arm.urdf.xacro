@@ -14,6 +14,7 @@
             <xacro:property name="shoulder_y" value="0.036"/>
         </xacro:if>
 
+
         <!--        <gazebo reference="r_gripper_thumb">-->
         <!--            <mu1>1.0</mu1>-->
         <!--            <mu2>1.0</mu2>-->
@@ -161,6 +162,14 @@
                 </geometry>
             </collision>
         </link>
+        <gazebo reference="{prefix}_wrist">
+            <self_collide>1</self_collide>
+            <gravity>0</gravity>
+            <mu1>1.0</mu1>
+            <mu2>1.0</mu2>
+            <kp>2e+9</kp>
+            <kd>1.0</kd>
+        </gazebo>
 
         <joint name="${prefix}_forearm_yaw" type="revolute">
             <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
@@ -185,12 +194,21 @@
                 </geometry>
             </visual>
             <collision>
-                <origin xyz="0.0 0.0 -0.03" rpy="0.0 0.0 0.0"/>
+                <origin xyz="0.0 0.0 -0.02" rpy="0.0 0.0 0.0"/>
                 <geometry>
-                    <cylinder length="0.06" radius="0.03"/>
+                    <cylinder length="0.03" radius="0.025"/>
                 </geometry>
             </collision>
         </link>
+        <gazebo reference="${prefix}_wrist2hand">
+            <self_collide>1</self_collide>
+            <gravity>0</gravity>
+            <mu1>1.0</mu1>
+            <mu2>1.0</mu2>
+            <kp>2e+9</kp>
+            <kd>1.0</kd>
+        </gazebo>
+        
 
         <joint name="${prefix}_wrist_pitch" type="revolute">
             <origin xyz="0 0 -0.25" rpy="0.0 0.0 0.0"/>
@@ -200,10 +218,18 @@
             <limit lower="-0.785" upper="0.785" effort="10." velocity="0.0"/>
             <dynamics damping="${damping}" friction="${friction}"/>
         </joint>
+        <gazebo reference="{prefix}_wrist_pitch">
+            <self_collide>1</self_collide>
+            <gravity>0</gravity>
+            <mu1>1.0</mu1>
+            <mu2>1.0</mu2>
+            <kp>2e+9</kp>
+            <kd>1.0</kd>
+        </gazebo>
 
         <link name="${prefix}_gripper_thumb">
             <inertial>
-                <origin xyz="0.032 ${-0.008*reflect} 0.0" rpy="0.0 1.57 0.0"/>
+                <origin xyz="0.0 ${0.02 *reflect} -0.06" rpy="0.0 1.57 0.0"/>
                 <mass value="0.173"/>
                 <inertia ixx="1.083e-4" ixy="-3.476e-5" ixz="1.331e-6" iyy="1.421e-4" iyz="6.730e-7" izz="2.112e-4"/>
             </inertial>
@@ -229,7 +255,7 @@
 
         <gazebo reference="${prefix}_gripper_thumb">
             <self_collide>1</self_collide>
-            <!--            <gravity>0</gravity>-->
+            <gravity>0</gravity>
             <mu1>1.0</mu1>
             <mu2>1.0</mu2>
             <kp>2e+9</kp>
@@ -250,12 +276,20 @@
             </xacro:if>
             <dynamics damping="${damping}" friction="${friction}"/>
         </joint>
+        <gazebo reference="${prefix}_wrist_roll">
+            <self_collide>1</self_collide>
+            <gravity>0</gravity>
+            <mu1>1.0</mu1>
+            <mu2>1.0</mu2>
+            <kp>2e+9</kp>
+            <kd>1.0</kd>
+        </gazebo>
 
         <link name="${prefix}_gripper_finger">
             <inertial>
-                <origin xyz="${-0.005*reflect} -0.043 -0.0" rpy="0.0 1.57 0.0"/>
+                <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/>
                 <mass value="0.035"/>
-                <inertia ixx="9.166e-5" ixy="-6.559e-6" ixz="-3.952e-8" iyy="1.062e-5" iyz="5.276e-9" izz="8.704e-5"/>
+                <inertia ixx="1.062e-5" ixy="-6.559e-6" ixz="-3.952e-8" iyy="9.166e-5" iyz="5.276e-9" izz="8.704e-5"/>
             </inertial>
             <visual name="">
                 <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
@@ -277,6 +311,7 @@
 
         <gazebo reference="${prefix}_gripper_finger">
             <self_collide>1</self_collide>
+            <gravity>0</gravity>
             <mu1>1.0</mu1>
             <mu2>1.0</mu2>
             <kp>2e+9</kp>
