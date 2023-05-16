@@ -256,8 +256,8 @@
         <gazebo reference="${prefix}_gripper_thumb">
             <self_collide>1</self_collide>
             <gravity>0</gravity>
-            <mu1>1.0</mu1>
-            <mu2>1.0</mu2>
+            <mu1>0.2</mu1>
+            <mu2>0.2</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
         </gazebo>
@@ -312,8 +312,8 @@
         <gazebo reference="${prefix}_gripper_finger">
             <self_collide>1</self_collide>
             <gravity>0</gravity>
-            <mu1>1.0</mu1>
-            <mu2>1.0</mu2>
+            <mu1>0.2</mu1>
+            <mu2>0.2</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
         </gazebo>
