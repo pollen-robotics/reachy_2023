@@ -244,7 +244,7 @@
                 <!-- <geometry> -->
                 <!-- <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_thumb.dae"/> -->
                 <!-- </geometry> -->
-                <origin xyz="0.0 ${0.02 *reflect} -0.06" rpy="0.0 1.57 0.0"/>
+                <origin xyz="0.0 ${0.02 *reflect} -0.06" rpy="-0.17 1.57 0.0"/>
                 <geometry>
                     <box size="0.1 0.012 0.035"/>
                 </geometry>
@@ -304,14 +304,37 @@
                 <!-- <geometry> -->
                 <!-- <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_finger.dae"/> -->
                 <!-- </geometry> -->
-                <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/>
+                <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.17 1.57 0.0"/>
                 <geometry>
-                    <box size="0.1 0.012 0.035"/>
+                    <box size="0.05 0.012 0.035"/>
                 </geometry>
             </collision>
         </link>
 
         <gazebo reference="${prefix}_gripper_finger">
+            <self_collide>1</self_collide>
+            <gravity>0</gravity>
+            <mu1>0.2</mu1>
+            <mu2>0.2</mu2>
+            <kp>2e+9</kp>
+            <kd>1.0</kd>
+        </gazebo>
+
+        <link name="${prefix}_gripper_finger2">
+            <inertial>
+                <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/>
+                <mass value="0.035"/>
+                <inertia ixx="1.062e-5" ixy="-6.559e-6" ixz="-3.952e-8" iyy="9.166e-5" iyz="5.276e-9" izz="8.704e-5"/>
+            </inertial>
+            <collision>
+                <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.17 1.57  -0.0"/>
+                <geometry>
+                    <box size="0.05 0.012 0.035"/>
+                </geometry>
+            </collision>
+        </link>
+
+        <gazebo reference="${prefix}_gripper_finger2">
             <self_collide>1</self_collide>
             <gravity>0</gravity>
             <mu1>0.2</mu1>
@@ -335,8 +358,14 @@
             <child link="${prefix}_arm_tip"/>
         </joint>
 
+        <joint name="${prefix}_gripper_finger2" type="fixed">
+            <origin xyz="0.0 0.0 -0.05" rpy="${0.6*reflect} 0 0"/>
+            <parent link="${prefix}_gripper_finger"/>
+            <child link="${prefix}_gripper_finger2"/>
+        </joint>
+
         <joint name="${prefix}_gripper" type="revolute">
-            <origin xyz="0.0 ${-0.037*reflect} -0.03998" rpy="0.0 0.0 0.0"/>
+            <origin xyz="0.0 ${-0.037*reflect} -0.03998" rpy="-0.5 0.0 0.0"/>
             <parent link="${prefix}_gripper_thumb"/>
             <child link="${prefix}_gripper_finger"/>
             <axis xyz="1 0 0"/>
