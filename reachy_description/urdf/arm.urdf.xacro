@@ -13,15 +13,6 @@
             <xacro:property name="reflect" value="1"/>
             <xacro:property name="shoulder_y" value="0.036"/>
         </xacro:if>
-
-
-        <!--        <gazebo reference="r_gripper_thumb">-->
-        <!--            <mu1>1.0</mu1>-->
-        <!--            <mu2>1.0</mu2>-->
-        <!--            <kp>2e+9</kp>-->
-        <!--            <kd>1.0</kd>-->
-        <!--        </gazebo>-->
-
         <link name="${prefix}_shoulder">
             <inertial>
                 <origin xyz="-0.016 ${shoulder_y} 0.0" rpy="${1.57*reflect} 1.57 0.0"/>
@@ -165,10 +156,11 @@
         <gazebo reference="{prefix}_wrist">
             <self_collide>1</self_collide>
             <gravity>0</gravity>
-            <mu1>1.0</mu1>
-            <mu2>1.0</mu2>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
         </gazebo>
 
         <joint name="${prefix}_forearm_yaw" type="revolute">
@@ -203,10 +195,11 @@
         <gazebo reference="${prefix}_wrist2hand">
             <self_collide>1</self_collide>
             <gravity>0</gravity>
-            <mu1>1.0</mu1>
-            <mu2>1.0</mu2>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
         </gazebo>
         
 
@@ -221,10 +214,11 @@
         <gazebo reference="{prefix}_wrist_pitch">
             <self_collide>1</self_collide>
             <gravity>0</gravity>
-            <mu1>1.0</mu1>
-            <mu2>1.0</mu2>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
         </gazebo>
 
         <link name="${prefix}_gripper_thumb">
@@ -256,10 +250,11 @@
         <gazebo reference="${prefix}_gripper_thumb">
             <self_collide>1</self_collide>
             <gravity>0</gravity>
-            <mu1>0.2</mu1>
-            <mu2>0.2</mu2>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
             <max_vel>0.1</max_vel>
             <min_depth>0.001</min_depth>
         </gazebo>
@@ -281,10 +276,11 @@
         <gazebo reference="${prefix}_wrist_roll">
             <self_collide>1</self_collide>
             <gravity>0</gravity>
-            <mu1>1.0</mu1>
-            <mu2>1.0</mu2>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
         </gazebo>
 
         <link name="${prefix}_gripper_finger">
@@ -314,10 +310,11 @@
         <gazebo reference="${prefix}_gripper_finger">
             <self_collide>1</self_collide>
             <gravity>0</gravity>
-            <mu1>0.2</mu1>
-            <mu2>0.2</mu2>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
         </gazebo>
 
         <link name="${prefix}_gripper_finger2">
@@ -337,10 +334,11 @@
         <gazebo reference="${prefix}_gripper_finger2">
             <self_collide>1</self_collide>
             <gravity>0</gravity>
-            <mu1>0.2</mu1>
-            <mu2>0.2</mu2>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
         </gazebo>
 
         <link name="${prefix}_arm_tip">
