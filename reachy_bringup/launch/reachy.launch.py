@@ -131,7 +131,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
             )),
     )
 
@@ -141,7 +141,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
             )),
     )
 
@@ -151,7 +151,7 @@ def launch_setup(context, *args, **kwargs):
         output='both',
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
             )),
     )
 
@@ -160,7 +160,7 @@ def launch_setup(context, *args, **kwargs):
         executable='camera_server',
         output='both',
         condition=IfCondition(PythonExpression(
-                f"{start_sdk_server_py} and '{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')"
+                f"{start_sdk_server_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
             )),
     )
 
@@ -229,7 +229,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['antenna_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' != ('{HEADLESS}' and '{STARTER_KIT_RIGHT_NO_HEAD}')")
+                f"'{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']")
         )
     )
 
