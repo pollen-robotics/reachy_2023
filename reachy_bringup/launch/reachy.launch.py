@@ -273,6 +273,11 @@ def launch_setup(context, *args, **kwargs):
         arguments=['forward_fan_controller', '-c', '/controller_manager'],
     )
 
+    fan_controller_spawner = Node(
+        package='fans_controller',
+        executable='fans_controller',
+    )
+
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -314,6 +319,7 @@ def launch_setup(context, *args, **kwargs):
                 forward_speed_limit_controller_spawner,
                 forward_pid_controller_spawner,
                 forward_fan_controller_spawner,
+                fan_controller_spawner,
                 kinematics_node
             ],
         ),
