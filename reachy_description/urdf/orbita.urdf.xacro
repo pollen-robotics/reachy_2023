@@ -1,0 +1,191 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="orbita" params="parent damping friction neck_orbita_serial_port neck_orbita_id neck_orbita_alpha neck_orbita_hardware_zero neck_orbita_reduction">
+
+    <xacro:include filename="$(find reachy_description)/ros2_control/orbita.ros2_control.xacro"/>
+
+    <joint name="neck_roll" type="revolute">
+      <origin xyz="0.015 0.0 0.095" rpy="-0.15105105 0.08669986 -1.05356462"/>
+      <parent link="${parent}"/>
+      <child link="head_x"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="-0.8" upper="0.8" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+    </joint>
+
+    <link name="head_x">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
+    </link>
+
+    <joint name="neck_pitch" type="revolute">
+      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+      <parent link="head_x"/>
+      <child link="head_y"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.8" upper="1.13" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+    </joint>
+
+    <link name="head_y" >
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
+    </link>
+
+    <joint name="neck_yaw" type="revolute">
+      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+      <parent link="head_y"/>
+      <child link="head_z"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="-2.79" upper="2.79" effort="10." velocity="0.0"/>
+      <dynamics damping="${damping}" friction="${friction}"/>
+    </joint>
+
+    <link name="head_z">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
+    </link>
+
+    <joint name="neck_fixed" type="fixed">
+      <origin xyz="0 0 0" rpy="0.0 0.0 1.047"/>
+      <parent link="head_z" />
+      <child link="head" />
+    </joint>
+
+    <!-- Fixed Orbita Arms Visuals -->
+
+    <joint name="neck_top" type="fixed">
+      <origin xyz="0.0067 0.0 0.0478" rpy="0 0.174 0"/>
+      <parent link="${parent}"/>
+      <child link="top_neck_arm"/>
+    </joint>
+
+    <link name="top_neck_arm">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
+
+      <visual name="">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.5236"/>
+        <geometry>
+          <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <cylinder length="0.0" radius="0.0" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="neck_middle" type="fixed">
+      <origin xyz="0.0067 0.0 0.0478" rpy="0 0.174 0"/>
+      <parent link="${parent}"/>
+      <child link="middle_neck_arm"/>
+    </joint>
+
+    <link name="middle_neck_arm">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
+      <visual name="">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 2.618"/>
+        <geometry>
+          <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <cylinder length="0.0" radius="0.0" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="neck_bottom" type="fixed">
+      <origin xyz="0.0067 0.0 0.0478" rpy="0 0.174 0"/>
+      <parent link="${parent}"/>
+      <child link="bottom_neck_arm"/>
+    </joint>
+
+    <link name="bottom_neck_arm">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
+      <visual name="">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 -1.57"/>
+        <geometry>
+          <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <cylinder length="0.0" radius="0.0" />
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Head Links -->
+
+    <link name="head">
+      <inertial>
+        <origin xyz="-0.009 -0.002 0.059" rpy="0.0 0.0 0.0"/>
+        <mass value="0.237"/>
+        <inertia ixx="1.676e-3" ixy="3.068e-6" ixz="1.2449e-4" iyy="1.368e-3" iyz="3.360e-5" izz="8.425e-4"/>
+      </inertial>
+      <visual name="">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <mesh filename="file://$(find reachy_description)/meshes/head.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="-0.009 -0.002 0.059" rpy="1.57 0.0 0.0"/>
+        <geometry>
+          <cylinder length="0.15" radius="0.06" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="head_tip" >
+    </link>
+
+    <joint name="head_tip_fixed" type="fixed">
+      <!-- between the cameras -->
+      <origin xyz="0.02 0 0.06105" rpy="0.0 0.0 0"/>
+
+      <!-- Rotation center -->
+      <!-- <origin xyz="0.0 0 0.0" rpy="0.0 0.0 0"/> -->
+      <parent link="head" />
+      <child link="head_tip" />
+    </joint>
+
+
+    <xacro:orbita_control
+      neck_orbita_serial_port="${neck_orbita_serial_port}"
+      neck_orbita_id="${neck_orbita_id}"
+      neck_orbita_alpha="${neck_orbita_alpha}"
+      neck_orbita_hardware_zero="${neck_orbita_hardware_zero}"
+      neck_orbita_reduction="${neck_orbita_reduction}"
+    />
+
+</xacro:macro>
+</robot>
