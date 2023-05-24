@@ -13,14 +13,6 @@
             <xacro:property name="reflect" value="1"/>
             <xacro:property name="shoulder_y" value="0.036"/>
         </xacro:if>
-
-        <!--        <gazebo reference="r_gripper_thumb">-->
-        <!--            <mu1>1.0</mu1>-->
-        <!--            <mu2>1.0</mu2>-->
-        <!--            <kp>2e+9</kp>-->
-        <!--            <kd>1.0</kd>-->
-        <!--        </gazebo>-->
-
         <link name="${prefix}_shoulder">
             <inertial>
                 <origin xyz="-0.016 ${shoulder_y} 0.0" rpy="${1.57*reflect} 1.57 0.0"/>
@@ -161,6 +153,15 @@
                 </geometry>
             </collision>
         </link>
+        <gazebo reference="{prefix}_wrist">
+            <self_collide>1</self_collide>
+            <gravity>0</gravity>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
+            <kp>2e+9</kp>
+            <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
+        </gazebo>
 
         <joint name="${prefix}_forearm_yaw" type="revolute">
             <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
@@ -185,12 +186,22 @@
                 </geometry>
             </visual>
             <collision>
-                <origin xyz="0.0 0.0 -0.03" rpy="0.0 0.0 0.0"/>
+                <origin xyz="0.0 0.0 -0.02" rpy="0.0 0.0 0.0"/>
                 <geometry>
-                    <cylinder length="0.06" radius="0.03"/>
+                    <cylinder length="0.03" radius="0.025"/>
                 </geometry>
             </collision>
         </link>
+        <gazebo reference="${prefix}_wrist2hand">
+            <self_collide>1</self_collide>
+            <gravity>0</gravity>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
+            <kp>2e+9</kp>
+            <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
+        </gazebo>
+        
 
         <joint name="${prefix}_wrist_pitch" type="revolute">
             <origin xyz="0 0 -0.25" rpy="0.0 0.0 0.0"/>
@@ -200,10 +211,19 @@
             <limit lower="-0.785" upper="0.785" effort="10." velocity="0.0"/>
             <dynamics damping="${damping}" friction="${friction}"/>
         </joint>
+        <gazebo reference="{prefix}_wrist_pitch">
+            <self_collide>1</self_collide>
+            <gravity>0</gravity>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
+            <kp>2e+9</kp>
+            <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
+        </gazebo>
 
         <link name="${prefix}_gripper_thumb">
             <inertial>
-                <origin xyz="0.032 ${-0.008*reflect} 0.0" rpy="0.0 1.57 0.0"/>
+                <origin xyz="0.0 ${0.02 *reflect} -0.06" rpy="0.0 1.57 0.0"/>
                 <mass value="0.173"/>
                 <inertia ixx="1.083e-4" ixy="-3.476e-5" ixz="1.331e-6" iyy="1.421e-4" iyz="6.730e-7" izz="2.112e-4"/>
             </inertial>
@@ -218,7 +238,7 @@
                 <!-- <geometry> -->
                 <!-- <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_thumb.dae"/> -->
                 <!-- </geometry> -->
-                <origin xyz="0.0 ${0.02 *reflect} -0.06" rpy="0.0 1.57 0.0"/>
+                <origin xyz="0.0 ${0.02 *reflect} -0.06" rpy="-0.17 1.57 0.0"/>
                 <geometry>
                     <box size="0.1 0.012 0.035"/>
                 </geometry>
@@ -229,11 +249,14 @@
 
         <gazebo reference="${prefix}_gripper_thumb">
             <self_collide>1</self_collide>
-            <!--            <gravity>0</gravity>-->
-            <mu1>1.0</mu1>
-            <mu2>1.0</mu2>
+            <gravity>0</gravity>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
+            <max_vel>0.1</max_vel>
+            <min_depth>0.001</min_depth>
         </gazebo>
 
 
@@ -250,12 +273,21 @@
             </xacro:if>
             <dynamics damping="${damping}" friction="${friction}"/>
         </joint>
+        <gazebo reference="${prefix}_wrist_roll">
+            <self_collide>1</self_collide>
+            <gravity>0</gravity>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
+            <kp>2e+9</kp>
+            <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
+        </gazebo>
 
         <link name="${prefix}_gripper_finger">
             <inertial>
-                <origin xyz="${-0.005*reflect} -0.043 -0.0" rpy="0.0 1.57 0.0"/>
+                <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/>
                 <mass value="0.035"/>
-                <inertia ixx="9.166e-5" ixy="-6.559e-6" ixz="-3.952e-8" iyy="1.062e-5" iyz="5.276e-9" izz="8.704e-5"/>
+                <inertia ixx="1.062e-5" ixy="-6.559e-6" ixz="-3.952e-8" iyy="9.166e-5" iyz="5.276e-9" izz="8.704e-5"/>
             </inertial>
             <visual name="">
                 <origin xyz="0.0 0.0 0.0" rpy="0.0 1.57 0.0"/>
@@ -268,19 +300,45 @@
                 <!-- <geometry> -->
                 <!-- <mesh filename="file://$(find reachy_description)/meshes/${prefix}_gripper_finger.dae"/> -->
                 <!-- </geometry> -->
-                <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/>
+                <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.17 1.57 0.0"/>
                 <geometry>
-                    <box size="0.1 0.012 0.035"/>
+                    <box size="0.05 0.012 0.035"/>
                 </geometry>
             </collision>
         </link>
 
         <gazebo reference="${prefix}_gripper_finger">
             <self_collide>1</self_collide>
-            <mu1>1.0</mu1>
-            <mu2>1.0</mu2>
+            <gravity>0</gravity>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
             <kp>2e+9</kp>
             <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
+        </gazebo>
+
+        <link name="${prefix}_gripper_finger2">
+            <inertial>
+                <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.0 1.57 0.0"/>
+                <mass value="0.035"/>
+                <inertia ixx="1.062e-5" ixy="-6.559e-6" ixz="-3.952e-8" iyy="9.166e-5" iyz="5.276e-9" izz="8.704e-5"/>
+            </inertial>
+            <collision>
+                <origin xyz="0.0 ${-0.01*reflect} -0.02" rpy="0.17 1.57  -0.0"/>
+                <geometry>
+                    <box size="0.05 0.012 0.035"/>
+                </geometry>
+            </collision>
+        </link>
+
+        <gazebo reference="${prefix}_gripper_finger2">
+            <self_collide>1</self_collide>
+            <gravity>0</gravity>
+            <mu1>10.0</mu1>
+            <mu2>0.1</mu2>
+            <kp>2e+9</kp>
+            <kd>1.0</kd>
+            <fdir1 value="1 0 0"/>
         </gazebo>
 
         <link name="${prefix}_arm_tip">
@@ -298,8 +356,14 @@
             <child link="${prefix}_arm_tip"/>
         </joint>
 
+        <joint name="${prefix}_gripper_finger2" type="fixed">
+            <origin xyz="0.0 0.0 -0.05" rpy="${0.6*reflect} 0 0"/>
+            <parent link="${prefix}_gripper_finger"/>
+            <child link="${prefix}_gripper_finger2"/>
+        </joint>
+
         <joint name="${prefix}_gripper" type="revolute">
-            <origin xyz="0.0 ${-0.037*reflect} -0.03998" rpy="0.0 0.0 0.0"/>
+            <origin xyz="0.0 ${-0.037*reflect} -0.03998" rpy="-0.5 0.0 0.0"/>
             <parent link="${prefix}_gripper_thumb"/>
             <child link="${prefix}_gripper_finger"/>
             <axis xyz="1 0 0"/>
