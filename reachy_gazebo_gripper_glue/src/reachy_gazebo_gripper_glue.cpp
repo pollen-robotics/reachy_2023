@@ -67,7 +67,7 @@ namespace gazebo
                 bool thumb_contact = CheckContact(this->robot_link_thumb, object_link);
                 bool finger_contact = CheckContact(this->robot_link_finger, object_link);
 
-
+                // LOOK AT ME, I'M THE GLUE NOW
                 if (
                 ((distance_thumb < threshold_distance && distance_finger < threshold_distance && gripper_opening < 0.1)
                 || ((thumb_contact || finger_contact) && gripper_opening < 0.1))
