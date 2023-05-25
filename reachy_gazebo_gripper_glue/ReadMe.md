@@ -5,3 +5,10 @@ export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:"YOURPATHTOYOURREACHYWS"/install/r
 
 
 ```
+
+install this lib
+
+```commandline
+sudo apt install libgazebo11-dev
+
+```
