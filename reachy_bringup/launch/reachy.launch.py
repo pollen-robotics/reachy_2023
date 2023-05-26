@@ -61,7 +61,7 @@ def launch_setup(context, *args, **kwargs):
     # var_rl is a ROS launch type object
     # var_py is a converted version, python friendly
     start_rviz_rl = LaunchConfiguration('start_rviz')
-    start_rviz_py = start_rviz_rl.perform(context) == 'true'
+    start_rviz_py = start_rviz_rl.perform(context)
     fake_rl = LaunchConfiguration('fake')
     fake_py = fake_rl.perform(context) == 'true'
     gazebo_rl = LaunchConfiguration('gazebo')
@@ -107,7 +107,8 @@ def launch_setup(context, *args, **kwargs):
     )
 
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
+        [FindPackageShare('reachy_description'), 'config', f'{start_rviz_py}.rviz']
+        # [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
     )
 
     control_node = Node(
@@ -177,7 +178,7 @@ def launch_setup(context, *args, **kwargs):
         name='rviz2',
         output='log',
         arguments=['-d', rviz_config_file],
-        condition=IfCondition(start_rviz_rl),
+        condition=IfCondition(PythonExpression(f"'{start_rviz_py}' != 'false'"))
     )
 
     gazebo_state_broadcaster_params = PathJoinSubstitution(
@@ -385,7 +386,7 @@ def generate_launch_description():
             'start_rviz',
             default_value='false',
             description='Start RViz2 automatically with this launch file.',
-            choices=['true', 'false']
+            choices=['reachy', 'reachy_grasping', 'false']
         ),
         DeclareLaunchArgument(
             'fake',
