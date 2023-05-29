@@ -107,7 +107,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare('reachy_description'), 'config', f'{start_rviz_py}.rviz']
+        [FindPackageShare('reachy_description'), 'config', f'{start_rviz_py}.rviz' if start_rviz_py != 'true' else 'reachy.rviz']
         # [FindPackageShare('reachy_description'), 'config', 'reachy.rviz']
     )
 
@@ -378,16 +378,15 @@ def launch_setup(context, *args, **kwargs):
 
 
 def generate_launch_description():
+    # for each file, if it is a .rviz file, add it to the list of choices without the .rviz extension
+    rviz_config_choices = []
+    for file in os.listdir(os.path.dirname(os.path.realpath(__file__)) + "/../../reachy_description/config"):
+        if file.endswith(".rviz"):
+            rviz_config_choices.append(file[:-5])
+
     return LaunchDescription([
         # Needed by camera publisher - See: https://github.com/ros2/rosidl_python/issues/79
         SetEnvironmentVariable('PYTHONOPTIMIZE', '1'),
-
-        DeclareLaunchArgument(
-            'start_rviz',
-            default_value='false',
-            description='Start RViz2 automatically with this launch file.',
-            choices=['reachy', 'reachy_grasping', 'false']
-        ),
         DeclareLaunchArgument(
             'fake',
             default_value='false',
@@ -405,6 +404,12 @@ def generate_launch_description():
             default_value='false',
             description='Start sdk_server along with reachy nodes with this launch file.',
             choices=['true', 'false']
+        ),
+        DeclareLaunchArgument(
+            'start_rviz',
+            default_value='false',
+            description='Start RViz2 automatically with this launch file.',
+            choices=['true', 'false', *rviz_config_choices]
         ),
         OpaqueFunction(function=launch_setup)
     ])
