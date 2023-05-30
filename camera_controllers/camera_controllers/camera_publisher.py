@@ -10,6 +10,9 @@ from threading import Thread
 from typing import Dict
 from subprocess import Popen, PIPE
 from ffc_wrapper import FFCWrapper
+import cv2
+from cv_bridge import CvBridge
+import numpy as np
 
 import rclpy
 from rclpy.node import Node
@@ -30,12 +33,12 @@ class CameraPublisher(Node):
         self.logger = self.get_logger()
         self.clock = self.get_clock()
 
-        self.ffc_wrapper = FFCWrapper("/home/reachy/dev/reachy_stereo/luxonis/MY_MODULAR_CONFIG.json")
+        self.ffcw = FFCWrapper("/home/reachy/dev/Reachy_stereo/luxonis/MY_MODULAR_CONFIG.json")
 
-        self.camera_publisher_left = self.create_publisher(CompressedImage, 'left_image/image_raw/compressed', 1)
+        self.camera_publisher_left = self.create_publisher(CompressedImage, 'left_image', 1)
         self.logger.info(f'Launching "{self.camera_publisher_left.topic_name}" publisher.')
 
-        self.camera_publisher_right = self.create_publisher(CompressedImage, 'right_image/image_raw/compressed', 1)
+        self.camera_publisher_right = self.create_publisher(CompressedImage, 'right_image', 1)
         self.logger.info(f'Launching "{self.camera_publisher_right.topic_name}" publisher.')
 
         self.publisher = {
@@ -45,13 +48,30 @@ class CameraPublisher(Node):
 
         self.compr_img: Dict[str, CompressedImage] = {}
 
-        def publisher():
-            self.logger.info(f'{side.capitalize()} camera ready to publish!')
-            
-            imgList = self.ffcw.get_sync_images(rectify=True, invert_h=True, invert_v=True)
+        self.bridge = CvBridge()
 
-            self.publish_img("left", imgList["left"])
-            self.publish_img("right", imgList["right"])
+        def publisher():
+            self.logger.info('Left and Right cameras ready to publish!')
+            while True:
+                imgList = self.ffcw.get_sync_images(rectify=True, invert_h=True, invert_v=True)
+                if imgList is not None:
+                    self.logger.info('PUBLISHING')
+                    leftIm = imgList["left"]
+                    rightIm = imgList["right"]
+                    
+                    leftIm = cv2.resize(leftIm, (0, 0), fx=0.5, fy=0.5)
+                    rightIm = cv2.resize(rightIm, (0, 0), fx=0.5, fy=0.5)
+
+                    # im = np.random.rand(1920, 1080, 3)*255
+
+                    # leftIm = self.bridge.cv2_to_compressed_imgmsg(im, "jpeg")
+                    # rightIm = self.bridge.cv2_to_compressed_imgmsg(im, "jpeg")
+
+                    leftIm = self.bridge.cv2_to_compressed_imgmsg(leftIm, "jpeg")
+                    rightIm = self.bridge.cv2_to_compressed_imgmsg(rightIm, "jpeg")
+
+                    self.publish_img("left", leftIm)
+                    self.publish_img("right", rightIm)
 
         for side in ('left', 'right'):
             compr_img = CompressedImage()
@@ -66,10 +86,11 @@ class CameraPublisher(Node):
 
     def publish_img(self, side: str, frame: bytes) -> None:
         """Read image from the requested side and publishes it."""
-        compr_img = self.compr_img[side]
-        compr_img.header.stamp = self.clock.now().to_msg()
-        compr_img.data = frame
-        self.publisher[side].publish(compr_img)
+        # compr_img = self.compr_img[side]
+        # compr_img.header.stamp = self.clock.now().to_msg()
+        # compr_img.data = frame
+        frame.header.stamp = self.clock.now().to_msg()
+        self.publisher[side].publish(frame)
 
     def _rotate(self, frame, angle):
         process = Popen([
