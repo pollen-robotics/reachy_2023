@@ -3,14 +3,13 @@ Camera Node.
 
 - publish /left_image and /right_image at the specified rate (default: 30Hz)
 
-Supported resolutions are: (1920,1080) at 15FPS, (1280,720) at 30FPS, (640,480) at 30FPS.
+Supported resolutions are: (1920,1080) at 15FPS, (1280,720) at 30FPS, (640,480) at 30FPS. <-- TODO update for luxonis FFC if needed
 """
 from functools import partial
 from threading import Thread
 from typing import Dict
 from subprocess import Popen, PIPE
-
-from v4l2py import Device
+from ffc_wrapper import FFCWrapper
 
 import rclpy
 from rclpy.node import Node
@@ -24,24 +23,14 @@ class CameraPublisher(Node):
     def __init__(self,
                  left_port: str = '/dev/left_camera',
                  right_port: str = '/dev/right_camera',
-                 resolution: tuple = (640, 480),
+                 resolution: tuple = (1920, 1080),
                  fps: int = 30) -> None:
         """Connect to both cameras, initialize the publishers."""
         super().__init__('camera_publisher')
         self.logger = self.get_logger()
         self.clock = self.get_clock()
 
-        self.devices = {}
-
-        self.left_device = Device(left_port)
-        self.left_device.video_capture.set_format(width=resolution[0], height=resolution[1], pixel_format='MJPG')
-        self.left_device.video_capture.set_fps(fps)
-        self.devices['left'] = self.left_device
-
-        self.right_device = Device(right_port)
-        self.right_device.video_capture.set_format(width=resolution[0], height=resolution[1], pixel_format='MJPG')
-        self.right_device.video_capture.set_fps(fps)
-        self.devices['right'] = self.right_device
+        self.ffc_wrapper = FFCWrapper("/home/reachy/dev/reachy_stereo/luxonis/MY_MODULAR_CONFIG.json")
 
         self.camera_publisher_left = self.create_publisher(CompressedImage, 'left_image/image_raw/compressed', 1)
         self.logger.info(f'Launching "{self.camera_publisher_left.topic_name}" publisher.')
@@ -55,30 +44,23 @@ class CameraPublisher(Node):
         }
 
         self.compr_img: Dict[str, CompressedImage] = {}
-        self.publisher_loop: Dict[str, callable] = {}
 
-        def publisher(side):
+        def publisher():
             self.logger.info(f'{side.capitalize()} camera ready to publish!')
+            
+            imgList = self.ffcw.get_sync_images(rectify=True, invert_h=True, invert_v=True)
 
-            if side == 'right':
-                angle = '90'
-            else:
-                angle = '270'
-
-            for frame in self.devices[side]:
-                self.publish_img(side, self._rotate(frame, angle))
+            self.publish_img("left", imgList["left"])
+            self.publish_img("right", imgList["right"])
 
         for side in ('left', 'right'):
             compr_img = CompressedImage()
             compr_img.format = 'jpeg'
             self.compr_img[side] = compr_img
 
-            self.publisher_loop[side] = partial(publisher, side=side)
-
-        for loop in self.publisher_loop.values():
-            t = Thread(target=loop)
-            t.daemon = True
-            t.start()
+        t = Thread(target=publisher)
+        t.daemon = True
+        t.start()
 
         self.logger.info('Node ready!')
 
