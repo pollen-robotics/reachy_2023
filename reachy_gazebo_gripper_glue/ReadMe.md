@@ -22,5 +22,12 @@ add this to your world to load the plugin into it
 
 ```
 
+As an argument, can be specified (default value: 0.1)
+```commandline
+<plugin name="reachy_gazebo_gripper_glue" filename="libreachy_gazebo_gripper_glue.so">
+<glue_threshold_distance>0.4</glue_threshold_distance>
+</plugin>
+```
+
 
 il y a un petit comment `// LOOK AT ME, I'M THE GLUE NOW` pour indiquer le principal levier de mofi à savoir la condition de trigger du glue

@@ -19,8 +19,23 @@ namespace gazebo
             this->initialized = false;
             this->updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&ReachyGazeboGripperGlue::OnUpdate, this));
             this->object_links = std::vector<physics::LinkPtr>();
-            gzdbg << "ReachyGazeboGripperGlue loaded" << std::endl;
-        }
+
+            // Check if the sdf element is provided
+            if (_sdf->HasElement("glue_threshold_distance"))
+            {
+                // Set the value of the distance threshold
+                this->glue_threshold_distance = _sdf->Get<double>("glue_threshold_distance");
+                gzdbg << "Using custom glue_threshold_distance of " << this->glue_threshold_distance << std::endl;
+            }
+
+            else
+            {
+                this->glue_threshold_distance = 0.1;
+                gzdbg << "Using default glue_threshold_distance of 0.1" << std::endl;
+            }
+
+                gzdbg << "ReachyGazeboGripperGlue loaded" << std::endl;
+            }
 
         void UpdateModelsAndLinks()
         {
@@ -57,7 +72,7 @@ namespace gazebo
             }
 
             this->UpdateModelsAndLinks();
-            double threshold_distance = 0.1;
+            //double threshold_distance = 0.1;
             double gripper_opening = this->GetDistance(this->robot_link_finger, this->robot_link_thumb);
 
             for (const auto& object_link : this->object_links)
@@ -69,7 +84,8 @@ namespace gazebo
 
                 // LOOK AT ME, I'M THE GLUE NOW
                 if (
-                ((distance_thumb < threshold_distance && distance_finger < threshold_distance && gripper_opening < 0.1)
+                ((distance_thumb < this->glue_threshold_distance && distance_finger < this->glue_threshold_distance
+                && gripper_opening < 0.1)
                 || ((thumb_contact || finger_contact) && gripper_opening < 0.1))
                 && !this->joint)
                 {
@@ -146,6 +162,7 @@ namespace gazebo
         event::ConnectionPtr updateConnection;
         bool initialized;
         std::vector<physics::LinkPtr> object_links;
+        double glue_threshold_distance;
     };
 
     GZ_REGISTER_WORLD_PLUGIN(ReachyGazeboGripperGlue)
