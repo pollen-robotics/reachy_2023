@@ -22,7 +22,7 @@ add this to your world to load the plugin into it
 
 ```
 
-As an argument, can be specified (default value: 0.1)
+As an argument, glue_threshold_distance can be specified (default value: 0.1)
 ```commandline
 <plugin name="reachy_gazebo_gripper_glue" filename="libreachy_gazebo_gripper_glue.so">
 <glue_threshold_distance>0.4</glue_threshold_distance>
