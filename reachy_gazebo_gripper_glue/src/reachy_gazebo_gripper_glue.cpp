@@ -39,6 +39,7 @@ namespace gazebo
 
         void UpdateModelsAndLinks()
         {
+            this->object_links.clear();  // Clear previous list of links
             auto models = this->world->Models();
 
             for (const auto& model : models)
