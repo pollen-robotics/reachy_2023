@@ -67,13 +67,9 @@ class ReachyKdlKinematics(LifecycleNode):
         new_urdf = fix_arm_tip_names(new_urdf)
 
         # Using the collision.json file from reachy_placo
-        collision_file_location = os.path.join(
-            os.path.dirname(ik_reachy_placo.__file__), "reachy"
-        )
+        collision_file_location = os.path.join(os.path.dirname(ik_reachy_placo.__file__), "reachy")
 
-        self.ik_reachy_placo = ik_reachy_placo.IKReachyQP(
-            viewer_on=True, collision_avoidance=True
-        )
+        self.ik_reachy_placo = ik_reachy_placo.IKReachyQP(viewer_on=True, collision_avoidance=True)
         self.ik_reachy_placo.setup(
             urdf_path=collision_file_location,
             urdf_string=new_urdf,
@@ -84,9 +80,7 @@ class ReachyKdlKinematics(LifecycleNode):
         for prefix in ("l", "r"):
             arm = f"{prefix}_arm"
 
-            chain, fk_solver, ik_solver = generate_solver(
-                self.urdf, "torso", f"{prefix}_arm_tip"
-            )
+            chain, fk_solver, ik_solver = generate_solver(self.urdf, "torso", f"{prefix}_arm_tip")
 
             # We automatically loads the kinematics corresponding to the config
             if chain.getNrOfJoints():
@@ -107,7 +101,7 @@ class ReachyKdlKinematics(LifecycleNode):
                     callback=partial(self.inverse_kinematics_srv, name=arm),
                 )
                 self.logger.info(f'Adding service "{self.ik_srv[arm].srv_name}"...')
-                
+
                 # Create reachability service
                 self.reach_srv[arm] = self.create_service(
                     srv_type=GetReachability,
@@ -115,8 +109,6 @@ class ReachyKdlKinematics(LifecycleNode):
                     callback=partial(self.reachability_srv, name=arm),
                 )
                 self.logger.info(f'Adding service "{self.reach_srv[arm].srv_name}"...')
-                
-                
 
                 # Create cartesian control pub/subscription
                 forward_position_pub = self.create_publisher(
@@ -137,9 +129,7 @@ class ReachyKdlKinematics(LifecycleNode):
                         forward_publisher=forward_position_pub,
                     ),
                 )
-                self.logger.info(
-                    f'Adding subscription on "{self.target_sub[arm].topic}"...'
-                )
+                self.logger.info(f'Adding subscription on "{self.target_sub[arm].topic}"...')
 
                 self.averaged_target_sub[arm] = self.create_subscription(
                     msg_type=PoseStamped,
@@ -155,9 +145,7 @@ class ReachyKdlKinematics(LifecycleNode):
                 )
                 self.averaged_pose[arm] = PoseAverager(window_length=1)
                 self.max_joint_vel[arm] = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
-                self.logger.info(
-                    f'Adding subscription on "{self.target_sub[arm].topic}"...'
-                )
+                self.logger.info(f'Adding subscription on "{self.target_sub[arm].topic}"...')
 
                 self.chain[arm] = chain
                 self.fk_solver[arm] = fk_solver
@@ -242,9 +230,7 @@ class ReachyKdlKinematics(LifecycleNode):
 
     def on_configure(self, state: State) -> TransitionCallbackReturn:
         # Dummy state to minimize impact on current behavior
-        self.logger.info(
-            "Configuring state has been called, going into inactive to release event trigger"
-        )
+        self.logger.info("Configuring state has been called, going into inactive to release event trigger")
         return TransitionCallbackReturn.SUCCESS
 
     def forward_kinematics_srv(
@@ -254,9 +240,7 @@ class ReachyKdlKinematics(LifecycleNode):
         name,
     ) -> GetForwardKinematics.Response:
         try:
-            joint_position = self.check_position(
-                request.joint_position, self.chain[name]
-            )
+            joint_position = self.check_position(request.joint_position, self.chain[name])
         except KeyError:
             response.success = False
             return response
@@ -310,8 +294,8 @@ class ReachyKdlKinematics(LifecycleNode):
                 M,
                 arm_name=name,
                 q0=q0,
-                max_iter=20,
-                nb_stepper_solve=5,
+                max_iter=30,
+                nb_stepper_solve=10,
             )
             dt = time.time() - lt0
             self.logger.info(f"IK took {dt*1000:.2f} ms")
@@ -328,23 +312,23 @@ class ReachyKdlKinematics(LifecycleNode):
         response.joint_position.position = sol
 
         return response
-    
+
     def reachability_srv(
         self,
         request: GetReachability.Request,
         response: GetReachability.Response,
         name,
     ) -> GetReachability.Response:
-        try :
-            M = ros_pose_to_matrix(request.pose)            
+        try:
+            M = ros_pose_to_matrix(request.pose)
             q0 = request.q0.position
             tolerances = request.tolerances
 
-            if name == "head" :
+            if name == "head":
                 self.logger.error(f"The reachability service does not exist for {name} yet")
                 raise NotImplementedError
             elif not (USE_QP_IK):
-                self.logger.error(f"The reachability service needs the flag USE_QP_IK to be True" )
+                self.logger.error(f"The reachability service needs the flag USE_QP_IK to be True")
                 raise ValueError
             else:
                 # Reachability check + IK using Placo
@@ -353,16 +337,15 @@ class ReachyKdlKinematics(LifecycleNode):
                     M,
                     arm_name=name,
                     q0=q0,
-                    max_iter=20,
-                    nb_stepper_solve=5,
+                    max_iter=30,
+                    nb_stepper_solve=10,
                     tolerances=tolerances,
                 )
                 dt = time.time() - lt0
                 self.logger.info(f"Reachability took {dt*1000:.2f} ms for {name}")
-                
+
                 # TODO temp for debug
                 self.ik_reachy_placo._tick_viewer()
-                
 
                 # self.logger.info(f"IK errors: {[round(error, 4) for error in errors]}")
                 # self.logger.info(f"sol: {sol}")
@@ -371,18 +354,17 @@ class ReachyKdlKinematics(LifecycleNode):
                     s = s * 180 / np.pi
 
                 response.success = is_reachable
-                
+
                 response.joint_position.name = self.get_chain_joints_name(self.chain[name])
-                
+
                 response.joint_position.position = sol
-                
+
                 response.errors = errors
                 return response
-                
+
         except Exception as e:
             self.logger.error(f"Error in reachability service: {e}")
-            raise e    
-    
+            raise e
 
     def on_target_pose(self, msg: PoseStamped, name, q0, forward_publisher):
         M = ros_pose_to_matrix(msg.pose)
@@ -401,8 +383,8 @@ class ReachyKdlKinematics(LifecycleNode):
                 M,
                 arm_name=name,
                 q0=q0,
-                max_iter=20,
-                nb_stepper_solve=5,
+                max_iter=30,
+                nb_stepper_solve=10,
             )
             # rads to deg
             for s in sol:
@@ -435,8 +417,8 @@ class ReachyKdlKinematics(LifecycleNode):
                 M,
                 arm_name=name,
                 q0=q0,
-                max_iter=20,
-                nb_stepper_solve=5,
+                max_iter=30,
+                nb_stepper_solve=10,
             )
             # rads to deg
             for s in sol:
@@ -504,42 +486,27 @@ class ReachyKdlKinematics(LifecycleNode):
             joints = [pos[j] for j in self.get_chain_joints_name(chain)]
             return joints
         except KeyError:
-            self.logger.warning(
-                f"Incorrect joints found ({js.name} vs {self.get_chain_joints_name(chain)})"
-            )
+            self.logger.warning(f"Incorrect joints found ({js.name} vs {self.get_chain_joints_name(chain)})")
             raise
 
     def get_chain_joints_name(self, chain):
-        return [
-            chain.getSegment(i).getJoint().getName()
-            for i in range(chain.getNrOfJoints())
-        ]
+        return [chain.getSegment(i).getJoint().getName() for i in range(chain.getNrOfJoints())]
 
 
 def remove_ros2_control_tags(urdf_string):
     # Use regex to find and remove everything between <ros2_control> and </ros2_control>, including the tags
-    stripped_urdf_string = re.sub(
-        r"<ros2_control[^>]*>.*?</ros2_control>", "", urdf_string, flags=re.DOTALL
-    )
+    stripped_urdf_string = re.sub(r"<ros2_control[^>]*>.*?</ros2_control>", "", urdf_string, flags=re.DOTALL)
     return stripped_urdf_string
 
 
 def fix_arm_tip_names(urdf_string):
     # Replace 'r_arm_tip' and 'l_arm_tip' link names with 'r_arm_tip_link' and 'l_arm_tip_link'
-    modified_urdf_string = urdf_string.replace(
-        '<link name="r_arm_tip">', '<link name="r_arm_tip_link">'
-    )
-    modified_urdf_string = modified_urdf_string.replace(
-        '<link name="l_arm_tip">', '<link name="l_arm_tip_link">'
-    )
+    modified_urdf_string = urdf_string.replace('<link name="r_arm_tip">', '<link name="r_arm_tip_link">')
+    modified_urdf_string = modified_urdf_string.replace('<link name="l_arm_tip">', '<link name="l_arm_tip_link">')
 
     # Replace child link names 'r_arm_tip' and 'l_arm_tip' with 'r_arm_tip_link' and 'l_arm_tip_link' in <joint> tags
-    modified_urdf_string = modified_urdf_string.replace(
-        '<child link="r_arm_tip"/>', '<child link="r_arm_tip_link"/>'
-    )
-    modified_urdf_string = modified_urdf_string.replace(
-        '<child link="l_arm_tip"/>', '<child link="l_arm_tip_link"/>'
-    )
+    modified_urdf_string = modified_urdf_string.replace('<child link="r_arm_tip"/>', '<child link="r_arm_tip_link"/>')
+    modified_urdf_string = modified_urdf_string.replace('<child link="l_arm_tip"/>', '<child link="l_arm_tip_link"/>')
 
     return modified_urdf_string
 
