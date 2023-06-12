@@ -46,6 +46,9 @@ class FansController(Node):
         self._motor_temperatures = {}
 
         for part in robot_parts:
+            if part == 'orbita':
+                continue
+
             for motor in motors_to_monitor_per_part[part]:
                 self._motor_temperatures[motor] = 0.0
 
