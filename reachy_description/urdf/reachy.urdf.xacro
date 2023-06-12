@@ -26,7 +26,7 @@
         <visual name="">
             <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
             <geometry>
-                <mesh filename="file://$(find reachy_description)/meshes/torso.dae"/>
+                <mesh filename="package://reachy_description/meshes/torso.dae"/>
             </geometry>
         </visual>
         <collision>
