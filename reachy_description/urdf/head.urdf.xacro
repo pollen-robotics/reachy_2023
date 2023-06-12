@@ -84,7 +84,7 @@
       <visual name="">
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.5236"/>
         <geometry>
-          <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
+          <mesh filename="package://reachy_description/meshes/orbita_arm.dae"/>
         </geometry>
       </visual>
       <collision>
@@ -110,7 +110,7 @@
       <visual name="">
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 2.618"/>
         <geometry>
-          <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
+          <mesh filename="package://reachy_description/meshes/orbita_arm.dae"/>
         </geometry>
       </visual>
       <collision>
@@ -136,7 +136,7 @@
       <visual name="">
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 -1.57"/>
         <geometry>
-          <mesh filename="file://$(find reachy_description)/meshes/orbita_arm.dae"/>
+          <mesh filename="package://reachy_description/meshes/orbita_arm.dae"/>
         </geometry>
       </visual>
       <collision>
@@ -158,7 +158,7 @@
       <visual name="">
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <geometry>
-          <mesh filename="file://$(find reachy_description)/meshes/head.dae"/>
+          <mesh filename="package://reachy_description/meshes/head.dae"/>
         </geometry>
       </visual>
       <collision>
@@ -195,7 +195,7 @@
       <visual name="">
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <geometry>
-          <mesh filename="file://$(find reachy_description)/meshes/antenna.dae"/>
+          <mesh filename="package://reachy_description/meshes/antenna.dae"/>
         </geometry>
       </visual>
       <collision>
@@ -223,7 +223,7 @@
       <visual name="">
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <geometry>
-          <mesh filename="file://$(find reachy_description)/meshes/antenna.dae"/>
+          <mesh filename="package://reachy_description/meshes/antenna.dae"/>
         </geometry>
       </visual>
       <collision>

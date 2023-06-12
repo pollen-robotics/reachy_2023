@@ -65,6 +65,7 @@ Now you can add the following lines to your bashrc
 ```commandline
 source ~/reachy_ws/install/setup.bash
 source /usr/share/gazebo/setup.bash
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:<your path>/reachy_ws/src/reachy_2023
 ```
 
 If there is multiple ROS2 environement on the same network, you should think about using adding ROS_DOMAIN_ID yo your
