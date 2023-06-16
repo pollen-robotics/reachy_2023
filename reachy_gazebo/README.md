@@ -29,4 +29,4 @@ sudo apt install ros-humble-gazebo-ros2-control ros-humble-compressed-image-tran
 ---
 This package is part of the ROS2-based software release of the version 2023 of Reachy.
 
-Visit [pollen-robotics.com](https://pollen-robotics.com) to learn more or join our [Dicord community](https://discord.com/invite/Kg3mZHTKgs) if you have any questions or want to share your ideas.
+Visit [pollen-robotics.com](https://pollen-robotics.com) to learn more or join our [Dicord community](https://discord.com/invite/vnYD6GAqJR) if you have any questions or want to share your ideas.
