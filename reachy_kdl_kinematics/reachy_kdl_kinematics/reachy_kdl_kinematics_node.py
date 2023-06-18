@@ -60,6 +60,7 @@ class ReachyKdlKinematics(LifecycleNode):
         self.target_sub, self.averaged_target_sub = {}, {}
         self.averaged_pose = {}
         self.max_joint_vel = {}
+        self.previous_ik_target = None
 
         # Removing URDF tags that Placo does not support
         new_urdf = copy.copy(self.urdf)
@@ -277,6 +278,22 @@ class ReachyKdlKinematics(LifecycleNode):
         M = ros_pose_to_matrix(request.pose)
         q0 = request.q0.position
 
+        if USE_QP_IK:
+            is_retry_call = np.allclose(
+                np.array(self.previous_ik_target, dtype=float),
+                np.array(M, dtype=float),
+                atol=1e-8,
+                rtol=1e-5,
+            )
+            self.previous_ik_target = M
+            if not is_retry_call:
+                # This will set placo's internal model to the current joint positions of the robot
+                self.ik_reachy_placo._set_joints(self._current_pos)
+            else:
+                # If the user is retrying the same pose, we wont update the internal model so that the solver
+                # has a better starting position
+                pass
+
         if name == "head" or not (USE_QP_IK):
             # IK using KDL
             error, sol = inverse_kinematics(
@@ -323,6 +340,22 @@ class ReachyKdlKinematics(LifecycleNode):
             M = ros_pose_to_matrix(request.pose)
             q0 = request.q0.position
             tolerances = request.tolerances
+
+            if USE_QP_IK:
+                is_retry_call = np.allclose(
+                    np.array(self.previous_ik_target, dtype=float),
+                    np.array(M, dtype=float),
+                    atol=1e-8,
+                    rtol=1e-5,
+                )
+                self.previous_ik_target = M
+                if not is_retry_call:
+                    # This will set placo's internal model to the current joint positions of the robot
+                    self.ik_reachy_placo._set_joints(self._current_pos)
+                else:
+                    # If the user is retrying the same pose, we wont update the internal model so that the solver
+                    # has a better starting position
+                    pass
 
             if name == "head":
                 self.logger.error(f"The reachability service does not exist for {name} yet")
