@@ -14,6 +14,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
+find_package(vision_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -39,8 +40,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetFocusState.srv"
   "srv/GetDynamicState.srv"
   "srv/GetReachability.srv"
+  "srv/GetReachableGraspTriplets.srv"
+  "srv/GetObjectDetection.srv"
 
-  DEPENDENCIES geometry_msgs sensor_msgs std_msgs trajectory_msgs
+  DEPENDENCIES geometry_msgs sensor_msgs std_msgs trajectory_msgs vision_msgs
+
 )
 
 ament_package()

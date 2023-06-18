@@ -18,6 +18,8 @@
 
 
   <depend>action_msgs</depend>
+  <depend>vision_msgs</depend>
+
   <depend>trajectory_msgs</depend>
 
 
