@@ -209,7 +209,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['r_arm_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' in ['{STARTER_KIT_RIGHT}', '{FULL_KIT}', '{HEADLESS}']")
+                f"'{reachy_config.model}' in ['{STARTER_KIT_RIGHT}', '{FULL_KIT}', '{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']")
         )
     )
 
