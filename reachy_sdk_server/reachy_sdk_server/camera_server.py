@@ -104,6 +104,8 @@ class CameraServer(
         im_msg = camera_reachy_pb2.Image()
         im_msg.data = self.cam_img[side]
 
+        self.logger.error(f'Send IMAGE')
+
         return im_msg
 
     def StreamImage(self, request: camera_reachy_pb2.StreamImageRequest, context) -> Iterator[camera_reachy_pb2.Image]:

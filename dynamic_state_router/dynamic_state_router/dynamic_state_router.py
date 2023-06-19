@@ -188,7 +188,7 @@ class DynamicStateRouterNode(Node):
 
         for joint, iv in commands.items():
             for interface, value in iv.items():
-                if joint.endswith('gripper') and interface == 'position':
+                if 'gripper' in joint and interface == 'position':
                     gripper_commands[joint].update({interface: value})
                 elif interface in ('p_gain', 'i_gain', 'd_gain'):
                     pid_commands[joint].update({interface: value})
@@ -202,7 +202,11 @@ class DynamicStateRouterNode(Node):
     def handle_gripper_commands(self, commands):
         msg = Gripper()
 
+        self.logger.error("GRIPPER")
+
         for joint, iv in commands.items():
+            self.logger.error(f"GRIPPER JOINT {joint}")
+
             for interface, value in iv.items():
                 if interface == 'position':
                     msg.name.append(joint)

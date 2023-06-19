@@ -299,12 +299,17 @@ class BodyControlNode(Node):
         if joint_id.HasField('uid'):
             return joint_id.uid in self.joint_uids.keys()
         else:
+            if joint_id.name == 'r_gripper':
+                return True
+
             return joint_id.name in self.joints.keys()
 
     def _get_joint_name(self, joint_id: joint_pb2.JointId) -> str:
         if joint_id.HasField('uid'):
             return self.joint_uids[joint_id.uid]
         else:
+            if joint_id.name == 'r_gripper':
+                return 'r_gripper_grasping_finger'
             return joint_id.name
 
     def _check_fan_exist(self, fan_id: fan_pb2.FanId) -> bool:
