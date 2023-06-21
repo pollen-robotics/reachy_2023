@@ -43,6 +43,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetReachableGraspTriplets.srv"
   "srv/GetObjectDetection.srv"
   "srv/GetSimpleGraspPose.srv"
+  "srv/GetGraspCNN.srv"
 
   DEPENDENCIES geometry_msgs sensor_msgs std_msgs trajectory_msgs vision_msgs
 

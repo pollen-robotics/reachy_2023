@@ -1,0 +1,5 @@
+vision_msgs/Detection2DArray detection_2d
+sensor_msgs/Image color_image
+sensor_msgs/Image depth_image
+---
+GraspPoseArray grasp_poses
