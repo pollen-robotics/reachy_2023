@@ -1,0 +1,5 @@
+---
+sensor_msgs/Image color_image
+sensor_msgs/Image depth_image
+vision_msgs/Detection2DArray detection_2d
+vision_msgs/Detection3DArray detection_3d
