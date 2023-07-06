@@ -18,6 +18,8 @@ from zuuu_interfaces.srv import SetZuuuMode, GetZuuuMode, GetOdometry, ResetOdom
 from zuuu_interfaces.srv import GoToXYTheta, DistanceToGoal, SetZuuuSafety
 from zuuu_interfaces.srv import SetSpeed, GetBatteryVoltage
 
+from reachy_utils.config import get_zuuu_version
+
 
 class MobileBaseServer(
                         Node,
@@ -287,11 +289,11 @@ class MobileBaseServer(
         presence = False
         version = '0.0'
 
-        model = check_output(['reachy-identify-zuuu-model']).strip().decode()
+        model = get_zuuu_version()
 
         if model and model != 'None':
             presence = True
-            version = float(model)
+            version = model
 
         response = mobile_platform_reachy_pb2.MobileBasePresence(
             presence=BoolValue(value=presence),

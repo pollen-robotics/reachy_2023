@@ -139,6 +139,9 @@ class ReachySDKServer(
     
     # Force Sensors gRPCs
     def GetAllForceSensorsId(self, request: Empty, context) -> sensor_pb2.SensorsId:
+        if not self.body_control_node.sensors:
+            return sensor_pb2.SensorsId(names=[], uids=[])
+
         names, uids = zip(*[
             (sensor['name'], sensor['uid'])
             for sensor in self.body_control_node.sensors.values()
@@ -223,9 +226,10 @@ class ReachySDKServer(
     # Config gRPCs
     def GetReachyConfig(self, request: Empty, context) -> config_pb2.ConfigReachy:
         """Get Reachy generation and if there is a mobile base attached."""
-        from reachy_utils.config import get_reachy_generation, get_zuuu_version, get_camera_parameters
+        from reachy_utils.config import get_reachy_generation, get_zuuu_version, get_camera_parameters, get_reachy_model
         generation = get_reachy_generation()
         mobile_base_presence = True if get_zuuu_version() != 'none' else False
+        config = get_reachy_model()
 
         camera_parameters = get_camera_parameters()
 
@@ -237,6 +241,7 @@ class ReachySDKServer(
             generation=generation,
             mobile_base_presence=mobile_base_presence,
             camera_parameters=camera_parameters,
+            config=config,
         )
 
 

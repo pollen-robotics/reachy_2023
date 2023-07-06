@@ -56,7 +56,6 @@ from zuuu_interfaces.srv import SetSpeed, GetBatteryVoltage, SetZuuuSafety
 
 from zuuu_hal.utils import PID, angle_diff, sign
 from zuuu_hal.lidar_safety import LidarSafety
-from zuuu_hal import identify_zuuu_model
 from reachy_utils.config import get_zuuu_version
 
 
@@ -157,10 +156,10 @@ class ZuuuHAL(Node):
         # self.zuuu_model = check_output(
         #     os.path.expanduser('~')+'/.local/bin/reachy-identify-zuuu-model'
         #     ).strip().decode()
-        self.zuuu_model = get_zuuu_version()
-        self.get_logger().info(f"zuuu version: {self.zuuu_model}")
+        self.zuuu_version = get_zuuu_version()
+        self.get_logger().info(f"zuuu version: {self.zuuu_version}")
         try:
-            float_model = float(self.zuuu_model)
+            float_model = float(self.zuuu_version)
             if float_model < 1.0:
                 self.omnibase = MobileBase(left_wheel_id=24, right_wheel_id=72, back_wheel_id=None)
             elif float_model < 1.2:
@@ -168,7 +167,7 @@ class ZuuuHAL(Node):
             else:
                 self.omnibase = MobileBase(left_wheel_id=None, right_wheel_id=72, back_wheel_id=116)
         except Exception:
-            msg = "ZUUU version can't be processed, check that the 'zuuu_model' tag is "\
+            msg = "ZUUU version can't be processed, check that the 'zuuu_version' tag is "\
                 "present in the .reachy.yaml file"
             self.get_logger().error(msg)
             self.get_logger().error(traceback.format_exc())

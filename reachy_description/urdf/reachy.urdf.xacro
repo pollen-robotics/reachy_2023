@@ -9,6 +9,7 @@
 
     <xacro:include filename="$(find reachy_description)/urdf/arm.urdf.xacro"/>
     <xacro:include filename="$(find reachy_description)/urdf/head.urdf.xacro"/>
+    <xacro:include filename="$(find reachy_description)/urdf/orbita.urdf.xacro"/>
 
     <link name="world"/>
     <joint name="world_joint" type="fixed">
@@ -52,24 +53,42 @@
         <xacro:property name="use_right_arm" value="true"/>
         <xacro:property name="use_left_arm" value="true"/>
         <xacro:property name="use_head" value="true"/>
+        <xacro:property name="use_orbita" value="false"/>
     </xacro:if>
 
     <xacro:if value="${robot_config == 'starter_kit_left'}">
         <xacro:property name="use_right_arm" value="false"/>
         <xacro:property name="use_left_arm" value="true"/>
         <xacro:property name="use_head" value="true"/>
+        <xacro:property name="use_orbita" value="false"/>
     </xacro:if>
 
     <xacro:if value="${robot_config == 'starter_kit_right'}">
         <xacro:property name="use_right_arm" value="true"/>
         <xacro:property name="use_left_arm" value="false"/>
         <xacro:property name="use_head" value="true"/>
+        <xacro:property name="use_orbita" value="false"/>
     </xacro:if>
 
     <xacro:if value="${robot_config == 'headless'}">
         <xacro:property name="use_right_arm" value="true"/>
         <xacro:property name="use_left_arm" value="true"/>
         <xacro:property name="use_head" value="false"/>
+        <xacro:property name="use_orbita" value="false"/>
+    </xacro:if>
+
+    <xacro:if value="${robot_config == 'mini'}">
+        <xacro:property name="use_right_arm" value="false"/>
+        <xacro:property name="use_left_arm" value="false"/>
+        <xacro:property name="use_head" value="true"/>
+        <xacro:property name="use_orbita" value="false"/>
+    </xacro:if>
+
+    <xacro:if value="${robot_config == 'starter_kit_right_no_head'}">
+        <xacro:property name="use_right_arm" value="true"/>
+        <xacro:property name="use_left_arm" value="false"/>
+        <xacro:property name="use_head" value="false"/>
+        <xacro:property name="use_orbita" value="true"/>
     </xacro:if>
 
     <xacro:if value="${robot_config == 'mini'}">
@@ -126,6 +145,20 @@
                 head_xl320_is_direct="1.0, 1.0"
                 head_xl320_reductions="1.0, 1.0"
                 head_fan_id="60"
+        />
+    </xacro:if>
+
+    <xacro:if value="${use_orbita}">
+        <!-- NO HEAD CASE - ONLY ORBITA IS REQUIRED -->
+        <xacro:orbita
+                parent="torso"
+                damping="${damping}" friction="${friction}"
+
+                neck_orbita_serial_port="/dev/orbita_neck"
+                neck_orbita_id="70"
+                neck_orbita_alpha="0.9424777960769379"
+                neck_orbita_hardware_zero="$(arg orbita_hardware_zero)"
+                neck_orbita_reduction="4.26666667"
         />
     </xacro:if>
 
