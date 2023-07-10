@@ -8,6 +8,7 @@ import re
 import time
 import os
 
+from rcl_interfaces.msg import ParameterDescriptor
 from scipy.spatial.transform import Rotation
 
 from .pose_averager import PoseAverager
@@ -31,15 +32,22 @@ from .kdl_kinematics import (
     inverse_kinematics,
     ros_pose_to_matrix,
 )
-from reachy_placo import ik_reachy_placo
-
-USE_QP_IK = True
 
 
 class ReachyKdlKinematics(LifecycleNode):
     def __init__(self):
         super().__init__("reachy_kdl_kinematics_node")
         self.logger = self.get_logger()
+
+        # Handle QP mode
+        self.declare_parameter(
+            "use_qp_ik",
+            False,
+            ParameterDescriptor(description="Enable Quadratic Programming Inverse Kinematics. reachy_placo must be installed."),
+        )
+        self._USE_QP_IK = self.get_parameter("use_qp_ik").get_parameter_value().bool_value
+        self.logger.info(f"Using QP IK: {self._USE_QP_IK}")
+
 
         self.urdf = self.retrieve_urdf()
 
@@ -66,16 +74,18 @@ class ReachyKdlKinematics(LifecycleNode):
         new_urdf = remove_ros2_control_tags(new_urdf)
         new_urdf = fix_arm_tip_names(new_urdf)
 
-        # Using the collision.json file from reachy_placo
-        collision_file_location = os.path.join(os.path.dirname(ik_reachy_placo.__file__), "reachy")
+        if self._USE_QP_IK:
+            from reachy_placo import ik_reachy_placo
+            # Using the collision.json file from reachy_placo
+            collision_file_location = os.path.join(os.path.dirname(ik_reachy_placo.__file__), "reachy")
 
-        self.ik_reachy_placo = ik_reachy_placo.IKReachyQP(viewer_on=True, collision_avoidance=True)
-        self.ik_reachy_placo.setup(
-            urdf_path=collision_file_location,
-            urdf_string=new_urdf,
-        )
+            self.ik_reachy_placo = ik_reachy_placo.IKReachyQP(viewer_on=True, collision_avoidance=True)
+            self.ik_reachy_placo.setup(
+                urdf_path=collision_file_location,
+                urdf_string=new_urdf,
+            )
 
-        self.ik_reachy_placo.create_tasks()
+            self.ik_reachy_placo.create_tasks()
 
         for prefix in ("l", "r"):
             arm = f"{prefix}_arm"
@@ -102,13 +112,14 @@ class ReachyKdlKinematics(LifecycleNode):
                 )
                 self.logger.info(f'Adding service "{self.ik_srv[arm].srv_name}"...')
 
-                # Create reachability service
-                self.reach_srv[arm] = self.create_service(
-                    srv_type=GetReachability,
-                    srv_name=f"/{arm}/reachability",
-                    callback=partial(self.reachability_srv, name=arm),
-                )
-                self.logger.info(f'Adding service "{self.reach_srv[arm].srv_name}"...')
+                if self._USE_QP_IK:
+                    # Create reachability service
+                    self.reach_srv[arm] = self.create_service(
+                        srv_type=GetReachability,
+                        srv_name=f"/{arm}/reachability",
+                        callback=partial(self.reachability_srv, name=arm),
+                    )
+                    self.logger.info(f'Adding service "{self.reach_srv[arm].srv_name}"...')
 
                 # Create cartesian control pub/subscription
                 forward_position_pub = self.create_publisher(
@@ -277,7 +288,7 @@ class ReachyKdlKinematics(LifecycleNode):
         M = ros_pose_to_matrix(request.pose)
         q0 = request.q0.position
 
-        if name == "head" or not (USE_QP_IK):
+        if name == "head" or not (self._USE_QP_IK):
             # IK using KDL
             error, sol = inverse_kinematics(
                 self.ik_solver[name],
@@ -327,8 +338,8 @@ class ReachyKdlKinematics(LifecycleNode):
             if name == "head":
                 self.logger.error(f"The reachability service does not exist for {name} yet")
                 raise NotImplementedError
-            elif not (USE_QP_IK):
-                self.logger.error(f"The reachability service needs the flag USE_QP_IK to be True")
+            elif not (self._USE_QP_IK):
+                self.logger.error(f"The reachability service needs the flag self._USE_QP_IK to be True, set by arg use_qp_ik")
                 raise ValueError
             else:
                 # Reachability check + IK using Placo
@@ -369,7 +380,7 @@ class ReachyKdlKinematics(LifecycleNode):
     def on_target_pose(self, msg: PoseStamped, name, q0, forward_publisher):
         M = ros_pose_to_matrix(msg.pose)
 
-        if name == "head" or not (USE_QP_IK):
+        if name == "head" or not (self._USE_QP_IK):
             # IK using KDL
             error, sol = inverse_kinematics(
                 self.ik_solver[name],
@@ -403,7 +414,7 @@ class ReachyKdlKinematics(LifecycleNode):
 
         M = ros_pose_to_matrix(avg_pose)
 
-        if name == "head" or not (USE_QP_IK):
+        if name == "head" or not (self._USE_QP_IK):
             # IK using KDL
             error, sol = inverse_kinematics(
                 self.ik_solver[name],

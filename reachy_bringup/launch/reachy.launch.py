@@ -303,6 +303,9 @@ def launch_setup(context, *args, **kwargs):
         namespace="",
         package="reachy_kdl_kinematics",
         executable="reachy_kdl_kinematics",
+        parameters=[
+            {"use_qp_ik": LaunchConfiguration("use_qp_ik")}
+        ],
     )
 
     dynamic_state_router_node = Node(
@@ -418,6 +421,8 @@ def generate_launch_description():
                 description="Start RViz2 automatically with this launch file.",
                 choices=["true", "false", *rviz_config_choices],
             ),
+            DeclareLaunchArgument("use_qp_ik", default_value="false", description="Enable Quadratic Programming Inverse Kinematics. reachy_placo must be installed.",choices=["true", "false"]),
+
             OpaqueFunction(function=launch_setup),
         ]
     )
