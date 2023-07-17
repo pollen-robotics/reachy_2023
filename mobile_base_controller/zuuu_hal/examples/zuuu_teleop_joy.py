@@ -14,6 +14,9 @@ from rclpy.qos import ReliabilityPolicy, QoSProfile
 
 import os
 
+from zuuu_interfaces.srv import SetZuuuMode
+
+
 # To be able to use pygame in "headless" mode
 # set SDL to use the dummy NULL video driver, so it doesn't need a windowing system.
 os.environ["SDL_VIDEODRIVER"] = "dummy"
@@ -92,6 +95,8 @@ class JoyTeleop(Node):
         self.min_joy_position = 0.03
         self.pub = self.create_publisher(
             geometry_msgs.msg.Twist, 'cmd_vel', 10)
+        self.set_zuuu_mode_client = self.create_client(SetZuuuMode, 'SetZuuuMode')            
+
         self.create_timer(0.01, self.main_tick)
         self.get_logger().info(msg)
 
@@ -188,8 +193,14 @@ class JoyTeleop(Node):
 
         return x, y, rot
 
+    def set_driving_mode_to_cmd_vel(self):
+        req = SetZuuuMode.Request()
+        req.mode = 'CMD_VEL'
+        self.set_zuuu_mode_client.call_async(req)
+
     def main_tick(self):
         self.get_logger().info("Tick!!")
+        self.set_driving_mode_to_cmd_vel()
         self.tick_controller()
         x, y, theta = self.speeds_from_joystick()
         twist = geometry_msgs.msg.Twist()
