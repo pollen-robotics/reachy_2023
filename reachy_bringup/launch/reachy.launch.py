@@ -52,12 +52,12 @@ class ReachyConfig:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
             # Robot model
-            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS]:
+            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD]:
                 self.model = config[REACHY_CONFIG_MODEL]
             else:
                 raise ValueError(
                     'Bad robot model "{}". Expected values are {}'.format(
-                        config[REACHY_CONFIG_MODEL], [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS]
+                        config[REACHY_CONFIG_MODEL], [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD]
                     )
                 )
 
@@ -162,7 +162,9 @@ def launch_setup(context, *args, **kwargs):
         executable="camera_publisher",
         output="both",
         condition=IfCondition(
-            PythonExpression(f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != '{HEADLESS}' ")
+            PythonExpression(
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+                )
         ),
     )
     camera_focus_node = Node(
@@ -170,7 +172,9 @@ def launch_setup(context, *args, **kwargs):
         executable="camera_focus",
         output="both",
         condition=IfCondition(
-            PythonExpression(f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != '{HEADLESS}' ")
+            PythonExpression(
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+            )
         ),
     )
 
@@ -179,7 +183,9 @@ def launch_setup(context, *args, **kwargs):
         executable="camera_zoom_service",
         output="both",
         condition=IfCondition(
-            PythonExpression(f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' != '{HEADLESS}' ")
+            PythonExpression(
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+            )
         ),
     )
 
@@ -187,7 +193,10 @@ def launch_setup(context, *args, **kwargs):
         package="reachy_sdk_server",
         executable="camera_server",
         output="both",
-        condition=IfCondition(PythonExpression(f"{start_sdk_server_py} and '{reachy_config.model}' != '{HEADLESS}' ")),
+        condition=IfCondition(PythonExpression(
+            f"{start_sdk_server_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+            )
+        ),
     )
 
     robot_state_publisher_node = Node(
@@ -235,27 +244,40 @@ def launch_setup(context, *args, **kwargs):
         package="controller_manager",
         executable="spawner",
         arguments=["r_arm_forward_position_controller", "-c", "/controller_manager"],
-        condition=IfCondition(PythonExpression(f"'{reachy_config.model}' != '{STARTER_KIT_LEFT}'")),
+        condition=IfCondition(PythonExpression(
+            f"'{reachy_config.model}' in ['{STARTER_KIT_RIGHT}', '{FULL_KIT}', '{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+            )
+        ),
     )
 
     l_arm_forward_position_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["l_arm_forward_position_controller", "-c", "/controller_manager"],
-        condition=IfCondition(PythonExpression(f"'{reachy_config.model}' != '{STARTER_KIT_RIGHT}'")),
+        condition=IfCondition(PythonExpression(
+            f"'{reachy_config.model}' in ['{STARTER_KIT_LEFT}', '{FULL_KIT}', '{HEADLESS}']"
+            )
+        ),
     )
 
     antenna_forward_position_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["antenna_forward_position_controller", "-c", "/controller_manager"],
-        condition=IfCondition(PythonExpression(f"'{reachy_config.model}' != '{HEADLESS}'")),
+        condition=IfCondition(PythonExpression(
+            f"'{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+            )
+        ),
     )
 
     gripper_forward_position_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["gripper_forward_position_controller", "-c", "/controller_manager"],
+        condition=IfCondition(
+            PythonExpression(
+                f"'{reachy_config.model}' != '{MINI}'")
+        ),
     )
 
     forward_torque_controller_spawner = Node(
@@ -351,6 +373,10 @@ def launch_setup(context, *args, **kwargs):
         package="gripper_safe_controller",
         executable="gripper_safe_controller",
         arguments=["--controllers-file", robot_controllers],
+        condition=IfCondition(
+                    PythonExpression(
+                        f"'{reachy_config.model}' != '{MINI}'")
+        ),
     )
 
     fake_camera_node = Node(
