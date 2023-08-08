@@ -63,6 +63,7 @@ DUMMY_SPECIAL_INTERFACES = {
     },
     'starter_kit_right': {
         'l_antenna_fan': 'state',
+        'r_shoulder_fan': 'state',
         'r_elbow_fan': 'state',
         'r_wrist_fan': 'state',
         'r_antenna_fan': 'state',
@@ -75,7 +76,17 @@ DUMMY_SPECIAL_INTERFACES = {
         'l_antenna_fan': 'state',
         'l_force_gripper': 'force',
         'r_antenna_fan': 'state',
-    }
+    },
+    'mini': {
+        'l_antenna_fan': 'state',
+        'r_antenna_fan': 'state',
+    },
+    'starter_kit_right_no_head': {
+        'r_shoulder_fan': 'state',
+        'r_elbow_fan': 'state',
+        'r_wrist_fan': 'state',
+        'r_force_gripper': 'force',
+    },
 }
 
 
