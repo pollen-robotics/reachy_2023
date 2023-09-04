@@ -109,6 +109,9 @@ class ReachySDKServer(
 
     # Fans gRPCs
     def GetAllFansId(self, request: Empty, context) -> fan_pb2.FansId:
+        if not self.body_control_node.fans:
+            return fan_pb2.FansId(names=[], uids=[])
+
         names, uids = zip(*[
             (fan['name'], fan['uid'])
             for fan in self.body_control_node.fans.values()

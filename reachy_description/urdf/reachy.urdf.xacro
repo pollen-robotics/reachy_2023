@@ -91,6 +91,13 @@
         <xacro:property name="use_orbita" value="true"/>
     </xacro:if>
 
+    <xacro:if value="${robot_config == 'orbita'}">
+        <xacro:property name="use_right_arm" value="false"/>
+        <xacro:property name="use_left_arm" value="false"/>
+        <xacro:property name="use_head" value="false"/>
+        <xacro:property name="use_orbita" value="true"/>
+    </xacro:if>
+
     <xacro:if value="${use_right_arm}">
         <!-- RIGHT ARM-->
         <xacro:arm
