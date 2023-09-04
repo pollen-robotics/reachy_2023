@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>reachy_gazebo_gripper_glue</name>
+  <version>0.0.1</version>
+  <description>Reachy Gazebo Gripper Glue Plugin</description>
+  <maintainer email="your-email@example.com">Your Name</maintainer>
+  <license>TODO</license>
+  <depend>rclcpp</depend>
+  <depend>gazebo_ros</depend>
+  <depend>gazebo_ros_pkgs</depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
