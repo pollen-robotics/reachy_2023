@@ -21,7 +21,7 @@ import os
 from multiprocessing import Process
 
 FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI = 'full_kit', 'starter_kit_right', 'starter_kit_left', 'headless', 'mini'
-STARTER_KIT_RIGHT_NO_HEAD = 'starter_kit_right_no_head'
+STARTER_KIT_RIGHT_NO_HEAD, ORBITA = 'starter_kit_right_no_head', 'orbita'
 
 REACHY_CONFIG_MODEL = "model"
 REACHY_CONFIG_NECK_ORBITA_ZERO = "neck_orbita_zero"
@@ -52,12 +52,12 @@ class ReachyConfig:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
             # Robot model
-            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD]:
+            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD, ORBITA]:
                 self.model = config[REACHY_CONFIG_MODEL]
             else:
                 raise ValueError(
                     'Bad robot model "{}". Expected values are {}'.format(
-                        config[REACHY_CONFIG_MODEL], [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD]
+                        config[REACHY_CONFIG_MODEL], [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD, ORBITA]
                     )
                 )
 
@@ -163,7 +163,7 @@ def launch_setup(context, *args, **kwargs):
         output="both",
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{ORBITA}']"
                 )
         ),
     )
@@ -173,7 +173,7 @@ def launch_setup(context, *args, **kwargs):
         output="both",
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{ORBITA}']"
             )
         ),
     )
@@ -184,7 +184,7 @@ def launch_setup(context, *args, **kwargs):
         output="both",
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{ORBITA}']"
             )
         ),
     )
@@ -194,7 +194,7 @@ def launch_setup(context, *args, **kwargs):
         executable="camera_server",
         output="both",
         condition=IfCondition(PythonExpression(
-            f"{start_sdk_server_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+            f"{start_sdk_server_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{ORBITA}']"
             )
         ),
     )
@@ -265,7 +265,7 @@ def launch_setup(context, *args, **kwargs):
         executable="spawner",
         arguments=["antenna_forward_position_controller", "-c", "/controller_manager"],
         condition=IfCondition(PythonExpression(
-            f"'{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}']"
+            f"'{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{ORBITA}']"
             )
         ),
     )
@@ -276,7 +276,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=["gripper_forward_position_controller", "-c", "/controller_manager"],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' != '{MINI}'")
+                f"'{reachy_config.model}' not in ['{MINI}', '{ORBITA}']")
         ),
     )
 
@@ -307,7 +307,11 @@ def launch_setup(context, *args, **kwargs):
     forward_fan_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["forward_fan_controller", "-c", "/controller_manager"],
+        arguments=["forward_fan_controller", "-c", "/controller_manager"],\
+        condition=IfCondition(
+            PythonExpression(
+                f"'{reachy_config.model}' not in ['{ORBITA}']")
+        ),
     )
 
     fan_controller_spawner = Node(
@@ -375,7 +379,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=["--controllers-file", robot_controllers],
         condition=IfCondition(
                     PythonExpression(
-                        f"'{reachy_config.model}' != '{MINI}'")
+                        f"'{reachy_config.model}' not in ['{MINI}', '{ORBITA}']")
         ),
     )
 
