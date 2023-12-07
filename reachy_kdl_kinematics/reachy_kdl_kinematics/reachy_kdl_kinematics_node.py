@@ -286,6 +286,12 @@ class ReachyKdlKinematics(LifecycleNode):
         )
 
         # TODO: check error
+        if name == 'r_arm' and (sol[1] > 0.75 or sol[1] < -1.5):
+            self.logger.warning("Out of bounds solution, skipped")
+            return
+        elif name == 'l_arm' and (sol[1] < -0.75 or sol[1] > 1.5):
+            self.logger.warning("Out of bounds solution, skipped")
+            return
 
         current_position = np.array(self.get_current_position(self.chain[name]))
 
