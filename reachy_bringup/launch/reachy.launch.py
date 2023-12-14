@@ -54,11 +54,15 @@ class ReachyConfig:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
             # Robot model
-            if config[REACHY_CONFIG_MODEL] in [FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD, ORBITA, RIGHT_ARM]:
+            if config[REACHY_CONFIG_MODEL] in [
+                FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD, ORBITA, LEFT_ARM, RIGHT_ARM
+                ]:
                 self.model = config[REACHY_CONFIG_MODEL]
             else:
                 raise ValueError('Bad robot model "{}". Expected values are {}'.format(
-                    config[REACHY_CONFIG_MODEL],[FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD, ORBITA, RIGHT_ARM]))
+                    config[REACHY_CONFIG_MODEL],[
+                        FULL_KIT, STARTER_KIT_RIGHT, STARTER_KIT_LEFT, HEADLESS, MINI, STARTER_KIT_RIGHT_NO_HEAD, ORBITA, LEFT_ARM, RIGHT_ARM
+                        ]))
 
             # orbita zero
             try:
@@ -162,7 +166,7 @@ def launch_setup(context, *args, **kwargs):
         output="both",
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{RIGHT_ARM}', '{ORBITA}']"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{LEFT_ARM}', '{RIGHT_ARM}', '{ORBITA}']"
             )),
     )
     camera_focus_node = Node(
@@ -171,7 +175,7 @@ def launch_setup(context, *args, **kwargs):
         output="both",
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{RIGHT_ARM}', '{ORBITA}']"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{LEFT_ARM}', '{RIGHT_ARM}', '{ORBITA}']"
             )),
     )
 
@@ -181,7 +185,7 @@ def launch_setup(context, *args, **kwargs):
         output="both",
         condition=IfCondition(
             PythonExpression(
-                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{RIGHT_ARM}', '{ORBITA}']"
+                f"not {fake_py} and not {gazebo_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{LEFT_ARM}', '{RIGHT_ARM}', '{ORBITA}']"
             )),
     )
 
@@ -190,7 +194,7 @@ def launch_setup(context, *args, **kwargs):
         executable="camera_server",
         output="both",
         condition=IfCondition(PythonExpression(
-                f"{start_sdk_server_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{RIGHT_ARM}', '{ORBITA}']"
+                f"{start_sdk_server_py} and '{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{LEFT_ARM}', '{RIGHT_ARM}', '{ORBITA}']"
             )),
     )
 
@@ -234,7 +238,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['neck_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' not in ['{HEADLESS}', '{RIGHT_ARM}']")
+                f"'{reachy_config.model}' not in ['{HEADLESS}', '{LEFT_ARM}', '{RIGHT_ARM}']")
         )
     )
 
@@ -253,7 +257,7 @@ def launch_setup(context, *args, **kwargs):
         executable="spawner",
         arguments=["l_arm_forward_position_controller", "-c", "/controller_manager"],
         condition=IfCondition(PythonExpression(
-            f"'{reachy_config.model}' in ['{STARTER_KIT_LEFT}', '{FULL_KIT}', '{HEADLESS}']"
+            f"'{reachy_config.model}' in ['{STARTER_KIT_LEFT}', '{FULL_KIT}', '{LEFT_ARM}', '{HEADLESS}']"
             )
         ),
     )
@@ -264,7 +268,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=['antenna_forward_position_controller', '-c', '/controller_manager'],
         condition=IfCondition(
             PythonExpression(
-                f"'{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{ORBITA}', '{RIGHT_ARM}']")
+                f"'{reachy_config.model}' not in ['{HEADLESS}', '{STARTER_KIT_RIGHT_NO_HEAD}', '{ORBITA}', '{LEFT_ARM}', '{RIGHT_ARM}']")
         )
     )
 
