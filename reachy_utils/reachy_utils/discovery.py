@@ -26,6 +26,7 @@ robot_config_to_parts = {
     "starter_kit_right_no_head": ["right_arm", "orbita"],
     "left_arm": ["left_arm"],
     "right_arm": ["right_arm"],
+    "orbita": ["orbita"],
 }
 
 motor_id_to_name = {
@@ -113,6 +114,7 @@ def check_if_orbita_missing(missing_motors: Dict):
         print(
             "Port /dev/orbita_neck not found. Make sure that the udev rules is set and orbita plugged."
         )
+        
         missing_motors["head"] += ["orbita_neck"]
         return missing_motors
 
@@ -162,6 +164,7 @@ def get_missing_motors_reachy(check_service: bool = True):
             missing_motors = check_if_orbita_missing(missing_motors)
 
         elif "orbita" in part:
+            missing_motors["head"] = []
             missing_motors = check_if_orbita_missing(missing_motors)
 
     if service_was_active:
