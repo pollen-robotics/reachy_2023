@@ -1,6 +1,6 @@
 services:
   reachy_2023:
-    image:  pollenrobotics/reachy_2023:1.0
+    image: pollenrobotics/reachy2023:1.1
     container_name: reachy_2023
     privileged: true
     environment:
@@ -8,7 +8,9 @@ services:
       - DISPLAY=$DISPLAY
       - "RCUTILS_CONSOLE_OUTPUT_FORMAT=[{severity}]: {message}"
       - $HOME/.ssh:/home/reachy/.ssh
+    volumes:
+      - $PWD:/opt/docker_reachy_2023_src:ro
     network_mode: "host"
-    entrypoint: sleep infinity
+    entrypoint:  /package/start.sh
 
 
