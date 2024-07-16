@@ -1,6 +1,6 @@
 services:
   reachy_2023:
-    image: pollenrobotics/reachy2023:1.1
+    image: pollenrobotics/reachy_2023:1.1
     container_name: reachy_2023
     privileged: true
     environment:
