@@ -52,7 +52,7 @@ git clone https://github.com/pollen-robotics/reachy_2023.git
 ```
 ### Copy the configuration file
 ```commandline
-cp ~/reachy_ws/src/reachy_2023/reachy_utils/reachy_utils/files/reachy.yaml ~/
+cp ~/reachy_ws/src/reachy_2023/reachy_utils/reachy_utils/files/.reachy.yaml ~/
 ```
 
 ### Build Reachy_2023 env
