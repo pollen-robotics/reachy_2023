@@ -708,7 +708,7 @@ class ZuuuHAL(Node):
         wheel_rot_speed_right = (1/self.omnibase.wheel_radius) * (
             self.omnibase.wheel_to_center*rot_vel + y_vel/2.0 + math.sin(math.pi/3)*x_vel)
         wheel_rot_speed_left = (1/self.omnibase.wheel_radius) * (self.omnibase.wheel_to_center *
-                                                                 rot_vel + math.sin(math.pi/3)*y_vel/2 -
+                                                                 rot_vel + y_vel/2 -
                                                                  math.sin(math.pi/3)*x_vel)
 
         return [wheel_rot_speed_back, wheel_rot_speed_right, wheel_rot_speed_left]
