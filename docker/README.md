@@ -57,7 +57,7 @@ git clone https://github.com/pollen-robotics/reachy_2023.git
 ```
 Move to `reachy_2023/docker` then
 ```
-docker compose up -d
+docker-compose up -d
 ```
 Then connect to it with
 ```
@@ -78,7 +78,7 @@ Go to the A simple SDK test section to try it out!
 Alternatively, you can use the `reachy_2023` container as a development environment.
 Launch it with 
 ```
-docker compose -f mode/dev.yaml up -d
+docker-compose -f mode/dev.yaml up -d
 ```
 `reachy_2023` sources will be mounted as volumes into your container, from the `reachy_2023` repository on your host machine to `/opt/reachy_ws/src/reachy_2023` in your container
 
@@ -96,11 +96,11 @@ These commands must be done inside the container, so in a terminal where you con
 ## Stop
 You can stop the `reachy_2023` container with
 ```
-docker compose down
+docker-compose down
 ```
 or
 ```
-docker compose -f mode/dev.yaml down # if you launched the dev mode
+docker-compose -f mode/dev.yaml down # if you launched the dev mode
 
 ```
 
